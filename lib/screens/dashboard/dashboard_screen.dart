@@ -7,7 +7,7 @@ class DashboardScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text("Dashboard"), backgroundColor: Color(0xFF66BB6A)),
       body: const Center(
-        child: Text("!", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+        child: Text("welcome to dashboard!", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
       ),
     );
   }
