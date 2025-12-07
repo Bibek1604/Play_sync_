@@ -115,6 +115,17 @@ class _SplashScreenState extends State<SplashScreen>
                       ),
                     ),
                   ),
+                  const SizedBox(height: 16),
+
+                  // Loading Text
+                  const Text(
+                    "Loading...",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF81C784),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ],
               ),
             ),
