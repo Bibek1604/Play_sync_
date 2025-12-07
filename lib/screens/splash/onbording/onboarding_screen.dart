@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+/// Onboarding screen that introduces new users to PlaySync features
+/// Shows 4 pages with gaming-focused content and smooth navigation
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
   @override
@@ -10,6 +12,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _controller = PageController();
   int current = 0;
 
+  /// Onboarding pages data with gaming-focused content
   final List<OnboardingData> pages = [
     OnboardingData(
       icon: Icons.sports_esports,
