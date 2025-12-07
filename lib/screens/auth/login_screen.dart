@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+/// Login screen for user authentication
+/// Features email/password login with form validation
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -13,6 +15,42 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _rememberMe = false;
+  bool _isLoading = false;
+
+  /// Validates email format
+  String? _validateEmail(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter your email';
+    }
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegex.hasMatch(value)) {
+      return 'Please enter a valid email';
+    }
+    return null;
+  }
+
+  /// Validates password
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter your password';
+    }
+    if (value.length < 6) {
+      return 'Password must be at least 6 characters';
+    }
+    return null;
+  }
+
+  /// Handles login submission
+  void _handleLogin() {
+    if (_formKey.currentState!.validate()) {
+      setState(() => _isLoading = true);
+      // TODO: Implement actual login logic
+      Future.delayed(const Duration(seconds: 2), () {
+        setState(() => _isLoading = false);
+        Navigator.pushReplacementNamed(context, '/dashboard');
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -113,6 +151,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
+                    validator: _validateEmail,
                     decoration: InputDecoration(
                       hintText: "Enter your email",
                       hintStyle: TextStyle(color: Colors.grey[400]),
@@ -144,6 +183,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextFormField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
+                    validator: _validatePassword,
                     decoration: InputDecoration(
                       hintText: "Enter your password",
                       hintStyle: TextStyle(color: Colors.grey[400]),
@@ -219,7 +259,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
-                      onPressed: () => Navigator.pushReplacementNamed(context, '/dashboard'),
+                      onPressed: _isLoading ? null : _handleLogin,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF2E7D32),
                         foregroundColor: Colors.white,
@@ -228,13 +268,22 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        "Sign In",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text(
+                              "Sign In",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                     ),
                   ),
                   const SizedBox(height: 24),
