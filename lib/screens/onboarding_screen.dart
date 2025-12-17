@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// Onboarding screen that introduces new users to PlaySync features
-/// Shows 4 pages with gaming-focused content and smooth navigation
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
+
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
@@ -12,7 +11,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _controller = PageController();
   int current = 0;
 
-  /// Onboarding pages data with gaming-focused content
   final List<OnboardingData> pages = [
     OnboardingData(
       icon: Icons.sports_esports,
@@ -53,7 +51,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Skip button
             Align(
               alignment: Alignment.topRight,
               child: Padding(
@@ -62,17 +59,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   onPressed: () => Navigator.pushReplacementNamed(context, '/register'),
                   child: Text(
                     "Skip",
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: TextStyle(fontSize: 16, color: Colors.grey[600], fontWeight: FontWeight.w500),
                   ),
                 ),
               ),
             ),
-
-            // Page content
             Expanded(
               child: PageView.builder(
                 controller: _controller,
@@ -81,66 +72,37 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 itemBuilder: (context, index) => _buildPage(pages[index]),
               ),
             ),
-
-            // Bottom section
             Padding(
               padding: const EdgeInsets.fromLTRB(30, 0, 30, 40),
               child: Column(
                 children: [
-                  // Dots indicator
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      pages.length,
-                      (i) => _buildDot(i == current, pages[i].color),
-                    ),
+                    children: List.generate(pages.length, (i) => _buildDot(i == current, pages[i].color)),
                   ),
                   const SizedBox(height: 40),
-
-                  // Navigation buttons
                   Row(
                     children: [
-                      // Back button
                       if (current > 0)
                         Expanded(
                           child: OutlinedButton(
-                            onPressed: () {
-                              _controller.previousPage(
-                                duration: const Duration(milliseconds: 400),
-                                curve: Curves.easeInOut,
-                              );
-                            },
+                            onPressed: () => _controller.previousPage(duration: const Duration(milliseconds: 400), curve: Curves.easeInOut),
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               side: BorderSide(color: pages[current].color, width: 2),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                             ),
-                            child: Text(
-                              "Back",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: pages[current].color,
-                              ),
-                            ),
+                            child: Text("Back", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: pages[current].color)),
                           ),
                         ),
                       if (current > 0) const SizedBox(width: 16),
-
-                      // Next/Get Started button
                       Expanded(
-                        flex: current > 0 ? 1 : 1,
                         child: ElevatedButton(
                           onPressed: () {
                             if (current == pages.length - 1) {
                               Navigator.pushReplacementNamed(context, '/register');
                             } else {
-                              _controller.nextPage(
-                                duration: const Duration(milliseconds: 400),
-                                curve: Curves.easeInOut,
-                              );
+                              _controller.nextPage(duration: const Duration(milliseconds: 400), curve: Curves.easeInOut);
                             }
                           },
                           style: ElevatedButton.styleFrom(
@@ -148,27 +110,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(
-                                current == pages.length - 1 ? "Get Started" : "Next",
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
+                              Text(current == pages.length - 1 ? "Get Started" : "Next", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                               const SizedBox(width: 8),
-                              Icon(
-                                current == pages.length - 1
-                                    ? Icons.arrow_forward
-                                    : Icons.arrow_forward_ios,
-                                size: 18,
-                              ),
+                              Icon(current == pages.length - 1 ? Icons.arrow_forward : Icons.arrow_forward_ios, size: 18),
                             ],
                           ),
                         ),
@@ -190,57 +139,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Icon container
           Container(
             width: 180,
             height: 180,
-            decoration: BoxDecoration(
-              color: data.color.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: data.color.withOpacity(0.1), shape: BoxShape.circle),
             child: Center(
               child: Container(
                 width: 130,
                 height: 130,
-                decoration: BoxDecoration(
-                  color: data.color.withOpacity(0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Icon(
-                    data.icon,
-                    size: 70,
-                    color: data.color,
-                  ),
-                ),
+                decoration: BoxDecoration(color: data.color.withOpacity(0.2), shape: BoxShape.circle),
+                child: Center(child: Icon(data.icon, size: 70, color: data.color)),
               ),
             ),
           ),
           const SizedBox(height: 50),
-
-          // Title
-          Text(
-            data.title,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[800],
-              letterSpacing: 0.5,
-            ),
-          ),
+          Text(data.title, textAlign: TextAlign.center, style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.grey[800], letterSpacing: 0.5)),
           const SizedBox(height: 20),
-
-          // Description
-          Text(
-            data.description,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[600],
-              height: 1.6,
-            ),
-          ),
+          Text(data.description, textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: Colors.grey[600], height: 1.6)),
         ],
       ),
     );
@@ -252,10 +167,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 5),
       height: 10,
       width: active ? 30 : 10,
-      decoration: BoxDecoration(
-        color: active ? color : Colors.grey[300],
-        borderRadius: BorderRadius.circular(5),
-      ),
+      decoration: BoxDecoration(color: active ? color : Colors.grey[300], borderRadius: BorderRadius.circular(5)),
     );
   }
 }
@@ -266,10 +178,5 @@ class OnboardingData {
   final String description;
   final Color color;
 
-  OnboardingData({
-    required this.icon,
-    required this.title,
-    required this.description,
-    required this.color,
-  });
+  OnboardingData({required this.icon, required this.title, required this.description, required this.color});
 }
