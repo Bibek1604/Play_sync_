@@ -1,5 +1,6 @@
 // lib/screens/home/home_page.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'online_mode.dart';
 import 'offline_mode.dart';
 
@@ -12,6 +13,16 @@ class HomePage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // App illustration image
+          Padding(
+            padding: const EdgeInsets.only(top: 24, left: 20, right: 20, bottom: 8),
+            child: Center(
+              child: SvgPicture.asset(
+                'assets/images/home_illustration.svg',
+                height: 180,
+              ),
+            ),
+          ),
           // Greeting and quick stats
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 32, 20, 8),
