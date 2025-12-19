@@ -1,5 +1,5 @@
-// lib/screens/dashboard_screen.dart
 import 'package:flutter/material.dart';
+import 'package:play_sync/screens/dashboard/home_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -11,87 +11,12 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   int _selectedIndex = 0;
 
-  // All pages defined inline – no external imports needed
+  // Pages for sidebar navigation
   static final List<Widget> _pages = <Widget>[
-    // Home Tab
-    const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.home, size: 80, color: Color(0xFF2E7D32)),
-          SizedBox(height: 16),
-          Text(
-            "Home",
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 8),
-          Text(
-            "Your main dashboard will appear here",
-            style: TextStyle(color: Colors.grey),
-          ),
-        ],
-      ),
-    ),
-
-    // History Tab
-    const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.history, size: 80, color: Color(0xFF66BB6A)),
-          SizedBox(height: 16),
-          Text(
-            "Match History",
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 8),
-          Text(
-            "Your past games and sessions",
-            style: TextStyle(color: Colors.grey),
-          ),
-        ],
-      ),
-    ),
-
-    // Leaderboard Tab
-    const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.leaderboard, size: 80, color: Color(0xFF2E7D32)),
-          SizedBox(height: 16),
-          Text(
-            "Leaderboard",
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 8),
-          Text(
-            "Global rankings coming soon",
-            style: TextStyle(color: Colors.grey),
-          ),
-        ],
-      ),
-    ),
-
-    // Settings Tab
-    const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.settings, size: 80, color: Color(0xFF66BB6A)),
-          SizedBox(height: 16),
-          Text(
-            "Settings",
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 8),
-          Text(
-            "Manage your account and preferences",
-            style: TextStyle(color: Colors.grey),
-          ),
-        ],
-      ),
-    ),
+    const HomeScreen(),
+    const Center(child: Text("Match History\nComing Soon", style: TextStyle(fontSize: 24), textAlign: TextAlign.center)),
+    const Center(child: Text("Leaderboard\nComing Soon", style: TextStyle(fontSize: 24), textAlign: TextAlign.center)),
+    const Center(child: Text("Settings\nComing Soon", style: TextStyle(fontSize: 24), textAlign: TextAlign.center)),
   ];
 
   void _onItemTapped(int index) {
@@ -103,7 +28,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text("PlaySync"),
         backgroundColor: const Color(0xFF2E7D32),
@@ -116,37 +40,104 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
+      drawer: _buildSidebar(), // ← SIDEBAR ADDED HERE
       body: _pages[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed, // Needed for 4 items
+      bottomNavigationBar: BottomNavigationBar( // Optional: Keep bottom bar or remove if you want only sidebar
+        type: BottomNavigationBarType.fixed,
         items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history_outlined),
-            activeIcon: Icon(Icons.history),
-            label: 'History',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.leaderboard_outlined),
-            activeIcon: Icon(Icons.leaderboard),
-            label: 'Leaderboard',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings_outlined),
-            activeIcon: Icon(Icons.settings),
-            label: 'Settings',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.history_outlined), activeIcon: Icon(Icons.history), label: 'History'),
+          BottomNavigationBarItem(icon: Icon(Icons.leaderboard_outlined), activeIcon: Icon(Icons.leaderboard), label: 'Leaderboard'),
+          BottomNavigationBarItem(icon: Icon(Icons.settings_outlined), activeIcon: Icon(Icons.settings), label: 'Settings'),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: const Color(0xFF2E7D32),
         unselectedItemColor: Colors.grey[600],
-        backgroundColor: Colors.white,
-        elevation: 10,
         onTap: _onItemTapped,
+      ),
+    );
+  }
+
+  Widget _buildSidebar() {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          // Sidebar Header with User Info
+          UserAccountsDrawerHeader(
+            accountName: const Text(
+              "Bibek Pandey",
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+            accountEmail: const Text("bibek@example.com"),
+            currentAccountPicture: CircleAvatar(
+              backgroundColor: Colors.white,
+              child: Text(
+                "B",
+                style: TextStyle(fontSize: 40, color: const Color(0xFF2E7D32), fontWeight: FontWeight.bold),
+              ),
+            ),
+            decoration: const BoxDecoration(
+              color: Color(0xFF2E7D32),
+            ),
+          ),
+
+          // Menu Items
+          ListTile(
+            leading: const Icon(Icons.home),
+            title: const Text('Home'),
+            selected: _selectedIndex == 0,
+            selectedTileColor: Colors.green[50],
+            onTap: () {
+              _onItemTapped(0);
+              Navigator.pop(context); // Close drawer
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.history),
+            title: const Text('Match History'),
+            selected: _selectedIndex == 1,
+            selectedTileColor: Colors.green[50],
+            onTap: () {
+              _onItemTapped(1);
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.leaderboard),
+            title: const Text('Leaderboard'),
+            selected: _selectedIndex == 2,
+            selectedTileColor: Colors.green[50],
+            onTap: () {
+              _onItemTapped(2);
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.settings),
+            title: const Text('Settings'),
+            selected: _selectedIndex == 3,
+            selectedTileColor: Colors.green[50],
+            onTap: () {
+              _onItemTapped(3);
+              Navigator.pop(context);
+            },
+          ),
+
+          const Divider(),
+
+          ListTile(
+            leading: const Icon(Icons.logout, color: Colors.red),
+            title: const Text('Logout', style: TextStyle(color: Colors.red)),
+            onTap: () {
+              // Add logout logic later (e.g., navigate to login)
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Logged out")),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
