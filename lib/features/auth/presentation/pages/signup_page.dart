@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../app/routes/app_routes.dart';
 import '../providers/auth_notifier.dart';
 
 class SignupPage extends ConsumerStatefulWidget {
@@ -70,7 +72,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         );
-        Navigator.pushReplacementNamed(context, '/login');
+        Navigator.pushReplacementNamed(context, AppRoutes.login);
       },
     );
   }
@@ -120,7 +122,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                             borderRadius: BorderRadius.circular(20),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF2E7D32).withOpacity(0.3),
+                                color: const Color(0xFF2E7D32).withValues(alpha: 0.3),
                                 blurRadius: 15,
                                 offset: const Offset(0, 8),
                               ),
@@ -321,7 +323,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF2E7D32).withOpacity(0.3),
+                            color: const Color(0xFF2E7D32).withValues(alpha: 0.3),
                             blurRadius: 12,
                             offset: const Offset(0, 6),
                           ),
@@ -490,7 +492,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
           border: Border.all(color: Colors.grey.shade300),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: Colors.grey.withValues(alpha: 0.1),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
