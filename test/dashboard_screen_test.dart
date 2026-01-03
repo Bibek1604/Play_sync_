@@ -59,12 +59,12 @@ class _FakeAuthNotifier extends AuthNotifier {
 class _FakeAuthRepository implements AuthRepository {
   @override
   Future<Either<Failure, User>> login(String email, String password) async {
-    return Right(User(id: '1', email: email, name: 'Test User'));
+    return Right(User(id: '1', email: email, name: 'Test User', token: 'fake-token'));
   }
 
   @override
   Future<Either<Failure, User>> signup(String email, String password, {String? name}) async {
-    return Right(User(id: '2', email: email, name: name ?? 'New User'));
+    return Right(User(id: '2', email: email, name: name ?? 'New User', token: 'fake-token'));
   }
 
   @override
