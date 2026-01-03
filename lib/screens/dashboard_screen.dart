@@ -185,7 +185,8 @@ class DashboardScreen extends ConsumerWidget {
                         crossAxisCount: crossAxisCount,
                         crossAxisSpacing: itemSpacing,
                         mainAxisSpacing: itemSpacing,
-                        childAspectRatio: isTabletWidth(width) ? 1.6 : 1.3,
+                        // Give tiles more vertical space on small widths to avoid overflow
+                        childAspectRatio: isTabletWidth(width) ? 1.4 : 0.9,
                       ),
                       itemCount: items.length,
                       itemBuilder: (context, index) {
