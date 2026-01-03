@@ -58,7 +58,7 @@ class DashboardScreen extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF2E7D32).withOpacity(0.3),
+                        color: const Color(0xFF2E7D32).withValues(alpha: 0.3),
                         blurRadius: 15,
                         offset: const Offset(0, 8),
                       ),
@@ -73,7 +73,7 @@ class DashboardScreen extends ConsumerWidget {
                             width: 60,
                             height: 60,
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                                color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(15),
                             ),
                             child: const Icon(
@@ -90,7 +90,7 @@ class DashboardScreen extends ConsumerWidget {
                                 Text(
                                   'Welcome back!',
                                   style: TextStyle(
-                                    color: Colors.white.withOpacity(0.9),
+                                    color: Colors.white.withValues(alpha: 0.9),
                                     fontSize: 14,
                                   ),
                                 ),
@@ -112,7 +112,7 @@ class DashboardScreen extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Row(
@@ -195,6 +195,15 @@ class DashboardScreen extends ConsumerWidget {
                           title: item.title,
                           subtitle: item.subtitle,
                           color: item.color,
+                          onTap: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('${item.title} coming soon'),
+                                behavior: SnackBarBehavior.floating,
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          },
                         );
                       },
                     );
@@ -230,7 +239,7 @@ class DashboardScreen extends ConsumerWidget {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.2),
+              color: Colors.grey.withValues(alpha: 0.2),
               blurRadius: 10,
               offset: const Offset(0, -5),
             ),
@@ -278,43 +287,51 @@ class DashboardScreen extends ConsumerWidget {
     required String title,
     required String subtitle,
     required Color color,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF1F8E9),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: color, size: 28),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF1F8E9),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: color.withValues(alpha: 0.2)),
           ),
-          const SizedBox(height: 14),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: color, size: 28),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[600],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -333,7 +350,7 @@ class DashboardScreen extends ConsumerWidget {
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
