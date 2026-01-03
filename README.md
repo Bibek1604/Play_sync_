@@ -28,6 +28,12 @@ samples, guidance on mobile development, and a full API reference.
 2. Launch an emulator: `flutter emulators --launch Pixel_7`
 3. Run the app on the emulator: `flutter run -d Pixel_7`
 
+If launch fails:
+- Open Android Studio > Device Manager, ensure the AVD exists and is started.
+- Verify the exact AVD id from `flutter emulators` and use that id.
+- Update emulator & platform tools via Android Studio.
+- Try: `emulator -list-avds` and start via Device Manager.
+
 ### Physical Android Device
 1. Enable Developer Options and USB debugging.
 2. Install OEM USB driver (Windows) if required.
