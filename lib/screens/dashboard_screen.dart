@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/auth/presentation/providers/auth_notifier.dart';
+import '../core/ui/responsive.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -142,54 +143,62 @@ class DashboardScreen extends ConsumerWidget {
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF1B5E20),
-                  ),
+                  ),  
                 ),
                 const SizedBox(height: 16),
 
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildActionCard(
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final width = constraints.maxWidth;
+                    final crossAxisCount = gridCountForWidth(width);
+                    final itemSpacing = isTabletWidth(width) ? 20.0 : 16.0;
+                    final items = [
+                      (
                         icon: Icons.group_add,
                         title: 'Find Players',
                         subtitle: 'Match with gamers',
                         color: const Color(0xFF2E7D32),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildActionCard(
+                      (
                         icon: Icons.event,
                         title: 'Events',
                         subtitle: 'Join tournaments',
                         color: const Color(0xFF388E3C),
                       ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 16),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildActionCard(
+                      (
                         icon: Icons.chat_bubble_outline,
                         title: 'Messages',
                         subtitle: 'Chat with friends',
                         color: const Color(0xFF43A047),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildActionCard(
+                      (
                         icon: Icons.leaderboard,
                         title: 'Rankings',
                         subtitle: 'View leaderboard',
                         color: const Color(0xFF66BB6A),
                       ),
-                    ),
-                  ],
+                    ];
+                    return GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: itemSpacing,
+                        mainAxisSpacing: itemSpacing,
+                        childAspectRatio: isTabletWidth(width) ? 1.6 : 1.3,
+                      ),
+                      itemCount: items.length,
+                      itemBuilder: (context, index) {
+                        final item = items[index];
+                        return _buildActionCard(
+                          icon: item.icon,
+                          title: item.title,
+                          subtitle: item.subtitle,
+                          color: item.color,
+                        );
+                      },
+                    );
+                  },
                 ),
 
                 const SizedBox(height: 30),
