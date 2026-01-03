@@ -27,8 +27,11 @@ void main() {
             );
           }),
         ],
-        child: const MaterialApp(
-          home: Scaffold(body: DashboardScreen()),
+        child: const MediaQuery(
+          data: MediaQueryData(size: Size(800, 1280)),
+          child: MaterialApp(
+            home: Scaffold(body: DashboardScreen()),
+          ),
         ),
       ),
     );
