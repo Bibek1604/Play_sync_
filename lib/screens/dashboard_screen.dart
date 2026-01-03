@@ -302,6 +302,7 @@ class DashboardScreen extends ConsumerWidget {
             border: Border.all(color: color.withValues(alpha: 0.2)),
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(

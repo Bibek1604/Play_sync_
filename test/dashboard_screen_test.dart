@@ -2,12 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:play_sync_new/screens/dashboard_screen.dart';
+import 'package:play_sync_new/features/auth/presentation/providers/auth_notifier.dart';
 
 void main() {
   testWidgets('Dashboard renders Quick Actions and 4 cards', (tester) async {
     await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
+      ProviderScope(
+        overrides: [
+          authNotifierProvider.overrideWith((ref) {
+            // Provide a lightweight notifier that does not touch Hive.
+            return _FakeAuthNotifier();
+          }),
+        ],
+        child: const MaterialApp(
           home: Scaffold(body: DashboardScreen()),
         ),
       ),
@@ -20,4 +27,8 @@ void main() {
     expect(find.byIcon(Icons.chat_bubble_outline), findsOneWidget);
     expect(find.byIcon(Icons.leaderboard), findsOneWidget);
   });
+}
+
+class _FakeAuthNotifier extends StateNotifier<AuthState> {
+  _FakeAuthNotifier() : super(const AuthState());
 }
