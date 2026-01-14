@@ -1,8 +1,6 @@
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:play_sync_new/features/auth/data/datasources/auth_datasource.dart';
 import 'package:play_sync_new/features/auth/data/models/auth_response_model.dart';
-import 'package:play_sync_new/core/constants/hive_table_constant.dart';
 import 'package:uuid/uuid.dart';
 
 /// Local Hive implementation of IAuthDataSource
@@ -14,6 +12,7 @@ class AuthLocalDataSource implements IAuthDataSource {
 
   @override
   Future<AuthResponseModel> register({
+    required String fullName,
     required String email,
     required String password,
   }) async {
@@ -29,6 +28,7 @@ class AuthLocalDataSource implements IAuthDataSource {
       final userId = const Uuid().v4();
       final userData = {
         'userId': userId,
+        'fullName': fullName,
         'email': normalizedEmail,
         'password': password,
         'role': 'student',
@@ -48,8 +48,10 @@ class AuthLocalDataSource implements IAuthDataSource {
 
   @override
   Future<AuthResponseModel> registerAdmin({
+    required String fullName,
     required String email,
     required String password,
+    String? adminCode,
   }) async {
     try {
       final normalizedEmail = email.toLowerCase().trim();
@@ -61,6 +63,7 @@ class AuthLocalDataSource implements IAuthDataSource {
       final userId = const Uuid().v4();
       final userData = {
         'userId': userId,
+        'fullName': fullName,
         'email': normalizedEmail,
         'password': password,
         'role': 'admin',
@@ -79,6 +82,7 @@ class AuthLocalDataSource implements IAuthDataSource {
 
   @override
   Future<AuthResponseModel> registerTutor({
+    required String fullName,
     required String email,
     required String password,
   }) async {
@@ -92,6 +96,7 @@ class AuthLocalDataSource implements IAuthDataSource {
       final userId = const Uuid().v4();
       final userData = {
         'userId': userId,
+        'fullName': fullName,
         'email': normalizedEmail,
         'password': password,
         'role': 'tutor',
@@ -135,6 +140,7 @@ class AuthLocalDataSource implements IAuthDataSource {
       // Convert to proper map
       final userData = {
         'userId': userMap['userId'],
+        'fullName': userMap['fullName'],
         'email': userMap['email'],
         'password': userMap['password'],
         'role': userMap['role'] ?? 'student',

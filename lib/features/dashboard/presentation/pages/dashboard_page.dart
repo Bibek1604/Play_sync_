@@ -45,7 +45,7 @@ class DashboardPage extends ConsumerWidget {
               children: [
                 // Welcome Section
                 _WelcomeCard(
-                  userName: authState.user?.name ?? authState.user?.email ?? 'Gamer',
+                  userName: authState.user?.fullName ?? authState.user?.email ?? 'Gamer',
                   isDark: isDark,
                 ),
 

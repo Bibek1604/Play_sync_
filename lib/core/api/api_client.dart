@@ -36,7 +36,6 @@ class ApiClient {
           responseBody: true,
           responseHeader: false,
           error: true,
-          compact: true,
         ),
       );
     }

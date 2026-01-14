@@ -4,18 +4,22 @@ import 'package:play_sync_new/features/auth/data/models/auth_response_model.dart
 abstract interface class IAuthDataSource {
   /// Register student
   Future<AuthResponseModel> register({
+    required String fullName,
     required String email,
     required String password,
   });
 
   /// Register admin
   Future<AuthResponseModel> registerAdmin({
+    required String fullName,
     required String email,
     required String password,
+    String? adminCode,
   });
 
   /// Register tutor
   Future<AuthResponseModel> registerTutor({
+    required String fullName,
     required String email,
     required String password,
   });

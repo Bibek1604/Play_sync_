@@ -3,6 +3,7 @@ import 'package:play_sync_new/features/auth/domain/entities/auth_entity.dart';
 /// API Response model for authentication
 class AuthResponseModel {
   final String? userId;
+  final String? fullName;
   final String email;
   final String role;
   final String? token;
@@ -12,6 +13,7 @@ class AuthResponseModel {
 
   AuthResponseModel({
     this.userId,
+    this.fullName,
     required this.email,
     required this.role,
     this.token,
@@ -24,6 +26,7 @@ class AuthResponseModel {
   factory AuthResponseModel.fromJson(Map<String, dynamic> json) {
     return AuthResponseModel(
       userId: json['userId'] ?? json['id'] ?? json['_id'],
+      fullName: json['fullName'] ?? json['full_name'] ?? json['name'],
       email: json['email'] ?? '',
       role: json['role'] ?? 'student',
       token: json['token'] ?? json['accessToken'] ?? json['access_token'],
@@ -40,6 +43,7 @@ class AuthResponseModel {
   AuthEntity toEntity() {
     return AuthEntity(
       userId: userId,
+      fullName: fullName,
       email: email,
       role: _parseRole(role),
       token: token,

@@ -13,6 +13,7 @@ class RegisterPage extends ConsumerStatefulWidget {
 }
 
 class _RegisterPageState extends ConsumerState<RegisterPage> {
+  late TextEditingController _fullNameController;
   late TextEditingController _emailController;
   late TextEditingController _passwordController;
   late TextEditingController _confirmPasswordController;
@@ -24,6 +25,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   @override
   void initState() {
     super.initState();
+    _fullNameController = TextEditingController();
     _emailController = TextEditingController();
     _passwordController = TextEditingController();
     _confirmPasswordController = TextEditingController();
@@ -31,6 +33,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
 
   @override
   void dispose() {
+    _fullNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -38,12 +41,13 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   }
 
   void _handleRegister() {
+    final fullName = _fullNameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     final confirmPassword = _confirmPasswordController.text.trim();
 
     // Validate inputs
-    if (email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+    if (fullName.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill in all fields')),
       );
@@ -78,13 +82,13 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     final notifier = ref.read(authViewModelProvider.notifier);
     switch (_selectedRole) {
       case UserRole.student:
-        notifier.register(email, password);
+        notifier.register(fullName, email, password);
         break;
       case UserRole.admin:
-        notifier.registerAdmin(email, password);
+        notifier.registerAdmin(fullName, email, password);
         break;
       case UserRole.tutor:
-        notifier.registerTutor(email, password);
+        notifier.registerTutor(fullName, email, password);
         break;
     }
   }
@@ -164,6 +168,26 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 },
               ),
               const SizedBox(height: 24),
+              // Full Name Field
+              TextField(
+                controller: _fullNameController,
+                enabled: !_isLoading,
+                keyboardType: TextInputType.name,
+                textCapitalization: TextCapitalization.words,
+                decoration: InputDecoration(
+                  labelText: 'Full Name',
+                  hintText: 'Enter your full name',
+                  prefixIcon: const Icon(Icons.person_outlined),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
               // Email Field
               TextField(
                 controller: _emailController,

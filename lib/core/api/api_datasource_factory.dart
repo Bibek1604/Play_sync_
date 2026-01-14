@@ -27,8 +27,7 @@ final authLocalDataSourceProvider = FutureProvider<AuthLocalDataSource>((ref) as
 /// Provider for remote datasource
 final authRemoteDatasourceProvider = Provider<AuthRemoteDataSource>((ref) {
   final apiClient = ref.watch(apiClientProvider);
-  final secureStorage = ref.watch(secureStorageProvider);
-  return AuthRemoteDataSource(apiClient: apiClient, secureStorage: secureStorage);
+  return AuthRemoteDataSource(apiClient: apiClient);
 });
 
 /// Provider to determine which datasource to use

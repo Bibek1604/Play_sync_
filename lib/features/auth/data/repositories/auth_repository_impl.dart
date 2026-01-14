@@ -17,11 +17,11 @@ final authRepositoryProvider = Provider<IAuthRepository>((ref) {
 /// Repository implementation for authentication
 class AuthRepository implements IAuthRepository {
   final FlutterSecureStorage _secureStorage;
-  final ProviderRef _ref;
+  final Ref _ref;
 
   AuthRepository({
     required FlutterSecureStorage secureStorage,
-    required ProviderRef ref,
+    required Ref ref,
   })  : _secureStorage = secureStorage,
         _ref = ref;
 
@@ -32,12 +32,14 @@ class AuthRepository implements IAuthRepository {
 
   @override
   Future<Either<Failure, AuthEntity>> register({
+    required String fullName,
     required String email,
     required String password,
   }) async {
     try {
       final datasource = await _getDataSource();
       final response = await datasource.register(
+        fullName: fullName,
         email: email,
         password: password,
       );
@@ -48,6 +50,7 @@ class AuthRepository implements IAuthRepository {
       await _secureStorage.write(key: 'user_id', value: response.userId);
       await _secureStorage.write(key: 'user_email', value: response.email);
       await _secureStorage.write(key: 'user_role', value: response.role);
+      await _secureStorage.write(key: 'user_fullName', value: response.fullName);
       
       return Right(response.toEntity());
     } catch (e) {
@@ -57,14 +60,18 @@ class AuthRepository implements IAuthRepository {
 
   @override
   Future<Either<Failure, AuthEntity>> registerAdmin({
+    required String fullName,
     required String email,
     required String password,
+    String? adminCode,
   }) async {
     try {
       final datasource = await _getDataSource();
       final response = await datasource.registerAdmin(
+        fullName: fullName,
         email: email,
         password: password,
+        adminCode: adminCode,
       );
       
       // Save token to secure storage
@@ -73,6 +80,7 @@ class AuthRepository implements IAuthRepository {
       await _secureStorage.write(key: 'user_id', value: response.userId);
       await _secureStorage.write(key: 'user_email', value: response.email);
       await _secureStorage.write(key: 'user_role', value: response.role);
+      await _secureStorage.write(key: 'user_fullName', value: response.fullName);
       
       return Right(response.toEntity());
     } catch (e) {
@@ -82,12 +90,14 @@ class AuthRepository implements IAuthRepository {
 
   @override
   Future<Either<Failure, AuthEntity>> registerTutor({
+    required String fullName,
     required String email,
     required String password,
   }) async {
     try {
       final datasource = await _getDataSource();
       final response = await datasource.registerTutor(
+        fullName: fullName,
         email: email,
         password: password,
       );
@@ -98,6 +108,7 @@ class AuthRepository implements IAuthRepository {
       await _secureStorage.write(key: 'user_id', value: response.userId);
       await _secureStorage.write(key: 'user_email', value: response.email);
       await _secureStorage.write(key: 'user_role', value: response.role);
+      await _secureStorage.write(key: 'user_fullName', value: response.fullName);
       
       return Right(response.toEntity());
     } catch (e) {

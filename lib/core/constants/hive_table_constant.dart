@@ -26,9 +26,10 @@ class HiveTableConstant {
   static const String productTable = "product_table";
 
   // ===== BOX NAMES (for complex data structures) =====
-  static const String preferencesBox = "preferences";
-  static const String cacheBox = "cache";
-  static const String syncBox = "sync_queue";
+  static const String preferencesBox = 'preferences';
+  static const String cacheBox = 'cache';
+  static const String syncBox = 'sync_queue';
+  static const String authBox = 'auth_box';
 
   // ===== HELPER METHODS =====
 

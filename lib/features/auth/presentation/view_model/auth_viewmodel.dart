@@ -43,11 +43,11 @@ class AuthViewModel extends Notifier<AuthState> {
     );
   }
 
-  Future<void> register(String email, String password) async {
+  Future<void> register(String fullName, String email, String password) async {
     state = state.copyWith(status: AuthStatus.loading);
 
     final result = await _registerUsecase.call(
-      RegisterParams(email: email, password: password),
+      RegisterParams(fullName: fullName, email: email, password: password),
     );
 
     result.fold(
@@ -62,11 +62,11 @@ class AuthViewModel extends Notifier<AuthState> {
     );
   }
 
-  Future<void> registerAdmin(String email, String password) async {
+  Future<void> registerAdmin(String fullName, String email, String password, {String? adminCode}) async {
     state = state.copyWith(status: AuthStatus.loading);
 
     final result = await _registerAdminUsecase.call(
-      RegisterAdminParams(email: email, password: password),
+      RegisterAdminParams(fullName: fullName, email: email, password: password, adminCode: adminCode),
     );
 
     result.fold(
@@ -81,11 +81,11 @@ class AuthViewModel extends Notifier<AuthState> {
     );
   }
 
-  Future<void> registerTutor(String email, String password) async {
+  Future<void> registerTutor(String fullName, String email, String password) async {
     state = state.copyWith(status: AuthStatus.loading);
 
     final result = await _registerTutorUsecase.call(
-      RegisterTutorParams(email: email, password: password),
+      RegisterTutorParams(fullName: fullName, email: email, password: password),
     );
 
     result.fold(

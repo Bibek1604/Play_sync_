@@ -7,33 +7,35 @@ import 'package:play_sync_new/features/auth/data/datasources/auth_datasource.dar
 import 'package:play_sync_new/features/auth/data/models/auth_request_model.dart';
 import 'package:play_sync_new/features/auth/data/models/auth_response_model.dart';
 
-final authRemoteDatasourceProvider = Provider<AuthRemoteDatasource>((ref) {
+final authRemoteDatasourceProvider = Provider<AuthRemoteDataSource>((ref) {
   final apiClient = ref.read(apiClientProvider);
-  return AuthRemoteDatasource(apiClient: apiClient);
+  return AuthRemoteDataSource(apiClient: apiClient);
 });
 
 /// Remote data source for authentication - Handles API calls
-class AuthRemoteDatasource implements IAuthDataSource {
+class AuthRemoteDataSource implements IAuthDataSource {
   final ApiClient _apiClient;
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
-  AuthRemoteDatasource({required ApiClient apiClient}) : _apiClient = apiClient;
+  AuthRemoteDataSource({required ApiClient apiClient}) : _apiClient = apiClient;
 
   /// ========== REGISTER STUDENT ==========
   @override
   Future<AuthResponseModel> register({
+    required String fullName,
     required String email,
     required String password,
   }) async {
     try {
       final requestModel = AuthRequestModel(
+        fullName: fullName,
         email: email,
         password: password,
       );
 
       final response = await _apiClient.post(
         ApiEndpoints.registerUser,
-        data: requestModel.toJson(),
+        data: requestModel.toRegisterJson(),
       );
 
       final authResponse = AuthResponseModel.fromJson(response.data);
@@ -52,18 +54,22 @@ class AuthRemoteDatasource implements IAuthDataSource {
   /// ========== REGISTER ADMIN ==========
   @override
   Future<AuthResponseModel> registerAdmin({
+    required String fullName,
     required String email,
     required String password,
+    String? adminCode,
   }) async {
     try {
       final requestModel = AuthRequestModel(
+        fullName: fullName,
         email: email,
         password: password,
+        adminCode: adminCode ?? ApiEndpoints.adminCode,
       );
 
       final response = await _apiClient.post(
         ApiEndpoints.registerAdmin,
-        data: requestModel.toJson(),
+        data: requestModel.toAdminRegisterJson(),
       );
 
       final authResponse = AuthResponseModel.fromJson(response.data);
@@ -81,18 +87,20 @@ class AuthRemoteDatasource implements IAuthDataSource {
   /// ========== REGISTER TUTOR ==========
   @override
   Future<AuthResponseModel> registerTutor({
+    required String fullName,
     required String email,
     required String password,
   }) async {
     try {
       final requestModel = AuthRequestModel(
+        fullName: fullName,
         email: email,
         password: password,
       );
 
       final response = await _apiClient.post(
         ApiEndpoints.registerTutor,
-        data: requestModel.toJson(),
+        data: requestModel.toRegisterJson(),
       );
 
       final authResponse = AuthResponseModel.fromJson(response.data);
@@ -121,7 +129,7 @@ class AuthRemoteDatasource implements IAuthDataSource {
 
       final response = await _apiClient.post(
         ApiEndpoints.login,
-        data: requestModel.toJson(),
+        data: requestModel.toLoginJson(),
       );
 
       final authResponse = AuthResponseModel.fromJson(response.data);
@@ -150,6 +158,7 @@ class AuthRemoteDatasource implements IAuthDataSource {
       await _secureStorage.delete(key: 'user_id');
       await _secureStorage.delete(key: 'user_email');
       await _secureStorage.delete(key: 'user_role');
+      await _secureStorage.delete(key: 'user_fullName');
       return true;
     } catch (e) {
       return false;
@@ -173,6 +182,9 @@ class AuthRemoteDatasource implements IAuthDataSource {
     }
     await _secureStorage.write(key: 'user_email', value: response.email);
     await _secureStorage.write(key: 'user_role', value: response.role);
+    if (response.fullName != null) {
+      await _secureStorage.write(key: 'user_fullName', value: response.fullName);
+    }
   }
 
   /// Handle Dio errors and return meaningful exception

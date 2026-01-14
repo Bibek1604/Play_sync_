@@ -96,7 +96,7 @@ class DashboardScreen extends ConsumerWidget {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  authState.user?.name ?? authState.user?.email ?? 'Gamer',
+                                  authState.user?.fullName ?? authState.user?.email ?? 'Gamer',
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 22,

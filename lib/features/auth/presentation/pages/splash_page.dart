@@ -30,7 +30,7 @@ class _SplashPageState extends ConsumerState<SplashPage> {
     
     _hasNavigated = true;
     
-    if (authState.user != null && authState.user!.token.isNotEmpty) {
+    if (authState.user != null && (authState.user!.token?.isNotEmpty ?? false)) {
       // User is logged in with valid token - go to dashboard
       Navigator.pushReplacementNamed(context, AppRoutes.dashboard);
     } else {

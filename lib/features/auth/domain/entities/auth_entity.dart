@@ -5,6 +5,7 @@ enum UserRole { student, admin, tutor }
 /// Authentication Entity - Represents user data in domain layer
 class AuthEntity extends Equatable {
   final String? userId;
+  final String? fullName;
   final String email;
   final String? password; // Only used for registration, never stored
   final UserRole role;
@@ -14,6 +15,7 @@ class AuthEntity extends Equatable {
 
   const AuthEntity({
     this.userId,
+    this.fullName,
     required this.email,
     this.password,
     this.role = UserRole.student,
@@ -25,6 +27,7 @@ class AuthEntity extends Equatable {
   /// Copy with method for immutability
   AuthEntity copyWith({
     String? userId,
+    String? fullName,
     String? email,
     String? password,
     UserRole? role,
@@ -34,6 +37,7 @@ class AuthEntity extends Equatable {
   }) {
     return AuthEntity(
       userId: userId ?? this.userId,
+      fullName: fullName ?? this.fullName,
       email: email ?? this.email,
       password: password ?? this.password,
       role: role ?? this.role,
@@ -45,5 +49,5 @@ class AuthEntity extends Equatable {
 
   @override
   List<Object?> get props =>
-      [userId, email, role, token, refreshToken, createdAt];
+      [userId, fullName, email, role, token, refreshToken, createdAt];
 }
