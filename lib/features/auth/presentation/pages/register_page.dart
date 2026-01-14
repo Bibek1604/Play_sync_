@@ -2,41 +2,48 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../view_model/auth_viewmodel.dart';
 import '../state/auth_state.dart';
-import 'register_page.dart';
+import '../../domain/entities/auth_entity.dart';
+import 'login_page.dart';
 
-class LoginPage extends ConsumerStatefulWidget {
-  const LoginPage({Key? key}) : super(key: key);
+class RegisterPage extends ConsumerStatefulWidget {
+  const RegisterPage({Key? key}) : super(key: key);
 
   @override
-  ConsumerState<LoginPage> createState() => _LoginPageState();
+  ConsumerState<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _LoginPageState extends ConsumerState<LoginPage> {
+class _RegisterPageState extends ConsumerState<RegisterPage> {
   late TextEditingController _emailController;
   late TextEditingController _passwordController;
+  late TextEditingController _confirmPasswordController;
   bool _isPasswordVisible = false;
+  bool _isConfirmPasswordVisible = false;
   bool _isLoading = false;
+  UserRole _selectedRole = UserRole.student;
 
   @override
   void initState() {
     super.initState();
     _emailController = TextEditingController();
     _passwordController = TextEditingController();
+    _confirmPasswordController = TextEditingController();
   }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  void _handleLogin() {
+  void _handleRegister() {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
 
     // Validate inputs
-    if (email.isEmpty || password.isEmpty) {
+    if (email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill in all fields')),
       );
@@ -51,8 +58,35 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       return;
     }
 
-    // Call login
-    ref.read(authViewModelProvider.notifier).login(email, password);
+    // Validate password length
+    if (password.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Password must be at least 6 characters')),
+      );
+      return;
+    }
+
+    // Validate passwords match
+    if (password != confirmPassword) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Passwords do not match')),
+      );
+      return;
+    }
+
+    // Call appropriate registration based on role
+    final notifier = ref.read(authViewModelProvider.notifier);
+    switch (_selectedRole) {
+      case UserRole.student:
+        notifier.register(email, password);
+        break;
+      case UserRole.admin:
+        notifier.registerAdmin(email, password);
+        break;
+      case UserRole.tutor:
+        notifier.registerTutor(email, password);
+        break;
+    }
   }
 
   @override
@@ -60,7 +94,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     ref.listen<AuthState>(authViewModelProvider, (previous, next) {
       if (next.hasError) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.error ?? 'Login failed')),
+          SnackBar(content: Text(next.error ?? 'Registration failed')),
         );
         ref.read(authViewModelProvider.notifier).clearError();
       } else if (next.isAuthenticated) {
@@ -73,7 +107,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Login'),
+        title: const Text('Register'),
         centerTitle: true,
         elevation: 0,
       ),
@@ -84,7 +118,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 32),
-              // Logo or Title
+              // Title
               Center(
                 child: Text(
                   'Play Sync',
@@ -96,13 +130,40 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               const SizedBox(height: 8),
               Center(
                 child: Text(
-                  'Sign in to your account',
+                  'Create your account',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Colors.grey[600],
                       ),
                 ),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 32),
+              // Role Selection
+              Text(
+                'Select your role',
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
+              const SizedBox(height: 12),
+              SegmentedButton<UserRole>(
+                segments: const [
+                  ButtonSegment(
+                    value: UserRole.student,
+                    label: Text('Student'),
+                  ),
+                  ButtonSegment(
+                    value: UserRole.tutor,
+                    label: Text('Tutor'),
+                  ),
+                  ButtonSegment(
+                    value: UserRole.admin,
+                    label: Text('Admin'),
+                  ),
+                ],
+                selected: <UserRole>{_selectedRole},
+                onSelectionChanged: (Set<UserRole> newSelection) {
+                  setState(() => _selectedRole = newSelection.first);
+                },
+              ),
+              const SizedBox(height: 24),
               // Email Field
               TextField(
                 controller: _emailController,
@@ -150,10 +211,42 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   ),
                 ),
               ),
+              const SizedBox(height: 16),
+              // Confirm Password Field
+              TextField(
+                controller: _confirmPasswordController,
+                enabled: !_isLoading,
+                obscureText: !_isConfirmPasswordVisible,
+                decoration: InputDecoration(
+                  labelText: 'Confirm Password',
+                  hintText: 'Confirm your password',
+                  prefixIcon: const Icon(Icons.lock_outlined),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isConfirmPasswordVisible
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                    ),
+                    onPressed: () {
+                      setState(
+                        () => _isConfirmPasswordVisible =
+                            !_isConfirmPasswordVisible,
+                      );
+                    },
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                ),
+              ),
               const SizedBox(height: 24),
-              // Login Button
+              // Register Button
               ElevatedButton(
-                onPressed: _isLoading ? null : _handleLogin,
+                onPressed: _isLoading ? null : _handleRegister,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
@@ -166,25 +259,25 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Sign In'),
+                    : const Text('Create Account'),
               ),
               const SizedBox(height: 16),
-              // Register Link
+              // Login Link
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text("Don't have an account? "),
+                  const Text('Already have an account? '),
                   TextButton(
                     onPressed: _isLoading
                         ? null
                         : () {
                             Navigator.of(context).pushReplacement(
                               MaterialPageRoute(
-                                builder: (context) => const RegisterPage(),
+                                builder: (context) => const LoginPage(),
                               ),
                             );
                           },
-                    child: const Text('Register'),
+                    child: const Text('Login'),
                   ),
                 ],
               ),
