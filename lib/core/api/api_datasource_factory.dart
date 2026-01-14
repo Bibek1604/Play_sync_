@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:play_sync_new/core/services/connectivity_service.dart';
@@ -54,14 +55,14 @@ final smartAuthDataSourceProvider = FutureProvider<IAuthDataSource>((ref) async 
     final isBackendAvailable = await connectivityService.isBackendAvailable();
 
     if (isBackendAvailable) {
-      print('[AUTH] Backend available - using remote datasource');
+      debugPrint('[AUTH] Backend available - using remote datasource');
       return ref.watch(authRemoteDatasourceProvider);
     } else {
-      print('[AUTH] Backend not available - using local datasource (Hive)');
+      debugPrint('[AUTH] Backend not available - using local datasource (Hive)');
       return ref.watch(authLocalDataSourceProvider.future);
     }
   } catch (e) {
-    print('[AUTH] Error determining datasource, falling back to local: $e');
+    debugPrint('[AUTH] Error determining datasource, falling back to local: $e');
     // Fallback to local datasource if anything goes wrong
     return ref.watch(authLocalDataSourceProvider.future);
   }

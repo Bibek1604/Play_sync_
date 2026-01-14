@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:play_sync_new/core/api/api_client.dart';
@@ -33,11 +34,15 @@ class AuthRemoteDataSource implements IAuthDataSource {
         password: password,
       );
 
+      debugPrint('[AUTH API] Registering user: ${requestModel.toRegisterJson()}');
+      debugPrint('[AUTH API] Endpoint: ${ApiEndpoints.baseUrl}${ApiEndpoints.registerUser}');
+
       final response = await _apiClient.post(
         ApiEndpoints.registerUser,
         data: requestModel.toRegisterJson(),
       );
 
+      debugPrint('[AUTH API] Response: ${response.data}');
       final authResponse = AuthResponseModel.fromJson(response.data);
 
       // Save token if returned
@@ -127,11 +132,15 @@ class AuthRemoteDataSource implements IAuthDataSource {
         password: password,
       );
 
+      debugPrint('[AUTH API] Logging in: ${requestModel.toLoginJson()}');
+      debugPrint('[AUTH API] Endpoint: ${ApiEndpoints.baseUrl}${ApiEndpoints.login}');
+
       final response = await _apiClient.post(
         ApiEndpoints.login,
         data: requestModel.toLoginJson(),
       );
 
+      debugPrint('[AUTH API] Response: ${response.data}');
       final authResponse = AuthResponseModel.fromJson(response.data);
 
       // Save tokens
@@ -197,9 +206,12 @@ class AuthRemoteDataSource implements IAuthDataSource {
 
       case DioExceptionType.badResponse:
         final statusCode = e.response?.statusCode;
-        final message = e.response?.data['message'] ??
-            e.response?.data['error'] ??
-            'Unknown error';
+        final responseData = e.response?.data;
+        debugPrint('[AUTH API ERROR] Status: $statusCode, Response: $responseData');
+        
+        final message = (responseData is Map)
+            ? (responseData['message'] ?? responseData['error'] ?? 'Unknown error')
+            : responseData?.toString() ?? 'Unknown error';
 
         switch (statusCode) {
           case 400:
@@ -215,7 +227,7 @@ class AuthRemoteDataSource implements IAuthDataSource {
           case 422:
             return Exception('Validation error: $message');
           case 500:
-            return Exception('Server error. Please try later.');
+            return Exception('Server error: $message');
           default:
             return Exception('Error: $message');
         }
