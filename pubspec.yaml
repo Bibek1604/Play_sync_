@@ -50,6 +50,18 @@ dependencies:
   
   # SVG Support
   flutter_svg: ^2.0.10
+  
+  # HTTP Client
+  dio: ^5.3.3
+  
+  # Secure Storage
+  flutter_secure_storage: ^9.0.0
+  
+  # Connectivity Checking
+  connectivity_plus: ^5.0.2
+  
+  # UUID Generation
+  uuid: ^4.2.1
 
 dev_dependencies:
   flutter_test:
