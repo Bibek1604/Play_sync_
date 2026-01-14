@@ -1,13 +1,139 @@
 import 'package:dartz/dartz.dart';
-import '../../../../core/error/failure.dart';
-import '../../domain/entities/user.dart';
-import '../../domain/repositories/auth_repository.dart';
-import '../datasources/local/auth_local_datasource.dart';
-import '../models/user_model.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:play_sync_new/core/error/failures.dart';
+import 'package:play_sync_new/features/auth/data/datasources/auth_datasource.dart';
+import 'package:play_sync_new/features/auth/data/datasources/remote/auth_remote_datasource.dart';
+import 'package:play_sync_new/features/auth/domain/entities/auth_entity.dart';
+import 'package:play_sync_new/features/auth/domain/repositories/auth_repository.dart';
 
-class AuthRepositoryImpl implements AuthRepository {
-  final AuthLocalDatasource localDatasource;
-  // final AuthRemoteDatasource remoteDatasource; // For future use
+final authRepositoryProvider = Provider<IAuthRepository>((ref) {
+  final remoteDatasource = ref.read(authRemoteDatasourceProvider);
+  return AuthRepository(remoteDatasource: remoteDatasource);
+});
+
+/// Repository implementation for authentication
+class AuthRepository implements IAuthRepository {
+  final IAuthDataSource _remoteDatasource;
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+
+  AuthRepository({required IAuthDataSource remoteDatasource})
+      : _remoteDatasource = remoteDatasource;
+
+  @override
+  Future<Either<Failure, AuthEntity>> register({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await _remoteDatasource.register(
+        email: email,
+        password: password,
+      );
+      return Right(response.toEntity());
+    } catch (e) {
+      return Left(AuthFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, AuthEntity>> registerAdmin({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await _remoteDatasource.registerAdmin(
+        email: email,
+        password: password,
+      );
+      return Right(response.toEntity());
+    } catch (e) {
+      return Left(AuthFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, AuthEntity>> registerTutor({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await _remoteDatasource.registerTutor(
+        email: email,
+        password: password,
+      );
+      return Right(response.toEntity());
+    } catch (e) {
+      return Left(AuthFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, AuthEntity>> login({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await _remoteDatasource.login(
+        email: email,
+        password: password,
+      );
+      return Right(response.toEntity());
+    } catch (e) {
+      return Left(AuthFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> logout() async {
+    try {
+      final result = await _remoteDatasource.logout();
+      return Right(result);
+    } catch (e) {
+      return Left(AuthFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, AuthEntity?>> getCurrentUser() async {
+    try {
+      final userId = await _secureStorage.read(key: 'user_id');
+      final email = await _secureStorage.read(key: 'user_email');
+      final role = await _secureStorage.read(key: 'user_role');
+      final token = await _secureStorage.read(key: 'access_token');
+
+      if (email == null || token == null) {
+        return const Right(null);
+      }
+
+      return Right(AuthEntity(
+        userId: userId,
+        email: email,
+        role: _parseRole(role ?? 'student'),
+        token: token,
+      ));
+    } catch (e) {
+      return Left(AuthFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<bool> isLoggedIn() async {
+    final token = await _secureStorage.read(key: 'access_token');
+    return token != null;
+  }
+
+  static UserRole _parseRole(String role) {
+    switch (role.toLowerCase()) {
+      case 'admin':
+        return UserRole.admin;
+      case 'tutor':
+        return UserRole.tutor;
+      default:
+        return UserRole.student;
+    }
+  }
+}
 
   AuthRepositoryImpl({
     required this.localDatasource,
