@@ -1,28 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../view_model/auth_viewmodel.dart';
-import '../state/auth_state.dart';
-import 'register_page.dart';
+import '../../../../app/routes/app_routes.dart';
+import '../providers/auth_notifier.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
-  const LoginPage({Key? key}) : super(key: key);
+  const LoginPage({super.key});
 
   @override
   ConsumerState<LoginPage> createState() => _LoginPageState();
 }
 
 class _LoginPageState extends ConsumerState<LoginPage> {
-  late TextEditingController _emailController;
-  late TextEditingController _passwordController;
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
-  bool _isLoading = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _emailController = TextEditingController();
-    _passwordController = TextEditingController();
-  }
 
   @override
   void dispose() {
@@ -31,14 +22,19 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     super.dispose();
   }
 
-  void _handleLogin() {
+  Future<void> _handleLogin() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
     // Validate inputs
     if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all fields')),
+        SnackBar(
+          content: const Text('Please fill in all fields'),
+          backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
       );
       return;
     }
@@ -46,30 +42,52 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     // Validate email format
     if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid email')),
+        SnackBar(
+          content: const Text('Please enter a valid email'),
+          backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
       );
       return;
     }
 
-    // Call login
-    ref.read(authViewModelProvider.notifier).login(email, password);
+    // Call login API
+    final result = await ref.read(authNotifierProvider.notifier).login(
+          email: email,
+          password: password,
+        );
+
+    result.fold(
+      (failure) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(failure.message),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      },
+      (user) {
+        // Login successful - navigate to dashboard
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Welcome back, ${user.fullName ?? user.email}!'),
+            backgroundColor: const Color(0xFF2E7D32),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+        Navigator.pushReplacementNamed(context, AppRoutes.dashboard);
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<AuthState>(authViewModelProvider, (previous, next) {
-      if (next.hasError) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.error ?? 'Login failed')),
-        );
-        ref.read(authViewModelProvider.notifier).clearError();
-      } else if (next.isAuthenticated) {
-        Navigator.of(context).pushReplacementNamed('/dashboard');
-      }
-    });
-
-    final authState = ref.watch(authViewModelProvider);
-    _isLoading = authState.isLoading;
+    final authState = ref.watch(authNotifierProvider);
+    final isLoading = authState.isLoading;
 
     return Scaffold(
       appBar: AppBar(
@@ -106,7 +124,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               // Email Field
               TextField(
                 controller: _emailController,
-                enabled: !_isLoading,
+                enabled: !isLoading,
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
                   labelText: 'Email',
@@ -125,7 +143,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               // Password Field
               TextField(
                 controller: _passwordController,
-                enabled: !_isLoading,
+                enabled: !isLoading,
                 obscureText: !_isPasswordVisible,
                 decoration: InputDecoration(
                   labelText: 'Password',
@@ -153,20 +171,22 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               const SizedBox(height: 24),
               // Login Button
               ElevatedButton(
-                onPressed: _isLoading ? null : _handleLogin,
+                onPressed: isLoading ? null : _handleLogin,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
+                  backgroundColor: const Color(0xFF2E7D32),
+                  foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: _isLoading
+                child: isLoading
                     ? const SizedBox(
                         height: 20,
                         width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                       )
-                    : const Text('Sign In'),
+                    : const Text('Sign In', style: TextStyle(fontSize: 16)),
               ),
               const SizedBox(height: 16),
               // Register Link
@@ -175,15 +195,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 children: [
                   const Text("Don't have an account? "),
                   TextButton(
-                    onPressed: _isLoading
+                    onPressed: isLoading
                         ? null
-                        : () {
-                            Navigator.of(context).pushReplacement(
-                              MaterialPageRoute(
-                                builder: (context) => const RegisterPage(),
-                              ),
-                            );
-                          },
+                        : () => Navigator.pushReplacementNamed(context, AppRoutes.signup),
                     child: const Text('Register'),
                   ),
                 ],
