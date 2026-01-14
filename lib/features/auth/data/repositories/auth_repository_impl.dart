@@ -3,22 +3,32 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:play_sync_new/core/error/failures.dart';
 import 'package:play_sync_new/features/auth/data/datasources/auth_datasource.dart';
-import 'package:play_sync_new/features/auth/data/datasources/remote/auth_remote_datasource.dart';
+import 'package:play_sync_new/core/api/api_datasource_factory.dart';
 import 'package:play_sync_new/features/auth/domain/entities/auth_entity.dart';
 import 'package:play_sync_new/features/auth/domain/repositories/auth_repository.dart';
 
+/// Provider for authentication repository
+/// Uses smart datasource that automatically switches between remote and local
 final authRepositoryProvider = Provider<IAuthRepository>((ref) {
-  final remoteDatasource = ref.read(authRemoteDatasourceProvider);
-  return AuthRepository(remoteDatasource: remoteDatasource);
+  final secureStorage = ref.watch(secureStorageProvider);
+  return AuthRepository(secureStorage: secureStorage, ref: ref);
 });
 
 /// Repository implementation for authentication
 class AuthRepository implements IAuthRepository {
-  final IAuthDataSource _remoteDatasource;
-  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+  final FlutterSecureStorage _secureStorage;
+  final ProviderRef _ref;
 
-  AuthRepository({required IAuthDataSource remoteDatasource})
-      : _remoteDatasource = remoteDatasource;
+  AuthRepository({
+    required FlutterSecureStorage secureStorage,
+    required ProviderRef ref,
+  })  : _secureStorage = secureStorage,
+        _ref = ref;
+
+  /// Get the appropriate datasource (smart switching)
+  Future<IAuthDataSource> _getDataSource() async {
+    return _ref.watch(smartAuthDataSourceProvider.future);
+  }
 
   @override
   Future<Either<Failure, AuthEntity>> register({
@@ -26,13 +36,22 @@ class AuthRepository implements IAuthRepository {
     required String password,
   }) async {
     try {
-      final response = await _remoteDatasource.register(
+      final datasource = await _getDataSource();
+      final response = await datasource.register(
         email: email,
         password: password,
       );
+      
+      // Save token to secure storage
+      await _secureStorage.write(key: 'access_token', value: response.token);
+      await _secureStorage.write(key: 'refresh_token', value: response.refreshToken);
+      await _secureStorage.write(key: 'user_id', value: response.userId);
+      await _secureStorage.write(key: 'user_email', value: response.email);
+      await _secureStorage.write(key: 'user_role', value: response.role);
+      
       return Right(response.toEntity());
     } catch (e) {
-      return Left(AuthFailure(message: e.toString()));
+      return Left(AuthFailure(message: 'Registration failed: ${e.toString()}'));
     }
   }
 
@@ -42,13 +61,22 @@ class AuthRepository implements IAuthRepository {
     required String password,
   }) async {
     try {
-      final response = await _remoteDatasource.registerAdmin(
+      final datasource = await _getDataSource();
+      final response = await datasource.registerAdmin(
         email: email,
         password: password,
       );
+      
+      // Save token to secure storage
+      await _secureStorage.write(key: 'access_token', value: response.token);
+      await _secureStorage.write(key: 'refresh_token', value: response.refreshToken);
+      await _secureStorage.write(key: 'user_id', value: response.userId);
+      await _secureStorage.write(key: 'user_email', value: response.email);
+      await _secureStorage.write(key: 'user_role', value: response.role);
+      
       return Right(response.toEntity());
     } catch (e) {
-      return Left(AuthFailure(message: e.toString()));
+      return Left(AuthFailure(message: 'Admin registration failed: ${e.toString()}'));
     }
   }
 
@@ -58,13 +86,22 @@ class AuthRepository implements IAuthRepository {
     required String password,
   }) async {
     try {
-      final response = await _remoteDatasource.registerTutor(
+      final datasource = await _getDataSource();
+      final response = await datasource.registerTutor(
         email: email,
         password: password,
       );
+      
+      // Save token to secure storage
+      await _secureStorage.write(key: 'access_token', value: response.token);
+      await _secureStorage.write(key: 'refresh_token', value: response.refreshToken);
+      await _secureStorage.write(key: 'user_id', value: response.userId);
+      await _secureStorage.write(key: 'user_email', value: response.email);
+      await _secureStorage.write(key: 'user_role', value: response.role);
+      
       return Right(response.toEntity());
     } catch (e) {
-      return Left(AuthFailure(message: e.toString()));
+      return Left(AuthFailure(message: 'Tutor registration failed: ${e.toString()}'));
     }
   }
 
@@ -74,23 +111,41 @@ class AuthRepository implements IAuthRepository {
     required String password,
   }) async {
     try {
-      final response = await _remoteDatasource.login(
+      final datasource = await _getDataSource();
+      final response = await datasource.login(
         email: email,
         password: password,
       );
+      
+      // Save token to secure storage
+      await _secureStorage.write(key: 'access_token', value: response.token);
+      await _secureStorage.write(key: 'refresh_token', value: response.refreshToken);
+      await _secureStorage.write(key: 'user_id', value: response.userId);
+      await _secureStorage.write(key: 'user_email', value: response.email);
+      await _secureStorage.write(key: 'user_role', value: response.role);
+      
       return Right(response.toEntity());
     } catch (e) {
-      return Left(AuthFailure(message: e.toString()));
+      return Left(AuthFailure(message: 'Login failed: ${e.toString()}'));
     }
   }
 
   @override
   Future<Either<Failure, bool>> logout() async {
     try {
-      final result = await _remoteDatasource.logout();
-      return Right(result);
+      final datasource = await _getDataSource();
+      await datasource.logout();
+      
+      // Clear secure storage
+      await _secureStorage.delete(key: 'access_token');
+      await _secureStorage.delete(key: 'refresh_token');
+      await _secureStorage.delete(key: 'user_id');
+      await _secureStorage.delete(key: 'user_email');
+      await _secureStorage.delete(key: 'user_role');
+      
+      return const Right(true);
     } catch (e) {
-      return Left(AuthFailure(message: e.toString()));
+      return Left(AuthFailure(message: 'Logout failed: ${e.toString()}'));
     }
   }
 
@@ -113,7 +168,7 @@ class AuthRepository implements IAuthRepository {
         token: token,
       ));
     } catch (e) {
-      return Left(AuthFailure(message: e.toString()));
+      return Left(AuthFailure(message: 'Failed to get user: ${e.toString()}'));
     }
   }
 
@@ -131,80 +186,6 @@ class AuthRepository implements IAuthRepository {
         return UserRole.tutor;
       default:
         return UserRole.student;
-    }
-  }
-}
-
-  AuthRepositoryImpl({
-    required this.localDatasource,
-    // required this.remoteDatasource,
-  });
-
-  @override
-  Future<Either<Failure, User>> login(String email, String password) async {
-    try {
-      // Validate against registered users
-      final user = await localDatasource.validateLogin(email, password);
-      
-      if (user == null) {
-        // Check if email exists to give better error message
-        final isRegistered = await localDatasource.isEmailRegistered(email);
-        if (!isRegistered) {
-          return Left(AuthFailure('Email not registered. Please sign up first.'));
-        }
-        return Left(AuthFailure('Invalid password. Please try again.'));
-      }
-      
-      // Cache the logged-in user
-      await localDatasource.cacheUser(user);
-      return Right(user.toEntity());
-    } catch (e) {
-      return Left(AuthFailure('Login failed: ${e.toString()}'));
-    }
-  }
-
-  @override
-  Future<Either<Failure, User>> signup(String email, String password, {String? name}) async {
-    try {
-      // Check if email already registered
-      final isRegistered = await localDatasource.isEmailRegistered(email);
-      if (isRegistered) {
-        return Left(AuthFailure('Email already registered. Please login instead.'));
-      }
-      
-      // Register the user
-      await localDatasource.registerUser(email, password, name);
-      
-      // Return user info (but don't cache - they must login)
-      final user = UserModel(
-        id: email.hashCode.toString(),
-        email: email.toLowerCase().trim(),
-        name: name,
-        token: '', // Empty token - user gets real token on login
-      );
-      return Right(user.toEntity());
-    } catch (e) {
-      return Left(AuthFailure('Signup failed: ${e.toString()}'));
-    }
-  }
-
-  @override
-  Future<Either<Failure, User?>> getCachedUser() async {
-    try {
-      final user = await localDatasource.getCachedUser();
-      return Right(user?.toEntity());
-    } catch (e) {
-      return Left(CacheFailure('Failed to get cached user: ${e.toString()}'));
-    }
-  }
-
-  @override
-  Future<Either<Failure, void>> logout() async {
-    try {
-      await localDatasource.clearUser();
-      return const Right(null);
-    } catch (e) {
-      return Left(CacheFailure('Logout failed: ${e.toString()}'));
     }
   }
 }
