@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../app/routes/app_routes.dart';
 import '../providers/auth_notifier.dart';
+import 'login_page.dart';
 
-class LoginPage extends ConsumerStatefulWidget {
-  const LoginPage({super.key});
+class RegisterPage extends ConsumerStatefulWidget {
+  const RegisterPage({Key? key}) : super(key: key);
 
   @override
-  ConsumerState<LoginPage> createState() => _LoginPageState();
+  ConsumerState<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _LoginPageState extends ConsumerState<LoginPage> with SingleTickerProviderStateMixin {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+class _RegisterPageState extends ConsumerState<RegisterPage> with SingleTickerProviderStateMixin {
+  late TextEditingController _fullNameController;
+  late TextEditingController _emailController;
+  late TextEditingController _passwordController;
+  late TextEditingController _confirmPasswordController;
   final _formKey = GlobalKey<FormState>();
   bool _isPasswordVisible = false;
+  bool _isConfirmPasswordVisible = false;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -22,6 +25,11 @@ class _LoginPageState extends ConsumerState<LoginPage> with SingleTickerProvider
   @override
   void initState() {
     super.initState();
+    _fullNameController = TextEditingController();
+    _emailController = TextEditingController();
+    _passwordController = TextEditingController();
+    _confirmPasswordController = TextEditingController();
+    
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
@@ -38,22 +46,56 @@ class _LoginPageState extends ConsumerState<LoginPage> with SingleTickerProvider
 
   @override
   void dispose() {
+    _fullNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     _animationController.dispose();
     super.dispose();
   }
 
-  Future<void> _handleLogin() async {
-    if (!_formKey.currentState!.validate()) return;
+  double _getPasswordStrength(String password) {
+    if (password.isEmpty) return 0;
+    double strength = 0;
+    if (password.length >= 8) strength += 0.25;
+    if (password.contains(RegExp(r'[a-z]'))) strength += 0.25;
+    if (password.contains(RegExp(r'[A-Z]'))) strength += 0.25;
+    if (password.contains(RegExp(r'[0-9!@#$%^&*(),.?":{}|<>]'))) strength += 0.25;
+    return strength;
+  }
 
+  Color _getStrengthColor(double strength) {
+    if (strength <= 0.25) return Colors.red;
+    if (strength <= 0.5) return Colors.orange;
+    if (strength <= 0.75) return Colors.yellow.shade700;
+    return const Color(0xFF2E7D32);
+  }
+
+  String _getStrengthText(double strength) {
+    if (strength <= 0.25) return 'Weak';
+    if (strength <= 0.5) return 'Fair';
+    if (strength <= 0.75) return 'Good';
+    return 'Strong';
+  }
+
+  void _handleRegister() {
+    if (!_formKey.currentState!.validate()) return;
+    
+    final fullName = _fullNameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
+    
+    _performRegistration(fullName, email, password);
+  }
 
-    final result = await ref.read(authNotifierProvider.notifier).login(
-          email: email,
-          password: password,
-        );
+  Future<void> _performRegistration(String fullName, String email, String password) async {
+    final notifier = ref.read(authNotifierProvider.notifier);
+    
+    final result = await notifier.register(
+      fullName: fullName,
+      email: email,
+      password: password,
+    );
 
     result.fold(
       (failure) {
@@ -80,7 +122,7 @@ class _LoginPageState extends ConsumerState<LoginPage> with SingleTickerProvider
               children: [
                 const Icon(Icons.check_circle_outline, color: Colors.white),
                 const SizedBox(width: 12),
-                Expanded(child: Text('Welcome back, ${user.fullName ?? user.email}!')),
+                const Expanded(child: Text('Registration successful! Please login.')),
               ],
             ),
             backgroundColor: const Color(0xFF2E7D32),
@@ -89,7 +131,9 @@ class _LoginPageState extends ConsumerState<LoginPage> with SingleTickerProvider
             margin: const EdgeInsets.all(16),
           ),
         );
-        Navigator.pushReplacementNamed(context, AppRoutes.dashboard);
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+        );
       },
     );
   }
@@ -100,6 +144,7 @@ class _LoginPageState extends ConsumerState<LoginPage> with SingleTickerProvider
     final isLoading = authState.isLoading;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final passwordStrength = _getPasswordStrength(_passwordController.text);
 
     return Scaffold(
       body: Container(
@@ -141,7 +186,7 @@ class _LoginPageState extends ConsumerState<LoginPage> with SingleTickerProvider
                         const SizedBox(height: 24),
                         // Title
                         Text(
-                          'Play Sync',
+                          'Join Play Sync',
                           style: theme.textTheme.headlineLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: const Color(0xFF2E7D32),
@@ -150,12 +195,33 @@ class _LoginPageState extends ConsumerState<LoginPage> with SingleTickerProvider
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Welcome back! Sign in to continue',
+                          'Create your account to get started',
                           style: theme.textTheme.bodyLarge?.copyWith(
                             color: isDark ? Colors.grey[400] : Colors.grey[600],
                           ),
                         ),
-                        const SizedBox(height: 48),
+                        const SizedBox(height: 40),
+                        // Full Name Field
+                        _buildTextField(
+                          controller: _fullNameController,
+                          label: 'Full Name',
+                          hint: 'Enter your full name',
+                          icon: Icons.person_outlined,
+                          keyboardType: TextInputType.name,
+                          textCapitalization: TextCapitalization.words,
+                          enabled: !isLoading,
+                          isDark: isDark,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your full name';
+                            }
+                            if (value.length < 2) {
+                              return 'Name must be at least 2 characters';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 20),
                         // Email Field
                         _buildTextField(
                           controller: _emailController,
@@ -180,11 +246,12 @@ class _LoginPageState extends ConsumerState<LoginPage> with SingleTickerProvider
                         _buildTextField(
                           controller: _passwordController,
                           label: 'Password',
-                          hint: 'Enter your password',
+                          hint: 'Create a strong password',
                           icon: Icons.lock_outlined,
                           obscureText: !_isPasswordVisible,
                           enabled: !isLoading,
                           isDark: isDark,
+                          onChanged: (_) => setState(() {}),
                           suffixIcon: IconButton(
                             icon: Icon(
                               _isPasswordVisible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
@@ -194,18 +261,86 @@ class _LoginPageState extends ConsumerState<LoginPage> with SingleTickerProvider
                           ),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter your password';
+                              return 'Please enter a password';
+                            }
+                            if (value.length < 8) {
+                              return 'Password must be at least 8 characters';
+                            }
+                            return null;
+                          },
+                        ),
+                        // Password Strength Indicator
+                        if (_passwordController.text.isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(4),
+                                        child: LinearProgressIndicator(
+                                          value: passwordStrength,
+                                          backgroundColor: Colors.grey.withOpacity(0.2),
+                                          valueColor: AlwaysStoppedAnimation<Color>(
+                                            _getStrengthColor(passwordStrength),
+                                          ),
+                                          minHeight: 6,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      _getStrengthText(passwordStrength),
+                                      style: TextStyle(
+                                        color: _getStrengthColor(passwordStrength),
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 20),
+                        // Confirm Password Field
+                        _buildTextField(
+                          controller: _confirmPasswordController,
+                          label: 'Confirm Password',
+                          hint: 'Re-enter your password',
+                          icon: Icons.lock_outlined,
+                          obscureText: !_isConfirmPasswordVisible,
+                          enabled: !isLoading,
+                          isDark: isDark,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _isConfirmPasswordVisible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                              color: Colors.grey[600],
+                            ),
+                            onPressed: () => setState(() => _isConfirmPasswordVisible = !_isConfirmPasswordVisible),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please confirm your password';
+                            }
+                            if (value != _passwordController.text) {
+                              return 'Passwords do not match';
                             }
                             return null;
                           },
                         ),
                         const SizedBox(height: 32),
-                        // Login Button
+                        // Register Button
                         SizedBox(
                           width: double.infinity,
                           height: 56,
                           child: ElevatedButton(
-                            onPressed: isLoading ? null : _handleLogin,
+                            onPressed: isLoading ? null : _handleRegister,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF2E7D32),
                               foregroundColor: Colors.white,
@@ -227,10 +362,10 @@ class _LoginPageState extends ConsumerState<LoginPage> with SingleTickerProvider
                                 : const Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Icon(Icons.login_rounded, size: 22),
+                                      Icon(Icons.person_add_rounded, size: 22),
                                       SizedBox(width: 10),
                                       Text(
-                                        'Sign In',
+                                        'Create Account',
                                         style: TextStyle(
                                           fontSize: 17,
                                           fontWeight: FontWeight.w600,
@@ -249,7 +384,7 @@ class _LoginPageState extends ConsumerState<LoginPage> with SingleTickerProvider
                             Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 16),
                               child: Text(
-                                'New to Play Sync?',
+                                'Already have an account?',
                                 style: TextStyle(color: Colors.grey[600], fontSize: 14),
                               ),
                             ),
@@ -257,14 +392,18 @@ class _LoginPageState extends ConsumerState<LoginPage> with SingleTickerProvider
                           ],
                         ),
                         const SizedBox(height: 24),
-                        // Register Link
+                        // Login Link
                         SizedBox(
                           width: double.infinity,
                           height: 56,
                           child: OutlinedButton(
                             onPressed: isLoading
                                 ? null
-                                : () => Navigator.pushReplacementNamed(context, AppRoutes.signup),
+                                : () {
+                                    Navigator.of(context).pushReplacement(
+                                      MaterialPageRoute(builder: (context) => const LoginPage()),
+                                    );
+                                  },
                             style: OutlinedButton.styleFrom(
                               foregroundColor: const Color(0xFF2E7D32),
                               side: const BorderSide(color: Color(0xFF2E7D32), width: 2),
@@ -275,10 +414,10 @@ class _LoginPageState extends ConsumerState<LoginPage> with SingleTickerProvider
                             child: const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.person_add_outlined, size: 22),
+                                Icon(Icons.login_rounded, size: 22),
                                 SizedBox(width: 10),
                                 Text(
-                                  'Create Account',
+                                  'Sign In',
                                   style: TextStyle(
                                     fontSize: 17,
                                     fontWeight: FontWeight.w600,
@@ -309,10 +448,12 @@ class _LoginPageState extends ConsumerState<LoginPage> with SingleTickerProvider
     required IconData icon,
     required bool isDark,
     TextInputType keyboardType = TextInputType.text,
+    TextCapitalization textCapitalization = TextCapitalization.none,
     bool obscureText = false,
     bool enabled = true,
     Widget? suffixIcon,
     String? Function(String?)? validator,
+    void Function(String)? onChanged,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -328,9 +469,11 @@ class _LoginPageState extends ConsumerState<LoginPage> with SingleTickerProvider
       child: TextFormField(
         controller: controller,
         keyboardType: keyboardType,
+        textCapitalization: textCapitalization,
         obscureText: obscureText,
         enabled: enabled,
         validator: validator,
+        onChanged: onChanged,
         style: TextStyle(fontSize: 16, color: isDark ? Colors.white : Colors.black87),
         decoration: InputDecoration(
           labelText: label,

@@ -1,90 +1,116 @@
-import '../../models/user_model.dart';
-import '../../../../../core/database/hive_service.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:play_sync_new/features/auth/data/datasources/auth_datasource.dart';
+import 'package:play_sync_new/features/auth/data/models/auth_response_model.dart';
+import 'package:uuid/uuid.dart';
 
-abstract class AuthLocalDatasource {
-  Future<UserModel?> getCachedUser();
-  Future<void> cacheUser(UserModel user);
-  Future<void> clearUser();
-  
-  // Registration methods
-  Future<void> registerUser(String email, String password, String? name);
-  Future<UserModel?> validateLogin(String email, String password);
-  Future<bool> isEmailRegistered(String email);
-}
+/// Local Hive implementation of IAuthDataSource
+/// Used when backend is not available or offline mode is preferred
+class AuthLocalDataSource implements IAuthDataSource {
+  final Box<dynamic> _authBox;
 
-class AuthLocalDatasourceImpl implements AuthLocalDatasource {
-  
+  AuthLocalDataSource({required Box<dynamic> authBox}) : _authBox = authBox;
+
   @override
-  Future<UserModel?> getCachedUser() async {
-    final box = await HiveService.openUserBox();
-    final user = box.get('user');
-    if (user != null && user is UserModel) {
-      return user;
+  Future<AuthResponseModel> register({
+    required String fullName,
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final normalizedEmail = email.toLowerCase().trim();
+      
+      // Check if user already exists
+      if (_authBox.containsKey('user_$normalizedEmail')) {
+        throw Exception('User already registered');
+      }
+
+      // Create new user locally
+      final userId = const Uuid().v4();
+      final userData = {
+        'userId': userId,
+        'fullName': fullName,
+        'email': normalizedEmail,
+        'password': password,
+        'role': 'user',
+        'token': 'local_token_$userId',
+        'refreshToken': 'local_refresh_$userId',
+        'createdAt': DateTime.now().toIso8601String(),
+      };
+
+      // Save locally
+      await _authBox.put('user_$normalizedEmail', userData);
+      
+      return AuthResponseModel.fromJson(userData);
+    } catch (e) {
+      throw Exception('Local registration failed: $e');
     }
-    return null;
   }
 
   @override
-  Future<void> cacheUser(UserModel user) async {
-    final box = await HiveService.openUserBox();
-    await box.put('user', user);
+  Future<AuthResponseModel> login({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final normalizedEmail = email.toLowerCase().trim();
+      
+      // Try to find user in any role
+      final user = _authBox.get('user_$normalizedEmail') ??
+          _authBox.get('admin_$normalizedEmail') ??
+          _authBox.get('tutor_$normalizedEmail');
+      
+      if (user == null) {
+        throw Exception('User not found');
+      }
+
+      final userMap = user as Map<dynamic, dynamic>;
+      
+      // Verify password
+      if (userMap['password'] != password) {
+        throw Exception('Invalid password');
+      }
+
+      // Convert to proper map
+      final userData = {
+        'userId': userMap['userId'],
+        'fullName': userMap['fullName'],
+        'email': userMap['email'],
+        'password': userMap['password'],
+        'role': userMap['role'] ?? 'student',
+        'token': 'local_token_${userMap['userId']}',
+        'refreshToken': 'local_refresh_${userMap['userId']}',
+        'createdAt': userMap['createdAt'],
+      };
+      
+      return AuthResponseModel.fromJson(userData);
+    } catch (e) {
+      throw Exception('Local login failed: $e');
+    }
   }
 
   @override
-  Future<void> clearUser() async {
-    final box = await HiveService.openUserBox();
-    await box.delete('user');
-  }
-  
-  @override
-  Future<void> registerUser(String email, String password, String? name) async {
-    final box = await HiveService.openRegisteredUsersBox();
-    final normalizedEmail = email.toLowerCase().trim();
-    
-    // Store user with password
-    await box.put(normalizedEmail, {
-      'id': normalizedEmail.hashCode.toString(),
-      'email': normalizedEmail,
-      'password': password,
-      'name': name,
-      'createdAt': DateTime.now().toIso8601String(),
-    });
-    
-    // Force flush to disk
-    await box.flush();
-  }
-  
-  @override
-  Future<UserModel?> validateLogin(String email, String password) async {
-    final box = await HiveService.openRegisteredUsersBox();
-    final normalizedEmail = email.toLowerCase().trim();
-    
-    final userData = box.get(normalizedEmail);
-    if (userData == null) {
-      return null; // Email not registered
+  Future<bool> logout() async {
+    try {
+      await _authBox.clear();
+      return true;
+    } catch (e) {
+      throw Exception('Local logout failed: $e');
     }
-    
-    // Cast to Map<dynamic, dynamic>
-    final Map<dynamic, dynamic> userMap = userData as Map<dynamic, dynamic>;
-    
-    // Check password
-    if (userMap['password'] != password) {
-      return null; // Wrong password
-    }
-    
-    // Return user model with a new token
-    return UserModel(
-      id: userMap['id'] as String,
-      email: userMap['email'] as String,
-      name: userMap['name'] as String?,
-      token: 'token_${normalizedEmail}_${DateTime.now().millisecondsSinceEpoch}',
-    );
   }
-  
-  @override
-  Future<bool> isEmailRegistered(String email) async {
-    final box = await HiveService.openRegisteredUsersBox();
-    final normalizedEmail = email.toLowerCase().trim();
-    return box.containsKey(normalizedEmail);
+
+  /// Get all cached users
+  List<Map<String, dynamic>> getAllCachedUsers() {
+    try {
+      final users = <Map<String, dynamic>>[];
+      for (final key in _authBox.keys) {
+        final user = _authBox.get(key);
+        if (user is Map) {
+          users.add(Map<String, dynamic>.from(user));
+        }
+      }
+      return users;
+    } catch (e) {
+      return [];
+    }
   }
 }

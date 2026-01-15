@@ -45,10 +45,10 @@ class _SignupPageState extends ConsumerState<SignupPage> {
       return;
     }
 
-    final result = await ref.read(authNotifierProvider.notifier).signup(
-          _emailController.text.trim(),
-          _passwordController.text,
-          name: _nameController.text.trim(),
+    final result = await ref.read(authNotifierProvider.notifier).register(
+          fullName: _nameController.text.trim(),
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
         );
 
     result.fold(

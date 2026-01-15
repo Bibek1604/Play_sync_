@@ -1,101 +1,143 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dartz/dartz.dart';
-import '../../../../core/error/failure.dart';
-import '../../domain/entities/user.dart';
-import '../../domain/usecases/login.dart';
-import '../../domain/usecases/signup.dart';
-import '../../domain/usecases/get_cached_user.dart';
-import '../../domain/usecases/logout.dart';
-import '../../domain/repositories/auth_repository.dart';
-import '../../data/repositories/auth_repository_impl.dart';
-import '../../data/datasources/local/auth_local_datasource.dart';
+import 'package:play_sync_new/core/error/failures.dart';
+import 'package:play_sync_new/features/auth/domain/entities/auth_entity.dart';
+import 'package:play_sync_new/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:play_sync_new/features/auth/domain/usecases/login_usecase.dart';
+import 'package:play_sync_new/features/auth/domain/usecases/register_usecase.dart';
 
-/// Auth state that holds the current user and loading/error states
+// ============================================================================
+// AUTH STATE
+// ============================================================================
+
+/// Enum for authentication status
+enum AuthStatus {
+  initial,
+  loading,
+  authenticated,
+  unauthenticated,
+  error,
+}
+
+/// Auth state that holds the current user and status
 class AuthState {
-  final User? user;
-  final bool isLoading;
+  final AuthEntity? user;
+  final AuthStatus status;
   final String? error;
 
   const AuthState({
     this.user,
-    this.isLoading = false,
+    this.status = AuthStatus.initial,
     this.error,
   });
 
   AuthState copyWith({
-    User? user,
-    bool? isLoading,
+    AuthEntity? user,
+    AuthStatus? status,
     String? error,
     bool clearUser = false,
     bool clearError = false,
   }) {
     return AuthState(
       user: clearUser ? null : (user ?? this.user),
-      isLoading: isLoading ?? this.isLoading,
+      status: status ?? this.status,
       error: clearError ? null : (error ?? this.error),
     );
   }
+
+  bool get isLoading => status == AuthStatus.loading;
+  bool get isAuthenticated => status == AuthStatus.authenticated;
 }
+
+// ============================================================================
+// AUTH NOTIFIER
+// ============================================================================
 
 /// AuthNotifier manages authentication state using clean architecture
 class AuthNotifier extends StateNotifier<AuthState> {
-  final Login _login;
-  final Signup _signup;
-  final GetCachedUser _getCachedUser;
-  final Logout _logout;
+  final LoginUsecase _loginUsecase;
+  final RegisterUsecase _registerUsecase;
+  final Ref _ref;
 
   AuthNotifier({
-    required Login login,
-    required Signup signup,
-    required GetCachedUser getCachedUser,
-    required Logout logout,
-  })  : _login = login,
-        _signup = signup,
-        _getCachedUser = getCachedUser,
-        _logout = logout,
-        super(const AuthState(isLoading: true)) {
+    required LoginUsecase loginUsecase,
+    required RegisterUsecase registerUsecase,
+    required Ref ref,
+  })  : _loginUsecase = loginUsecase,
+        _registerUsecase = registerUsecase,
+        _ref = ref,
+        super(const AuthState()) {
     _init();
   }
 
   /// Initialize - check for cached user on startup
   Future<void> _init() async {
-    final result = await _getCachedUser();
-    result.fold(
-      (failure) => state = const AuthState(),
-      (user) => state = AuthState(user: user),
-    );
+    final repository = _ref.read(authRepositoryProvider);
+    final isLoggedIn = await repository.isLoggedIn();
+    
+    if (isLoggedIn) {
+      final result = await repository.getCurrentUser();
+      result.fold(
+        (failure) => state = const AuthState(status: AuthStatus.unauthenticated),
+        (user) {
+          if (user != null) {
+            state = AuthState(user: user, status: AuthStatus.authenticated);
+          } else {
+            state = const AuthState(status: AuthStatus.unauthenticated);
+          }
+        },
+      );
+    } else {
+      state = const AuthState(status: AuthStatus.unauthenticated);
+    }
   }
 
   /// Login with email and password
-  Future<Either<Failure, User>> login(String email, String password) async {
-    state = state.copyWith(isLoading: true, clearError: true);
-    final result = await _login(email, password);
+  Future<Either<Failure, AuthEntity>> login({
+    required String email,
+    required String password,
+  }) async {
+    state = state.copyWith(status: AuthStatus.loading, clearError: true);
+    
+    final result = await _loginUsecase(LoginParams(
+      email: email,
+      password: password,
+    ));
+    
     return result.fold(
       (failure) {
-        state = state.copyWith(isLoading: false, error: failure.message);
+        state = state.copyWith(status: AuthStatus.error, error: failure.message);
         return Left(failure);
       },
       (user) {
-        state = AuthState(user: user);
+        state = AuthState(user: user, status: AuthStatus.authenticated);
         return Right(user);
       },
     );
   }
 
-  /// Signup with email, password and optional name
-  /// Note: This creates the user but does NOT auto-login
-  /// User must login separately after registration
-  Future<Either<Failure, User>> signup(String email, String password, {String? name}) async {
-    state = state.copyWith(isLoading: true, clearError: true);
-    final result = await _signup(email, password, name: name);
+  /// Register user
+  Future<Either<Failure, AuthEntity>> register({
+    required String fullName,
+    required String email,
+    required String password,
+  }) async {
+    state = state.copyWith(status: AuthStatus.loading, clearError: true);
+    
+    final result = await _registerUsecase(RegisterParams(
+      fullName: fullName,
+      email: email,
+      password: password,
+    ));
+    
     return result.fold(
       (failure) {
-        state = state.copyWith(isLoading: false, error: failure.message);
+        state = state.copyWith(status: AuthStatus.error, error: failure.message);
         return Left(failure);
       },
       (user) {
-        // Don't set user in state - user needs to login after registration
-        state = state.copyWith(isLoading: false, clearError: true);
+        // After registration, set state but don't auto-login
+        state = state.copyWith(status: AuthStatus.unauthenticated, clearError: true);
         return Right(user);
       },
     );
@@ -103,53 +145,28 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   /// Logout current user
   Future<void> logout() async {
-    state = state.copyWith(isLoading: true, clearError: true);
-    final result = await _logout();
+    state = state.copyWith(status: AuthStatus.loading, clearError: true);
+    
+    final repository = _ref.read(authRepositoryProvider);
+    final result = await repository.logout();
+    
     result.fold(
-      (failure) => state = state.copyWith(isLoading: false, error: failure.message),
-      (_) => state = const AuthState(),
+      (failure) => state = state.copyWith(status: AuthStatus.error, error: failure.message),
+      (_) => state = const AuthState(status: AuthStatus.unauthenticated),
     );
   }
 }
 
 // ============================================================================
-// DEPENDENCY INJECTION PROVIDERS
+// PROVIDERS
 // ============================================================================
-
-/// Repository provider - injects local datasource
-final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  final localDatasource = AuthLocalDatasourceImpl();
-  return AuthRepositoryImpl(localDatasource: localDatasource);
-});
-
-/// Use case providers
-final loginUseCaseProvider = Provider<Login>((ref) {
-  final repo = ref.read(authRepositoryProvider);
-  return Login(repo);
-});
-
-final signupUseCaseProvider = Provider<Signup>((ref) {
-  final repo = ref.read(authRepositoryProvider);
-  return Signup(repo);
-});
-
-final getCachedUserUseCaseProvider = Provider<GetCachedUser>((ref) {
-  final repo = ref.read(authRepositoryProvider);
-  return GetCachedUser(repo);
-});
-
-final logoutUseCaseProvider = Provider<Logout>((ref) {
-  final repo = ref.read(authRepositoryProvider);
-  return Logout(repo);
-});
 
 /// Main auth state provider
 final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(
-    login: ref.read(loginUseCaseProvider),
-    signup: ref.read(signupUseCaseProvider),
-    getCachedUser: ref.read(getCachedUserUseCaseProvider),
-    logout: ref.read(logoutUseCaseProvider),
+    loginUsecase: ref.read(loginUsecaseProvider),
+    registerUsecase: ref.read(registerUsecaseProvider),
+    ref: ref,
   );
 });
 
