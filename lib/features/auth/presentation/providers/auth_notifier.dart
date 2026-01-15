@@ -5,8 +5,6 @@ import 'package:play_sync_new/features/auth/domain/entities/auth_entity.dart';
 import 'package:play_sync_new/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:play_sync_new/features/auth/domain/usecases/login_usecase.dart';
 import 'package:play_sync_new/features/auth/domain/usecases/register_usecase.dart';
-import 'package:play_sync_new/features/auth/domain/usecases/register_admin_usecase.dart';
-import 'package:play_sync_new/features/auth/domain/usecases/register_tutor_usecase.dart';
 
 // ============================================================================
 // AUTH STATE
@@ -59,20 +57,14 @@ class AuthState {
 class AuthNotifier extends StateNotifier<AuthState> {
   final LoginUsecase _loginUsecase;
   final RegisterUsecase _registerUsecase;
-  final RegisterAdminUsecase _registerAdminUsecase;
-  final RegisterTutorUsecase _registerTutorUsecase;
   final Ref _ref;
 
   AuthNotifier({
     required LoginUsecase loginUsecase,
     required RegisterUsecase registerUsecase,
-    required RegisterAdminUsecase registerAdminUsecase,
-    required RegisterTutorUsecase registerTutorUsecase,
     required Ref ref,
   })  : _loginUsecase = loginUsecase,
         _registerUsecase = registerUsecase,
-        _registerAdminUsecase = registerAdminUsecase,
-        _registerTutorUsecase = registerTutorUsecase,
         _ref = ref,
         super(const AuthState()) {
     _init();
@@ -124,7 +116,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
   }
 
-  /// Register as student user
+  /// Register user
   Future<Either<Failure, AuthEntity>> register({
     required String fullName,
     required String email,
@@ -145,60 +137,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
       },
       (user) {
         // After registration, set state but don't auto-login
-        state = state.copyWith(status: AuthStatus.unauthenticated, clearError: true);
-        return Right(user);
-      },
-    );
-  }
-
-  /// Register as admin user
-  Future<Either<Failure, AuthEntity>> registerAdmin({
-    required String fullName,
-    required String email,
-    required String password,
-    String? adminCode,
-  }) async {
-    state = state.copyWith(status: AuthStatus.loading, clearError: true);
-    
-    final result = await _registerAdminUsecase(RegisterAdminParams(
-      fullName: fullName,
-      email: email,
-      password: password,
-      adminCode: adminCode,
-    ));
-    
-    return result.fold(
-      (failure) {
-        state = state.copyWith(status: AuthStatus.error, error: failure.message);
-        return Left(failure);
-      },
-      (user) {
-        state = state.copyWith(status: AuthStatus.unauthenticated, clearError: true);
-        return Right(user);
-      },
-    );
-  }
-
-  /// Register as tutor user
-  Future<Either<Failure, AuthEntity>> registerTutor({
-    required String fullName,
-    required String email,
-    required String password,
-  }) async {
-    state = state.copyWith(status: AuthStatus.loading, clearError: true);
-    
-    final result = await _registerTutorUsecase(RegisterTutorParams(
-      fullName: fullName,
-      email: email,
-      password: password,
-    ));
-    
-    return result.fold(
-      (failure) {
-        state = state.copyWith(status: AuthStatus.error, error: failure.message);
-        return Left(failure);
-      },
-      (user) {
         state = state.copyWith(status: AuthStatus.unauthenticated, clearError: true);
         return Right(user);
       },
@@ -228,8 +166,6 @@ final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref
   return AuthNotifier(
     loginUsecase: ref.read(loginUsecaseProvider),
     registerUsecase: ref.read(registerUsecaseProvider),
-    registerAdminUsecase: ref.read(registerAdminUsecaseProvider),
-    registerTutorUsecase: ref.read(registerTutorUsecaseProvider),
     ref: ref,
   );
 });

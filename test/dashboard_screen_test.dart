@@ -5,8 +5,6 @@ import 'package:play_sync_new/screens/dashboard_screen.dart';
 import 'package:play_sync_new/features/auth/presentation/providers/auth_notifier.dart';
 import 'package:play_sync_new/features/auth/domain/usecases/login_usecase.dart';
 import 'package:play_sync_new/features/auth/domain/usecases/register_usecase.dart';
-import 'package:play_sync_new/features/auth/domain/usecases/register_admin_usecase.dart';
-import 'package:play_sync_new/features/auth/domain/usecases/register_tutor_usecase.dart';
 
 void main() {
   testWidgets('Dashboard renders Quick Actions and 4 cards', (tester) async {
@@ -45,8 +43,6 @@ class _TestAuthNotifier extends AuthNotifier {
       : super(
           loginUsecase: _FakeLoginUsecase(),
           registerUsecase: _FakeRegisterUsecase(),
-          registerAdminUsecase: _FakeRegisterAdminUsecase(),
-          registerTutorUsecase: _FakeRegisterTutorUsecase(),
           ref: _FakeRef(),
         );
 }
@@ -54,6 +50,4 @@ class _TestAuthNotifier extends AuthNotifier {
 // Fake implementations for testing
 class _FakeLoginUsecase extends Fake implements LoginUsecase {}
 class _FakeRegisterUsecase extends Fake implements RegisterUsecase {}
-class _FakeRegisterAdminUsecase extends Fake implements RegisterAdminUsecase {}
-class _FakeRegisterTutorUsecase extends Fake implements RegisterTutorUsecase {}
 class _FakeRef extends Fake implements Ref {}

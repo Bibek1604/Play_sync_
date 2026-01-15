@@ -10,6 +10,7 @@ class AuthResponseModel {
   final String? refreshToken;
   final String? message;
   final DateTime? createdAt;
+  final bool? isVerified;
 
   AuthResponseModel({
     this.userId,
@@ -20,22 +21,45 @@ class AuthResponseModel {
     this.refreshToken,
     this.message,
     this.createdAt,
+    this.isVerified,
   });
 
-  /// Parse from JSON response
+  /// Parse from JSON response - handles nested 'data' or 'user' objects
   factory AuthResponseModel.fromJson(Map<String, dynamic> json) {
+    // Check if response has nested data/user object
+    final Map<String, dynamic> userData;
+    if (json.containsKey('data') && json['data'] is Map) {
+      userData = json['data'] as Map<String, dynamic>;
+    } else if (json.containsKey('user') && json['user'] is Map) {
+      userData = json['user'] as Map<String, dynamic>;
+    } else {
+      userData = json;
+    }
+
+    // Extract token from root or nested object
+    final token = json['token'] ?? 
+                  json['accessToken'] ?? 
+                  json['access_token'] ??
+                  userData['token'] ??
+                  userData['accessToken'];
+    
+    final refreshToken = json['refreshToken'] ?? 
+                         json['refresh_token'] ??
+                         userData['refreshToken'] ??
+                         userData['refresh_token'];
+
     return AuthResponseModel(
-      userId: json['userId'] ?? json['id'] ?? json['_id'],
-      fullName: json['fullName'] ?? json['full_name'] ?? json['name'],
-      email: json['email'] ?? '',
-      role: json['role'] ?? 'student',
-      token: json['token'] ?? json['accessToken'] ?? json['access_token'],
-      refreshToken:
-          json['refreshToken'] ?? json['refresh_token'] ?? json['refToken'],
+      userId: userData['_id'] ?? userData['userId'] ?? userData['id'],
+      fullName: userData['fullName'] ?? userData['full_name'] ?? userData['name'],
+      email: userData['email'] ?? json['email'] ?? '',
+      role: userData['role'] ?? json['role'] ?? 'user',
+      token: token,
+      refreshToken: refreshToken,
       message: json['message'],
-      createdAt: json['createdAt'] != null
-          ? DateTime.tryParse(json['createdAt'].toString())
+      createdAt: userData['createdAt'] != null
+          ? DateTime.tryParse(userData['createdAt'].toString())
           : null,
+      isVerified: userData['isVerified'] ?? false,
     );
   }
 
@@ -53,13 +77,12 @@ class AuthResponseModel {
   }
 
   /// Parse role string to UserRole enum
+  /// Backend uses 'user' and 'admin' only
   static UserRole _parseRole(String role) {
     switch (role.toLowerCase()) {
       case 'admin':
         return UserRole.admin;
-      case 'tutor':
-        return UserRole.tutor;
-      case 'student':
+      case 'user':
       default:
         return UserRole.student;
     }

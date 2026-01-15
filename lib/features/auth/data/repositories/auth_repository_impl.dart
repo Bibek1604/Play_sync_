@@ -59,64 +59,6 @@ class AuthRepository implements IAuthRepository {
   }
 
   @override
-  Future<Either<Failure, AuthEntity>> registerAdmin({
-    required String fullName,
-    required String email,
-    required String password,
-    String? adminCode,
-  }) async {
-    try {
-      final datasource = await _getDataSource();
-      final response = await datasource.registerAdmin(
-        fullName: fullName,
-        email: email,
-        password: password,
-        adminCode: adminCode,
-      );
-      
-      // Save token to secure storage
-      await _secureStorage.write(key: 'access_token', value: response.token);
-      await _secureStorage.write(key: 'refresh_token', value: response.refreshToken);
-      await _secureStorage.write(key: 'user_id', value: response.userId);
-      await _secureStorage.write(key: 'user_email', value: response.email);
-      await _secureStorage.write(key: 'user_role', value: response.role);
-      await _secureStorage.write(key: 'user_fullName', value: response.fullName);
-      
-      return Right(response.toEntity());
-    } catch (e) {
-      return Left(AuthFailure(message: 'Admin registration failed: ${e.toString()}'));
-    }
-  }
-
-  @override
-  Future<Either<Failure, AuthEntity>> registerTutor({
-    required String fullName,
-    required String email,
-    required String password,
-  }) async {
-    try {
-      final datasource = await _getDataSource();
-      final response = await datasource.registerTutor(
-        fullName: fullName,
-        email: email,
-        password: password,
-      );
-      
-      // Save token to secure storage
-      await _secureStorage.write(key: 'access_token', value: response.token);
-      await _secureStorage.write(key: 'refresh_token', value: response.refreshToken);
-      await _secureStorage.write(key: 'user_id', value: response.userId);
-      await _secureStorage.write(key: 'user_email', value: response.email);
-      await _secureStorage.write(key: 'user_role', value: response.role);
-      await _secureStorage.write(key: 'user_fullName', value: response.fullName);
-      
-      return Right(response.toEntity());
-    } catch (e) {
-      return Left(AuthFailure(message: 'Tutor registration failed: ${e.toString()}'));
-    }
-  }
-
-  @override
   Future<Either<Failure, AuthEntity>> login({
     required String email,
     required String password,
@@ -193,8 +135,7 @@ class AuthRepository implements IAuthRepository {
     switch (role.toLowerCase()) {
       case 'admin':
         return UserRole.admin;
-      case 'tutor':
-        return UserRole.tutor;
+      case 'user':
       default:
         return UserRole.student;
     }

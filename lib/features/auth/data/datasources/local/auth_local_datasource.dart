@@ -31,7 +31,7 @@ class AuthLocalDataSource implements IAuthDataSource {
         'fullName': fullName,
         'email': normalizedEmail,
         'password': password,
-        'role': 'student',
+        'role': 'user',
         'token': 'local_token_$userId',
         'refreshToken': 'local_refresh_$userId',
         'createdAt': DateTime.now().toIso8601String(),
@@ -43,73 +43,6 @@ class AuthLocalDataSource implements IAuthDataSource {
       return AuthResponseModel.fromJson(userData);
     } catch (e) {
       throw Exception('Local registration failed: $e');
-    }
-  }
-
-  @override
-  Future<AuthResponseModel> registerAdmin({
-    required String fullName,
-    required String email,
-    required String password,
-    String? adminCode,
-  }) async {
-    try {
-      final normalizedEmail = email.toLowerCase().trim();
-      
-      if (_authBox.containsKey('admin_$normalizedEmail')) {
-        throw Exception('Admin already registered');
-      }
-
-      final userId = const Uuid().v4();
-      final userData = {
-        'userId': userId,
-        'fullName': fullName,
-        'email': normalizedEmail,
-        'password': password,
-        'role': 'admin',
-        'token': 'local_token_$userId',
-        'refreshToken': 'local_refresh_$userId',
-        'createdAt': DateTime.now().toIso8601String(),
-      };
-
-      await _authBox.put('admin_$normalizedEmail', userData);
-      
-      return AuthResponseModel.fromJson(userData);
-    } catch (e) {
-      throw Exception('Local admin registration failed: $e');
-    }
-  }
-
-  @override
-  Future<AuthResponseModel> registerTutor({
-    required String fullName,
-    required String email,
-    required String password,
-  }) async {
-    try {
-      final normalizedEmail = email.toLowerCase().trim();
-      
-      if (_authBox.containsKey('tutor_$normalizedEmail')) {
-        throw Exception('Tutor already registered');
-      }
-
-      final userId = const Uuid().v4();
-      final userData = {
-        'userId': userId,
-        'fullName': fullName,
-        'email': normalizedEmail,
-        'password': password,
-        'role': 'tutor',
-        'token': 'local_token_$userId',
-        'refreshToken': 'local_refresh_$userId',
-        'createdAt': DateTime.now().toIso8601String(),
-      };
-
-      await _authBox.put('tutor_$normalizedEmail', userData);
-      
-      return AuthResponseModel.fromJson(userData);
-    } catch (e) {
-      throw Exception('Local tutor registration failed: $e');
     }
   }
 

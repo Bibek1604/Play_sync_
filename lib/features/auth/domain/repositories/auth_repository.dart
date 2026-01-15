@@ -4,23 +4,8 @@ import 'package:play_sync_new/features/auth/domain/entities/auth_entity.dart';
 
 /// Abstract repository interface for authentication operations
 abstract interface class IAuthRepository {
-  /// Register a new student user
+  /// Register a new user
   Future<Either<Failure, AuthEntity>> register({
-    required String fullName,
-    required String email,
-    required String password,
-  });
-
-  /// Register a new admin user
-  Future<Either<Failure, AuthEntity>> registerAdmin({
-    required String fullName,
-    required String email,
-    required String password,
-    String? adminCode,
-  });
-
-  /// Register a new tutor user
-  Future<Either<Failure, AuthEntity>> registerTutor({
     required String fullName,
     required String email,
     required String password,

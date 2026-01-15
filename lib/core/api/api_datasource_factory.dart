@@ -50,6 +50,12 @@ final authDataSourceProvider = FutureProvider<IAuthDataSource>((ref) async {
 /// This provider will automatically switch between remote and local datasources
 final smartAuthDataSourceProvider = FutureProvider<IAuthDataSource>((ref) async {
   try {
+    // On web, always try remote first (connectivity check can be unreliable on web)
+    if (kIsWeb) {
+      debugPrint('[AUTH] Web platform - using remote datasource');
+      return ref.watch(authRemoteDatasourceProvider);
+    }
+    
     // Try to use remote datasource first
     final connectivityService = ref.watch(connectivityServiceProvider);
     final isBackendAvailable = await connectivityService.isBackendAvailable();
