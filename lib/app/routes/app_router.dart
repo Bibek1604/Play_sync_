@@ -8,6 +8,7 @@ import '../../features/auth/presentation/widgets/auth_guard.dart';
 import '../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/settings/presentation/pages/theme_page.dart';
+import '../../features/profile/presentation/pages/profile_page.dart';
 
 /// Application Router
 /// 
@@ -46,6 +47,12 @@ class AppRouter {
           settings,
         );
 
+      case AppRoutes.profile:
+        return _buildRoute(
+          const AuthGuard(child: ProfilePage()),
+          settings,
+        );
+
       case AppRoutes.theme:
         return _buildRoute(
           const AuthGuard(child: ThemePage()),
@@ -79,6 +86,7 @@ class AppRouter {
         AppRoutes.signup: (_) => const SignupPage(),
         AppRoutes.dashboard: (_) => const AuthGuard(child: DashboardPage()),
         AppRoutes.settings: (_) => const AuthGuard(child: SettingsPage()),
+        AppRoutes.profile: (_) => const AuthGuard(child: ProfilePage()),
         AppRoutes.theme: (_) => const AuthGuard(child: ThemePage()),
       };
 }

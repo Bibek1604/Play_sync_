@@ -6,7 +6,7 @@ class HiveTableConstant {
   HiveTableConstant._();
 
   // Database name
-  static const String dbName = "play_sync_db";
+  static const String dbName = 'play_sync_db';
 
   // ===== TYPE IDs (0-223) =====
   // These must be unique for each Hive model
@@ -18,12 +18,12 @@ class HiveTableConstant {
   static const int productTypeId = 5;
 
   // ===== TABLE NAMES =====
-  static const String itemTable = "item_table";
-  static const String categoryTable = "category_table";
-  static const String batchTable = "batch_table";
-  static const String userTable = "user_table";
-  static const String authTable = "auth_table";
-  static const String productTable = "product_table";
+  static const String itemTable = 'item_table';
+  static const String categoryTable = 'category_table';
+  static const String batchTable = 'batch_table';
+  static const String userTable = 'user_table';
+  static const String authTable = 'auth_table';
+  static const String productTable = 'product_table';
 
   // ===== BOX NAMES (for complex data structures) =====
   static const String preferencesBox = 'preferences';

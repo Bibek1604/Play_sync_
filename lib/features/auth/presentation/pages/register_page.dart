@@ -4,7 +4,7 @@ import '../providers/auth_notifier.dart';
 import 'login_page.dart';
 
 class RegisterPage extends ConsumerStatefulWidget {
-  const RegisterPage({Key? key}) : super(key: key);
+  const RegisterPage({super.key});
 
   @override
   ConsumerState<RegisterPage> createState() => _RegisterPageState();

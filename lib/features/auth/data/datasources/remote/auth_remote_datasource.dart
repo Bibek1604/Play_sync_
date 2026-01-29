@@ -26,12 +26,14 @@ class AuthRemoteDataSource implements IAuthDataSource {
     required String fullName,
     required String email,
     required String password,
+    String? confirmPassword,
   }) async {
     try {
       final requestModel = AuthRequestModel(
         fullName: fullName,
         email: email,
         password: password,
+        confirmPassword: confirmPassword,
       );
 
       debugPrint('[AUTH API] Registering user: ${requestModel.toRegisterJson()}');

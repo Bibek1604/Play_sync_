@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/register_usecase.dart';
-import '../../domain/usecases/register_admin_usecase.dart';
-import '../../domain/usecases/register_tutor_usecase.dart';
+// import '../../domain/usecases/register_admin_usecase.dart';
+// import '../../domain/usecases/register_tutor_usecase.dart';
 import '../state/auth_state.dart';
 
 final authViewModelProvider =
@@ -11,15 +11,15 @@ final authViewModelProvider =
 class AuthViewModel extends Notifier<AuthState> {
   late LoginUsecase _loginUsecase;
   late RegisterUsecase _registerUsecase;
-  late RegisterAdminUsecase _registerAdminUsecase;
-  late RegisterTutorUsecase _registerTutorUsecase;
+//   late RegisterAdminUsecase _registerAdminUsecase;
+//   late RegisterTutorUsecase _registerTutorUsecase;
 
   @override
   AuthState build() {
     _loginUsecase = ref.watch(loginUsecaseProvider);
     _registerUsecase = ref.watch(registerUsecaseProvider);
-    _registerAdminUsecase = ref.watch(registerAdminUsecaseProvider);
-    _registerTutorUsecase = ref.watch(registerTutorUsecaseProvider);
+//     _registerAdminUsecase = ref.watch(registerAdminUsecaseProvider);
+//     _registerTutorUsecase = ref.watch(registerTutorUsecaseProvider);
 
     return const AuthState();
   }
@@ -43,11 +43,16 @@ class AuthViewModel extends Notifier<AuthState> {
     );
   }
 
-  Future<void> register(String fullName, String email, String password) async {
+  Future<void> register(String fullName, String email, String password, {String? confirmPassword}) async {
     state = state.copyWith(status: AuthStatus.loading);
 
     final result = await _registerUsecase.call(
-      RegisterParams(fullName: fullName, email: email, password: password),
+      RegisterParams(
+        fullName: fullName, 
+        email: email, 
+        password: password,
+        confirmPassword: confirmPassword,
+      ),
     );
 
     result.fold(
@@ -62,6 +67,7 @@ class AuthViewModel extends Notifier<AuthState> {
     );
   }
 
+/*
   Future<void> registerAdmin(String fullName, String email, String password, {String? adminCode}) async {
     state = state.copyWith(status: AuthStatus.loading);
 
@@ -99,6 +105,7 @@ class AuthViewModel extends Notifier<AuthState> {
       ),
     );
   }
+*/
 
   Future<void> logout() async {
     state = state.copyWith(status: AuthStatus.loading);

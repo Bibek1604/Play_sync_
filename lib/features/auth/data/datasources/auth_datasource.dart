@@ -7,6 +7,7 @@ abstract interface class IAuthDataSource {
     required String fullName,
     required String email,
     required String password,
+    String? confirmPassword,
   });
 
   /// Login

@@ -121,6 +121,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String fullName,
     required String email,
     required String password,
+    String? confirmPassword,
   }) async {
     state = state.copyWith(status: AuthStatus.loading, clearError: true);
     
@@ -128,6 +129,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       fullName: fullName,
       email: email,
       password: password,
+      confirmPassword: confirmPassword,
     ));
     
     return result.fold(

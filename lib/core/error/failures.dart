@@ -13,7 +13,7 @@ abstract class Failure extends Equatable {
 /// Failure for local database operations
 class LocalDatabaseFailure extends Failure {
   const LocalDatabaseFailure({
-    String message = "Local Database Failure",
+    String message = 'Local Database Failure',
   }) : super(message);
 }
 
@@ -22,7 +22,7 @@ class ApiFailure extends Failure {
   final int? statusCode;
 
   const ApiFailure({
-    String message = "API Failure",
+    String message = 'API Failure',
     this.statusCode,
   }) : super(message);
 
@@ -33,27 +33,27 @@ class ApiFailure extends Failure {
 /// Failure for network connectivity issues
 class NetworkFailure extends Failure {
   const NetworkFailure({
-    String message = "Network Error - No internet connection",
+    String message = 'Network Error - No internet connection',
   }) : super(message);
 }
 
 /// Failure for authentication/authorization issues
 class AuthFailure extends Failure {
   const AuthFailure({
-    String message = "Authentication Failed",
+    String message = 'Authentication Failed',
   }) : super(message);
 }
 
 /// Failure for cache-related operations
 class CacheFailure extends Failure {
   const CacheFailure({
-    String message = "Cache Failure",
+    String message = 'Cache Failure',
   }) : super(message);
 }
 
 /// Failure for general/unknown errors
 class GeneralFailure extends Failure {
   const GeneralFailure({
-    String message = "An unexpected error occurred",
+    String message = 'An unexpected error occurred',
   }) : super(message);
 }
