@@ -3,16 +3,16 @@ class AuthRequestModel {
   final String? fullName;
   final String email;
   final String password;
-  final String? adminCode;
+  final String? confirmPassword;
 
   AuthRequestModel({
     this.fullName,
     required this.email,
     required this.password,
-    this.adminCode,
+    this.confirmPassword,
   });
 
-  /// Convert to JSON for login requests (email + password only)
+  /// Convert to JSON for login requests
   Map<String, dynamic> toLoginJson() {
     return {
       'email': email,
@@ -20,22 +20,13 @@ class AuthRequestModel {
     };
   }
 
-  /// Convert to JSON for registration requests (includes fullName)
+  /// Convert to JSON for registration requests
   Map<String, dynamic> toRegisterJson() {
     return {
       'fullName': fullName ?? '',
       'email': email,
       'password': password,
-    };
-  }
-
-  /// Convert to JSON for admin registration (includes adminCode)
-  Map<String, dynamic> toAdminRegisterJson() {
-    return {
-      'fullName': fullName ?? '',
-      'email': email,
-      'password': password,
-      'adminCode': adminCode ?? '',
+      'confirmPassword': confirmPassword ?? password,
     };
   }
 }
