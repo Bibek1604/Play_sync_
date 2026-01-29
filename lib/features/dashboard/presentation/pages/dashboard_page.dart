@@ -415,6 +415,12 @@ class _BottomNavBar extends StatelessWidget {
       child: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: 0,
+        onTap: (index) {
+          if (index == 3) {
+            // Navigate to Profile Page
+            Navigator.pushNamed(context, '/profile');
+          }
+        },
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
