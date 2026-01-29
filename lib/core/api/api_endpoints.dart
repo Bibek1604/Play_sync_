@@ -4,11 +4,11 @@ class ApiEndpoints {
 
   // ========== BASE URL & TIMEOUTS ==========
   // Base URL - Change based on environment
-  static const String baseUrl = 'http://localhost:5000';
+  static const String baseUrl = 'http://10.0.2.2:5000/api/v1';
   
-  // For Android Emulator: 'http://10.0.2.2:5000'
-  // For iOS Simulator: 'http://localhost:5000'
-  // For Physical Device: 'http://192.168.x.x:5000'
+  // For Android Emulator: 'http://10.0.2.2:5000/api/v1'
+  // For iOS Simulator: 'http://localhost:5000/api/v1'
+  // For Physical Device: 'http://192.168.x.x:5000/api/v1'
 
   static const Duration connectionTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
@@ -17,10 +17,18 @@ class ApiEndpoints {
   static const String registerUser = '/auth/register/user';
   static const String registerAdmin = '/auth/register/admin';
   static const String registerTutor = '/auth/register/tutor';
-  static const String login = '/auth/login';  // Fixed: was /api/auth/login
+  static const String login = '/auth/login';
   static const String logout = '/auth/logout';
   static const String refreshToken = '/auth/refresh-token';
   static const String getCurrentUser = '/auth/me';
+
+  // ========== PROFILE ENDPOINTS ==========
+  static const String getProfile = '/profile';
+  static const String updateProfile = '/profile';
+  static const String uploadProfilePicture = '/profile/avatar';
+  static const String uploadCoverPicture = '/profile/cover';
+  static const String uploadGalleryPictures = '/profile/pictures';
+  static const String deleteProfilePicture = '/profile/avatar';
 
   // ========== USER ENDPOINTS ==========
   // static const String getUsers = '/users';
