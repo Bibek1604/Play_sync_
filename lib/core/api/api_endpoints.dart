@@ -1,9 +1,27 @@
+import 'package:flutter/foundation.dart';
+import 'dart:io' show Platform;
+
 /// API Endpoints for the application
 class ApiEndpoints {
   ApiEndpoints._();
 
   // ========== BASE URL & TIMEOUTS ==========
-  static const String baseUrl = 'http://localhost:5000/api/v1';
+  static String get baseUrl {
+    if (kIsWeb) {
+      return 'http://localhost:5000/api/v1';
+    }
+    
+    // For Android Emulator, use 10.0.2.2 to access host's localhost
+    try {
+      if (Platform.isAndroid) {
+        return 'http://10.0.2.2:5000/api/v1';
+      }
+    } catch (_) {
+      // Platform check may fail on some web environments if not handled by kIsWeb
+    }
+    
+    return 'http://localhost:5000/api/v1';
+  }
 
   static const Duration connectionTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
