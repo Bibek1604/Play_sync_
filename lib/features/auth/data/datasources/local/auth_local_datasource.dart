@@ -15,6 +15,7 @@ class AuthLocalDataSource implements IAuthDataSource {
     required String fullName,
     required String email,
     required String password,
+    String? confirmPassword,
   }) async {
     try {
       final normalizedEmail = email.toLowerCase().trim();

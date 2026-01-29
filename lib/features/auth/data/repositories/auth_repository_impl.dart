@@ -35,6 +35,7 @@ class AuthRepository implements IAuthRepository {
     required String fullName,
     required String email,
     required String password,
+    String? confirmPassword,
   }) async {
     try {
       final datasource = await _getDataSource();
@@ -42,6 +43,7 @@ class AuthRepository implements IAuthRepository {
         fullName: fullName,
         email: email,
         password: password,
+        confirmPassword: confirmPassword,
       );
       
       // Save token to secure storage

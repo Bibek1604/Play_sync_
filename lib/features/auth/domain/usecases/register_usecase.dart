@@ -15,11 +15,13 @@ class RegisterParams {
   final String fullName;
   final String email;
   final String password;
+  final String? confirmPassword;
 
   RegisterParams({
     required this.fullName,
     required this.email,
     required this.password,
+    this.confirmPassword,
   });
 }
 
@@ -35,6 +37,7 @@ class RegisterUsecase implements UsecaseWithParams<AuthEntity, RegisterParams> {
       fullName: params.fullName,
       email: params.email,
       password: params.password,
+      confirmPassword: params.confirmPassword,
     );
   }
 }

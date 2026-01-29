@@ -49,6 +49,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
           fullName: _nameController.text.trim(),
           email: _emailController.text.trim(),
           password: _passwordController.text,
+          confirmPassword: _confirmPasswordController.text,
         );
 
     result.fold(
@@ -136,7 +137,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                         ),
                         const SizedBox(height: 24),
                         const Text(
-                          "Create Account",
+                          'Create Account',
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
@@ -145,7 +146,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          "Join PlaySync and start gaming with friends",
+                          'Join PlaySync and start gaming with friends',
                           style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                         ),
                       ],
@@ -180,8 +181,8 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                   // Full Name Field
                   _buildTextField(
                     controller: _nameController,
-                    label: "Full Name",
-                    hint: "Enter your full name",
+                    label: 'Full Name',
+                    hint: 'Enter your full name',
                     prefixIcon: Icons.person_outline,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -195,8 +196,8 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                   // Email Field
                   _buildTextField(
                     controller: _emailController,
-                    label: "Email",
-                    hint: "Enter your email",
+                    label: 'Email',
+                    hint: 'Enter your email',
                     prefixIcon: Icons.email_outlined,
                     keyboardType: TextInputType.emailAddress,
                     validator: (value) {
@@ -214,8 +215,8 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                   // Password Field
                   _buildTextField(
                     controller: _passwordController,
-                    label: "Password",
-                    hint: "Create a password",
+                    label: 'Password',
+                    hint: 'Create a password',
                     prefixIcon: Icons.lock_outline,
                     obscureText: _obscurePassword,
                     suffixIcon: IconButton(
@@ -240,8 +241,8 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                   // Confirm Password Field
                   _buildTextField(
                     controller: _confirmPasswordController,
-                    label: "Confirm Password",
-                    hint: "Confirm your password",
+                    label: 'Confirm Password',
+                    hint: 'Confirm your password',
                     prefixIcon: Icons.lock_outline,
                     obscureText: _obscureConfirmPassword,
                     suffixIcon: IconButton(
@@ -283,17 +284,17 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                           text: TextSpan(
                             style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                             children: const [
-                              TextSpan(text: "I agree to the "),
+                              TextSpan(text: 'I agree to the '),
                               TextSpan(
-                                text: "Terms & Conditions",
+                                text: 'Terms & Conditions',
                                 style: TextStyle(
                                   color: Color(0xFF2E7D32),
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              TextSpan(text: " and "),
+                              TextSpan(text: ' and '),
                               TextSpan(
-                                text: "Privacy Policy",
+                                text: 'Privacy Policy',
                                 style: TextStyle(
                                   color: Color(0xFF2E7D32),
                                   fontWeight: FontWeight.w600,
@@ -343,7 +344,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
-                                    "Create Account",
+                                    'Create Account',
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 16,
@@ -367,7 +368,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
-                          "or sign up with",
+                          'or sign up with',
                           style: TextStyle(color: Colors.grey[500], fontSize: 14),
                         ),
                       ),
@@ -381,9 +382,9 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildSocialButton(Icons.g_mobiledata, "Google"),
+                      _buildSocialButton(Icons.g_mobiledata, 'Google'),
                       const SizedBox(width: 16),
-                      _buildSocialButton(Icons.apple, "Apple"),
+                      _buildSocialButton(Icons.apple, 'Apple'),
                     ],
                   ),
 
@@ -394,13 +395,13 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        "Already have an account? ",
+                        'Already have an account? ',
                         style: TextStyle(color: Colors.grey[600], fontSize: 14),
                       ),
                       GestureDetector(
                         onTap: () => Navigator.pushReplacementNamed(context, '/login'),
                         child: const Text(
-                          "Sign In",
+                          'Sign In',
                           style: TextStyle(
                             color: Color(0xFF2E7D32),
                             fontSize: 14,

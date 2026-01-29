@@ -10,9 +10,24 @@ import 'package:play_sync_new/core/constants/hive_table_constant.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// Provider for secure storage
-final secureStorageProvider = Provider<FlutterSecureStorage>(
-  (ref) => const FlutterSecureStorage(),
-);
+/// Configured to work on both mobile and web platforms
+final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
+  // Web options for browser compatibility
+  const webOptions = WebOptions(
+    dbName: 'PlaySyncSecureStorage',
+    publicKey: 'PlaySyncApp',
+  );
+  
+  // Android options for enhanced security
+  const androidOptions = AndroidOptions(
+    encryptedSharedPreferences: true,
+  );
+  
+  return const FlutterSecureStorage(
+    webOptions: webOptions,
+    aOptions: androidOptions,
+  );
+});
 
 /// Provider for Hive auth box
 final hiveAuthBoxProvider = FutureProvider<Box<dynamic>>((ref) async {

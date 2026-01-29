@@ -9,6 +9,7 @@ abstract interface class IAuthRepository {
     required String fullName,
     required String email,
     required String password,
+    String? confirmPassword,
   });
 
   /// Login user with email and password
