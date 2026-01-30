@@ -3,15 +3,18 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:play_sync_new/core/api/api_endpoints.dart';
+import 'package:play_sync_new/core/api/secure_storage_provider.dart';
 
 final apiClientProvider = Provider<ApiClient>((ref) {
-  return ApiClient();
+  final secureStorage = ref.watch(secureStorageProvider);
+  return ApiClient(secureStorage);
 });
 
 class ApiClient {
   late final Dio _dio;
+  final FlutterSecureStorage _secureStorage;
 
-  ApiClient() {
+  ApiClient(this._secureStorage) {
     _dio = Dio(
       BaseOptions(
         baseUrl: ApiEndpoints.baseUrl,
@@ -25,7 +28,7 @@ class ApiClient {
     );
 
     // Add Auth Interceptor for adding token to requests
-    _dio.interceptors.add(_AuthInterceptor());
+    _dio.interceptors.add(_AuthInterceptor(_secureStorage));
 
     // Logger for debugging (only in debug mode)
     if (kDebugMode) {
@@ -104,7 +107,9 @@ class ApiClient {
 
 /// Auth Interceptor - Adds token to requests and handles 401 errors
 class _AuthInterceptor extends Interceptor {
-  final _storage = const FlutterSecureStorage();
+  final FlutterSecureStorage _storage;
+
+  _AuthInterceptor(this._storage);
 
   @override
   void onRequest(
