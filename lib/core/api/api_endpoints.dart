@@ -23,6 +23,23 @@ class ApiEndpoints {
     return 'http://localhost:5000/api/v1';
   }
 
+  // ========== IMAGE BASE URL ==========
+  static String get imageBaseUrl {
+    if (kIsWeb) {
+      return 'http://localhost:5000';
+    }
+    
+    try {
+      if (Platform.isAndroid) {
+        return 'http://10.0.2.2:5000';
+      }
+    } catch (_) {
+      // Platform check may fail
+    }
+    
+    return 'http://localhost:5000';
+  }
+
   static const Duration connectionTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
 

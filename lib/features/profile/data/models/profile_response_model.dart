@@ -1,3 +1,4 @@
+import 'package:play_sync_new/core/api/api_endpoints.dart';
 import 'package:play_sync_new/features/profile/domain/entities/profile_entity.dart';
 
 /// API Response model for profile
@@ -48,13 +49,13 @@ class ProfileResponseModel {
       userId: profileData['_id'] ?? profileData['userId'] ?? profileData['id'],
       fullName: profileData['fullName'] ?? profileData['full_name'] ?? profileData['name'],
       email: profileData['email'],
-      phoneNumber: profileData['phoneNumber'] ?? profileData['phone_number'] ?? profileData['phone'] ?? profileData['number'],
+      phoneNumber: profileData['phone'] ?? profileData['phoneNumber'] ?? profileData['phone_number'] ?? profileData['number'],
       bio: profileData['bio'] ?? profileData['description'],
-      profilePicture: profileData['profilePicture'] ?? 
+      profilePicture: _getImageUrl(profileData['profilePicture'] ?? 
                       profileData['profile_picture'] ?? 
                       profileData['avatar'] ?? 
-                      profileData['image'],
-      location: profileData['location'] ?? profileData['place'],
+                      profileData['image']),
+      location: profileData['place'] ?? profileData['location'],
       dateOfBirth: profileData['dateOfBirth'] ?? profileData['date_of_birth'] ?? profileData['dob'],
       favouriteGame: profileData['favouriteGame']?.toString() ?? profileData['favoriteGame']?.toString(),
       gamingPlatform: profileData['gamingPlatform'] ?? profileData['gaming_platform'] ?? profileData['platform'],
@@ -101,5 +102,16 @@ class ProfileResponseModel {
       createdAt: createdAt,
       updatedAt: updatedAt,
     );
+  }
+  
+  /// Helper to construct full image URL
+  static String? _getImageUrl(String? path) {
+    if (path == null || path.isEmpty) return null;
+    if (path.startsWith('http')) return path;
+    
+    // Remove leading slash if present to avoid double slash
+    final cleanPath = path.startsWith('/') ? path : '/$path';
+    
+    return '${ApiEndpoints.imageBaseUrl}$cleanPath';
   }
 }

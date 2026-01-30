@@ -10,13 +10,13 @@ abstract interface class IProfileRepository {
 
   /// Update user profile
   Future<Either<Failure, ProfileEntity>> updateProfile({
-    String? name,
-    String? number,
+    String? fullName,
+    String? phone,
     String? favouriteGame,
     String? place,
-    String? avatar,
     String? currentPassword,
     String? changePassword,
+    XFile? profilePicture,
   });
 
   /// Upload profile picture

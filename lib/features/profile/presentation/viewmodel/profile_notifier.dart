@@ -61,24 +61,24 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
 
   /// Update user profile
   Future<void> updateProfile({
-    String? name,
-    String? number,
+    String? fullName,
+    String? phone,
     String? favouriteGame,
     String? place,
-    String? avatar,
     String? currentPassword,
     String? changePassword,
+    XFile? profilePicture,
   }) async {
     state = state.copyWith(isUpdating: true, clearError: true, clearSuccess: true);
 
     final params = UpdateProfileParams(
-      name: name,
-      number: number,
+      fullName: fullName,
+      phone: phone,
       favouriteGame: favouriteGame,
       place: place,
-      avatar: avatar,
       currentPassword: currentPassword,
       changePassword: changePassword,
+      profilePicture: profilePicture,
     );
 
     final result = await _updateProfileUsecase(params);

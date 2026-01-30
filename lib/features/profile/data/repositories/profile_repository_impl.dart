@@ -34,26 +34,28 @@ class ProfileRepositoryImpl implements IProfileRepository {
 
   @override
   Future<Either<Failure, ProfileEntity>> updateProfile({
-    String? name,
-    String? number,
+    String? fullName,
+    String? phone,
     String? favouriteGame,
     String? place,
-    String? avatar,
     String? currentPassword,
     String? changePassword,
+    XFile? profilePicture,
   }) async {
     try {
       final requestModel = UpdateProfileRequestModel(
-        name: name,
-        number: number,
+        fullName: fullName,
+        phone: phone,
         favouriteGame: favouriteGame,
         place: place,
-        avatar: avatar,
         currentPassword: currentPassword,
         changePassword: changePassword,
       );
 
-      final response = await _remoteDataSource.updateProfile(requestModel.toJson());
+      final response = await _remoteDataSource.updateProfile(
+        requestModel.toFormDataMap(),
+        profilePicture: profilePicture,
+      );
       return Right(response.toEntity());
     } catch (e) {
       debugPrint('[PROFILE REPO] Update profile error: $e');

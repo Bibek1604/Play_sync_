@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:play_sync_new/core/error/failures.dart';
 import 'package:play_sync_new/features/profile/data/repositories/profile_repository_impl.dart';
 import 'package:play_sync_new/features/profile/domain/entities/profile_entity.dart';
@@ -12,22 +13,22 @@ final updateProfileUsecaseProvider = Provider<UpdateProfileUsecase>((ref) {
 
 /// Parameters for updating profile
 class UpdateProfileParams {
-  final String? name;
-  final String? number;
+  final String? fullName;
+  final String? phone;
   final String? favouriteGame;
   final String? place;
-  final String? avatar;
   final String? currentPassword;
   final String? changePassword;
+  final XFile? profilePicture;
 
   UpdateProfileParams({
-    this.name,
-    this.number,
+    this.fullName,
+    this.phone,
     this.favouriteGame,
     this.place,
-    this.avatar,
     this.currentPassword,
     this.changePassword,
+    this.profilePicture,
   });
 }
 
@@ -40,13 +41,13 @@ class UpdateProfileUsecase {
 
   Future<Either<Failure, ProfileEntity>> call(UpdateProfileParams params) async {
     return await _repository.updateProfile(
-      name: params.name,
-      number: params.number,
+      fullName: params.fullName,
+      phone: params.phone,
       favouriteGame: params.favouriteGame,
       place: params.place,
-      avatar: params.avatar,
       currentPassword: params.currentPassword,
       changePassword: params.changePassword,
+      profilePicture: params.profilePicture,
     );
   }
 }
