@@ -69,9 +69,6 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         setState(() {
           _selectedImage = image;
         });
-
-        // Upload image immediately
-        await ref.read(profileNotifierProvider.notifier).uploadProfilePicture(image);
       }
     } catch (e) {
       if (mounted) {
@@ -95,9 +92,6 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         setState(() {
           _selectedImage = image;
         });
-
-        // Upload image immediately
-        await ref.read(profileNotifierProvider.notifier).uploadProfilePicture(image);
       }
     } catch (e) {
       if (mounted) {
@@ -138,15 +132,14 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
 
   Future<void> _saveProfile() async {
     if (_formKey.currentState!.validate()) {
-      final profile = ref.read(profileNotifierProvider).profile;
       await ref.read(profileNotifierProvider.notifier).updateProfile(
-            name: _fullNameController.text.trim(),
-            number: _phoneController.text.trim(),
+            fullName: _fullNameController.text.trim(),
+            phone: _phoneController.text.trim(),
             favouriteGame: _favoriteGameController.text.trim(),
             place: _locationController.text.trim(),
             currentPassword: _oldPasswordController.text.isNotEmpty ? _oldPasswordController.text : null,
             changePassword: _newPasswordController.text.isNotEmpty ? _newPasswordController.text : null,
-            avatar: profile?.profilePicture,
+            profilePicture: _selectedImage,
           );
     }
   }

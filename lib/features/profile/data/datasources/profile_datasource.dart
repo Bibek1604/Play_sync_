@@ -7,7 +7,10 @@ abstract interface class IProfileDataSource {
   Future<ProfileResponseModel> getProfile();
 
   /// Update user profile
-  Future<ProfileResponseModel> updateProfile(Map<String, dynamic> profileData);
+  Future<ProfileResponseModel> updateProfile(
+    Map<String, dynamic> profileData, {
+    XFile? profilePicture,
+  });
 
   /// Upload profile picture
   Future<String> uploadProfilePicture(XFile image);

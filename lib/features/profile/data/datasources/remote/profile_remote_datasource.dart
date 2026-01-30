@@ -36,15 +36,58 @@ class ProfileRemoteDataSource implements IProfileDataSource {
 
   /// ========== UPDATE PROFILE ==========
   @override
-  Future<ProfileResponseModel> updateProfile(Map<String, dynamic> profileData) async {
+  Future<ProfileResponseModel> updateProfile(
+    Map<String, dynamic> profileData, {
+    XFile? profilePicture,
+  }) async {
     try {
       debugPrint('[PROFILE API] Updating profile: $profileData');
+      debugPrint('[PROFILE API] Has profile picture: ${profilePicture != null}');
       debugPrint('[PROFILE API] Endpoint: ${ApiEndpoints.baseUrl}${ApiEndpoints.updateProfile}');
 
-      final response = await _apiClient.put(
-        ApiEndpoints.updateProfile,
-        data: profileData,
-      );
+      Response response;
+
+      // If profile picture is provided, send as multipart/form-data
+      if (profilePicture != null) {
+        final FormData formData = FormData();
+
+        // Add all text fields
+        profileData.forEach((key, value) {
+          if (value != null && value.toString().isNotEmpty) {
+            formData.fields.add(MapEntry(key, value.toString()));
+          }
+        });
+
+        // Add profile picture
+        if (kIsWeb) {
+          final bytes = await profilePicture.readAsBytes();
+          formData.files.add(MapEntry(
+            'profilePicture',
+            MultipartFile.fromBytes(bytes, filename: profilePicture.name),
+          ));
+        } else {
+          formData.files.add(MapEntry(
+            'profilePicture',
+            await MultipartFile.fromFile(
+              profilePicture.path,
+              filename: profilePicture.name,
+            ),
+          ));
+        }
+
+        debugPrint('[PROFILE API] Sending as multipart/form-data');
+        response = await _apiClient.put(
+          ApiEndpoints.updateProfile,
+          data: formData,
+        );
+      } else {
+        // Send as regular JSON
+        debugPrint('[PROFILE API] Sending as JSON');
+        response = await _apiClient.put(
+          ApiEndpoints.updateProfile,
+          data: profileData,
+        );
+      }
 
       debugPrint('[PROFILE API] Response: ${response.data}');
       return ProfileResponseModel.fromJson(response.data);
@@ -77,11 +120,6 @@ class ProfileRemoteDataSource implements IProfileDataSource {
       final response = await _apiClient.post(
         ApiEndpoints.uploadProfilePicture,
         data: formData,
-        options: Options(
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        ),
       );
 
       debugPrint('[PROFILE API] Response: ${response.data}');
@@ -93,7 +131,12 @@ class ProfileRemoteDataSource implements IProfileDataSource {
                       response.data['url'] ??
                       '';
       
-      return imageUrl;
+      String finalUrl = imageUrl;
+      if (imageUrl.isNotEmpty && !imageUrl.startsWith('http')) {
+        finalUrl = '${ApiEndpoints.imageBaseUrl}${imageUrl.startsWith('/') ? '' : '/'}$imageUrl';
+      }
+      
+      return finalUrl;
     } on DioException catch (e) {
       throw _handleDioError(e);
     }
@@ -125,7 +168,11 @@ class ProfileRemoteDataSource implements IProfileDataSource {
         data: formData,
       );
 
-      return response.data['url'] ?? '';
+      String imageUrl = response.data['url'] ?? '';
+      if (imageUrl.isNotEmpty && !imageUrl.startsWith('http')) {
+        imageUrl = '${ApiEndpoints.imageBaseUrl}${imageUrl.startsWith('/') ? '' : '/'}$imageUrl';
+      }
+      return imageUrl;
     } on DioException catch (e) {
       throw _handleDioError(e);
     }
@@ -160,7 +207,13 @@ class ProfileRemoteDataSource implements IProfileDataSource {
       );
 
       final List<dynamic> urls = response.data['urls'] ?? [];
-      return urls.map((e) => e.toString()).toList();
+      return urls.map((e) {
+        String url = e.toString();
+        if (url.isNotEmpty && !url.startsWith('http')) {
+          url = '${ApiEndpoints.imageBaseUrl}${url.startsWith('/') ? '' : '/'}$url';
+        }
+        return url;
+      }).toList();
     } on DioException catch (e) {
       throw _handleDioError(e);
     }
