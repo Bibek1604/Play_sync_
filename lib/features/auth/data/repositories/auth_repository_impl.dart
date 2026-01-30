@@ -6,6 +6,7 @@ import 'package:play_sync_new/features/auth/data/datasources/auth_datasource.dar
 import 'package:play_sync_new/core/api/api_datasource_factory.dart';
 import 'package:play_sync_new/features/auth/domain/entities/auth_entity.dart';
 import 'package:play_sync_new/features/auth/domain/repositories/auth_repository.dart';
+import 'package:play_sync_new/core/api/secure_storage_provider.dart';
 
 /// Provider for authentication repository
 /// Uses smart datasource that automatically switches between remote and local
