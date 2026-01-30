@@ -57,8 +57,7 @@ class AuthLocalDataSource implements IAuthDataSource {
       
       // Try to find user in any role
       final user = _authBox.get('user_$normalizedEmail') ??
-          _authBox.get('admin_$normalizedEmail') ??
-          _authBox.get('tutor_$normalizedEmail');
+          _authBox.get('admin_$normalizedEmail');
       
       if (user == null) {
         throw Exception('User not found');
@@ -77,7 +76,7 @@ class AuthLocalDataSource implements IAuthDataSource {
         'fullName': userMap['fullName'],
         'email': userMap['email'],
         'password': userMap['password'],
-        'role': userMap['role'] ?? 'student',
+        'role': userMap['role'] ?? 'user',
         'token': 'local_token_${userMap['userId']}',
         'refreshToken': 'local_refresh_${userMap['userId']}',
         'createdAt': userMap['createdAt'],

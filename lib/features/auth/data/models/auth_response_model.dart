@@ -84,7 +84,7 @@ class AuthResponseModel {
         return UserRole.admin;
       case 'user':
       default:
-        return UserRole.student;
+        return UserRole.user;
     }
   }
 }

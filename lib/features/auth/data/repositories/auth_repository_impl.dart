@@ -117,10 +117,10 @@ class AuthRepository implements IAuthRepository {
         return const Right(null);
       }
 
-      return Right(AuthEntity(
+        return Right(AuthEntity(
         userId: userId,
         email: email,
-        role: _parseRole(role ?? 'student'),
+        role: _parseRole(role ?? 'user'),
         token: token,
       ));
     } catch (e) {
@@ -140,7 +140,7 @@ class AuthRepository implements IAuthRepository {
         return UserRole.admin;
       case 'user':
       default:
-        return UserRole.student;
+        return UserRole.user;
     }
   }
 }
