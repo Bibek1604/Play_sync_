@@ -6,6 +6,7 @@ import 'package:play_sync_new/features/auth/data/datasources/auth_datasource.dar
 import 'package:play_sync_new/core/api/api_datasource_factory.dart';
 import 'package:play_sync_new/features/auth/domain/entities/auth_entity.dart';
 import 'package:play_sync_new/features/auth/domain/repositories/auth_repository.dart';
+import 'package:play_sync_new/core/api/secure_storage_provider.dart';
 
 /// Provider for authentication repository
 /// Uses smart datasource that automatically switches between remote and local
@@ -116,10 +117,10 @@ class AuthRepository implements IAuthRepository {
         return const Right(null);
       }
 
-      return Right(AuthEntity(
+        return Right(AuthEntity(
         userId: userId,
         email: email,
-        role: _parseRole(role ?? 'student'),
+        role: _parseRole(role ?? 'user'),
         token: token,
       ));
     } catch (e) {
@@ -139,7 +140,7 @@ class AuthRepository implements IAuthRepository {
         return UserRole.admin;
       case 'user':
       default:
-        return UserRole.student;
+        return UserRole.user;
     }
   }
 }

@@ -3,8 +3,7 @@ import 'package:play_sync_new/features/auth/data/datasources/auth_datasource.dar
 import 'package:play_sync_new/features/auth/data/models/auth_response_model.dart';
 import 'package:uuid/uuid.dart';
 
-/// Local Hive implementation of IAuthDataSource
-/// Used when backend is not available or offline mode is preferred
+
 class AuthLocalDataSource implements IAuthDataSource {
   final Box<dynamic> _authBox;
 
@@ -20,12 +19,10 @@ class AuthLocalDataSource implements IAuthDataSource {
     try {
       final normalizedEmail = email.toLowerCase().trim();
       
-      // Check if user already exists
       if (_authBox.containsKey('user_$normalizedEmail')) {
         throw Exception('User already registered');
       }
 
-      // Create new user locally
       final userId = const Uuid().v4();
       final userData = {
         'userId': userId,
@@ -57,8 +54,7 @@ class AuthLocalDataSource implements IAuthDataSource {
       
       // Try to find user in any role
       final user = _authBox.get('user_$normalizedEmail') ??
-          _authBox.get('admin_$normalizedEmail') ??
-          _authBox.get('tutor_$normalizedEmail');
+          _authBox.get('admin_$normalizedEmail');
       
       if (user == null) {
         throw Exception('User not found');
@@ -77,7 +73,7 @@ class AuthLocalDataSource implements IAuthDataSource {
         'fullName': userMap['fullName'],
         'email': userMap['email'],
         'password': userMap['password'],
-        'role': userMap['role'] ?? 'student',
+        'role': userMap['role'] ?? 'user',
         'token': 'local_token_${userMap['userId']}',
         'refreshToken': 'local_refresh_${userMap['userId']}',
         'createdAt': userMap['createdAt'],

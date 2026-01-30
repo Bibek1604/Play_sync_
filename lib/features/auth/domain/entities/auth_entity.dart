@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-enum UserRole { student, admin, tutor }
+enum UserRole { user, admin }
 
 /// Authentication Entity - Represents user data in domain layer
 class AuthEntity extends Equatable {
@@ -18,7 +18,7 @@ class AuthEntity extends Equatable {
     this.fullName,
     required this.email,
     this.password,
-    this.role = UserRole.student,
+    this.role = UserRole.user,
     this.token,
     this.refreshToken,
     this.createdAt,
