@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
 import 'package:play_sync_new/core/api/api_client.dart';
 import 'package:play_sync_new/core/api/api_endpoints.dart';
 import 'package:play_sync_new/features/auth/data/datasources/auth_datasource.dart';
@@ -16,7 +16,6 @@ final authRemoteDatasourceProvider = Provider<AuthRemoteDataSource>((ref) {
 /// Remote data source for authentication - Handles API calls
 class AuthRemoteDataSource implements IAuthDataSource {
   final ApiClient _apiClient;
-  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
   AuthRemoteDataSource({required ApiClient apiClient}) : _apiClient = apiClient;
 
@@ -48,9 +47,8 @@ class AuthRemoteDataSource implements IAuthDataSource {
       final authResponse = AuthResponseModel.fromJson(response.data);
 
       // Save token if returned
-      if (authResponse.token != null) {
-        await _saveTokens(authResponse.token!, authResponse.refreshToken);
-      }
+      // Note: Repository handles saving tokens
+
 
       return authResponse;
     } on DioException catch (e) {
@@ -81,13 +79,7 @@ class AuthRemoteDataSource implements IAuthDataSource {
       debugPrint('[AUTH API] Response: ${response.data}');
       final authResponse = AuthResponseModel.fromJson(response.data);
 
-      // Save tokens
-      if (authResponse.token != null) {
-        await _saveTokens(authResponse.token!, authResponse.refreshToken);
-      }
-
-      // Save user data
-      await _saveUserData(authResponse);
+      // Note: Repository handles saving tokens and user data
 
       return authResponse;
     } on DioException catch (e) {
@@ -99,40 +91,19 @@ class AuthRemoteDataSource implements IAuthDataSource {
   @override
   Future<bool> logout() async {
     try {
-      // Clear all stored data
-      await _secureStorage.delete(key: 'access_token');
-      await _secureStorage.delete(key: 'refresh_token');
-      await _secureStorage.delete(key: 'user_id');
-      await _secureStorage.delete(key: 'user_email');
-      await _secureStorage.delete(key: 'user_role');
-      await _secureStorage.delete(key: 'user_fullName');
+      debugPrint('[AUTH API] Logging out');
+      await _apiClient.post(ApiEndpoints.logout);
       return true;
     } catch (e) {
-      return false;
+      // Even if API fails, we return true to allow local logout
+      return true;
     }
   }
 
   /// ========== HELPER METHODS ==========
 
   /// Save tokens to secure storage
-  Future<void> _saveTokens(String accessToken, String? refreshToken) async {
-    await _secureStorage.write(key: 'access_token', value: accessToken);
-    if (refreshToken != null) {
-      await _secureStorage.write(key: 'refresh_token', value: refreshToken);
-    }
-  }
 
-  /// Save user data to secure storage
-  Future<void> _saveUserData(AuthResponseModel response) async {
-    if (response.userId != null) {
-      await _secureStorage.write(key: 'user_id', value: response.userId);
-    }
-    await _secureStorage.write(key: 'user_email', value: response.email);
-    await _secureStorage.write(key: 'user_role', value: response.role);
-    if (response.fullName != null) {
-      await _secureStorage.write(key: 'user_fullName', value: response.fullName);
-    }
-  }
 
   /// Handle Dio errors and return meaningful exception
   Exception _handleDioError(DioException e) {
