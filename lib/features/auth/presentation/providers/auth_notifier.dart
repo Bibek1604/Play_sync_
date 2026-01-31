@@ -47,6 +47,10 @@ class AuthState {
 
   bool get isLoading => status == AuthStatus.loading;
   bool get isAuthenticated => status == AuthStatus.authenticated;
+
+  static AuthState authenticated({required AuthEntity user}) {
+    return AuthState(user: user, status: AuthStatus.authenticated);
+  }
 }
 
 // ============================================================================

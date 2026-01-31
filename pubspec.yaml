@@ -30,6 +30,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  test_cov_console: ^0.2.2
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -80,6 +81,8 @@ dev_dependencies:
   # Hive code generation
   hive_generator: ^2.0.1
   build_runner: ^2.4.8
+  mocktail: ^1.0.4
+  remove_from_coverage: ^2.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

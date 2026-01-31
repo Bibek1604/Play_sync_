@@ -114,4 +114,6 @@ class ProfileResponseModel {
     
     return '${ApiEndpoints.imageBaseUrl}$cleanPath';
   }
+
+  static _getImageUrl(String url) {}
 }
