@@ -66,6 +66,27 @@ dependencies:
   
   # Image Picker
   image_picker: ^1.0.7
+  
+  # Socket.IO for real-time features
+  socket_io_client: ^2.0.3+1
+  
+  # Audio playback for sound effects
+  audioplayers: ^5.2.1
+  
+  # Shared Preferences for theme persistence
+  shared_preferences: ^2.2.2
+  
+  # Shimmer loading effects
+  shimmer: ^3.0.0
+  
+  # Cached network images
+  cached_network_image: ^3.3.1
+  
+  # Smooth page indicator
+  smooth_page_indicator: ^1.1.0
+  
+  # Intl for date formatting
+  intl: ^0.19.0
 
 dev_dependencies:
   flutter_test:
@@ -93,7 +114,9 @@ flutter:
   assets:
     - assets/images/playsync.svg
     - assets/images/home_illustration.svg
+    - assets/sounds/
   fonts:
+    # OpenSans - Primary font
     - family: OpenSans
       fonts:
         - asset: assets/font/OpenSans-Regular.ttf

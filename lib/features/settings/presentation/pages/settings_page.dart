@@ -3,10 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/routes/app_routes.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../core/widgets/app_drawer.dart';
 
 /// Settings Page
-/// 
-/// Main settings screen for app configuration.
+///
+/// Main settings screen with professional card-based design. 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
@@ -16,72 +17,198 @@ class SettingsPage extends ConsumerWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
+      drawer: const AppDrawer(),
+      backgroundColor: isDark ? AppColors.backgroundPrimaryDark : AppColors.backgroundSecondaryLight,
       appBar: AppBar(
-        title: const Text('Settings'),
+        elevation: 0,
+        backgroundColor: isDark ? AppColors.backgroundSecondaryDark : Colors.white,
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: Icon(
+              Icons.menu_rounded,
+              color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+            ),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [AppColors.emerald500, AppColors.teal500],
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.settings_rounded, color: Colors.white, size: 18),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              'Settings',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+                color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+              ),
+            ),
+          ],
+        ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // Appearance Section
-          _SectionHeader(title: 'Appearance', isDark: isDark),
-          const SizedBox(height: 8),
-          _SettingsTile(
-            icon: Icons.palette_outlined,
-            title: 'Theme',
-            subtitle: 'Change app appearance',
-            isDark: isDark,
-            onTap: () {
-              Navigator.pushNamed(context, AppRoutes.theme);
-            },
-          ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isTablet = constraints.maxWidth >= 600;
+          final hPad = isTablet ? constraints.maxWidth * 0.15 : 16.0;
+          return ListView(
+            padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 20),
+            children: [
+              // Appearance Section
+              _SectionHeader(title: 'Appearance', isDark: isDark),
+              const SizedBox(height: 10),
+              _SettingsGroup(
+                isDark: isDark,
+                items: [
+                  _SettingsTileData(
+                    icon: Icons.palette_outlined,
+                    iconColor: AppColors.purple500,
+                    title: 'Theme',
+                    subtitle: 'Light, dark or system default',
+                    onTap: () => Navigator.pushNamed(context, AppRoutes.theme),
+                  ),
+                ],
+              ),
 
-          const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-          // Account Section
-          _SectionHeader(title: 'Account', isDark: isDark),
-          const SizedBox(height: 8),
-          _SettingsTile(
-            icon: Icons.person_outline,
-            title: 'Profile',
-            subtitle: 'Manage your profile',
-            isDark: isDark,
-            onTap: () {},
-          ),
-          _SettingsTile(
-            icon: Icons.security_outlined,
-            title: 'Privacy',
-            subtitle: 'Privacy settings',
-            isDark: isDark,
-            onTap: () {},
-          ),
-          _SettingsTile(
-            icon: Icons.notifications_outlined,
-            title: 'Notifications',
-            subtitle: 'Notification preferences',
-            isDark: isDark,
-            onTap: () {},
-          ),
+              // Account Section
+              _SectionHeader(title: 'Account', isDark: isDark),
+              const SizedBox(height: 10),
+              _SettingsGroup(
+                isDark: isDark,
+                items: [
+                  _SettingsTileData(
+                    icon: Icons.person_outlined,
+                    iconColor: AppColors.emerald500,
+                    title: 'Profile',
+                    subtitle: 'Edit your public profile',
+                    onTap: () {},
+                  ),
+                  _SettingsTileData(
+                    icon: Icons.security_outlined,
+                    iconColor: AppColors.teal600,
+                    title: 'Privacy',
+                    subtitle: 'Control who sees your info',
+                    onTap: () {},
+                  ),
+                  _SettingsTileData(
+                    icon: Icons.notifications_outlined,
+                    iconColor: AppColors.warning,
+                    title: 'Notifications',
+                    subtitle: 'Push, email & in-app alerts',
+                    onTap: () {},
+                  ),
+                ],
+              ),
 
-          const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-          // About Section
-          _SectionHeader(title: 'About', isDark: isDark),
-          const SizedBox(height: 8),
-          _SettingsTile(
-            icon: Icons.info_outline,
-            title: 'About PlaySync',
-            subtitle: 'Version 1.0.0',
-            isDark: isDark,
-            onTap: () {},
-          ),
-          _SettingsTile(
-            icon: Icons.help_outline,
-            title: 'Help & Support',
-            subtitle: 'Get help',
-            isDark: isDark,
-            onTap: () {},
-          ),
+              // About Section
+              _SectionHeader(title: 'About', isDark: isDark),
+              const SizedBox(height: 10),
+              _SettingsGroup(
+                isDark: isDark,
+                items: [
+                  _SettingsTileData(
+                    icon: Icons.info_outline,
+                    iconColor: AppColors.info,
+                    title: 'About PlaySync',
+                    subtitle: 'Version 1.0.0',
+                    onTap: () {},
+                  ),
+                  _SettingsTileData(
+                    icon: Icons.help_outline,
+                    iconColor: AppColors.emerald600,
+                    title: 'Help & Support',
+                    subtitle: 'FAQs, contact & feedback',
+                    onTap: () {},
+                  ),
+                  _SettingsTileData(
+                    icon: Icons.description_outlined,
+                    iconColor: AppColors.textSecondaryLight,
+                    title: 'Terms & Privacy Policy',
+                    subtitle: 'Legal information',
+                    onTap: () {},
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 32),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Data class for a settings tile entry
+class _SettingsTileData {
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _SettingsTileData({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+}
+
+/// A grouped card containing multiple settings tiles
+class _SettingsGroup extends StatelessWidget {
+  final bool isDark;
+  final List<_SettingsTileData> items;
+
+  const _SettingsGroup({required this.isDark, required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.cardDark : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? AppColors.borderDefaultDark : AppColors.borderDefaultLight,
+        ),
+        boxShadow: [
+          if (!isDark)
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
         ],
+      ),
+      child: Column(
+        children: List.generate(items.length, (i) {
+          final item = items[i];
+          final isLast = i == items.length - 1;
+          return Column(
+            children: [
+              _SettingsTile(data: item, isDark: isDark),
+              if (!isLast)
+                Divider(
+                  height: 1,
+                  indent: 60,
+                  color: isDark ? AppColors.borderDefaultDark : AppColors.borderDefaultLight,
+                ),
+            ],
+          );
+        }),
       ),
     );
   }
@@ -92,20 +219,20 @@ class _SectionHeader extends StatelessWidget {
   final String title;
   final bool isDark;
 
-  const _SectionHeader({
-    required this.title,
-    required this.isDark,
-  });
+  const _SectionHeader({required this.title, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      title,
-      style: TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        color: isDark ? AppColors.secondary : AppColors.primary,
-        letterSpacing: 0.5,
+    return Padding(
+      padding: const EdgeInsets.only(left: 4),
+      child: Text(
+        title.toUpperCase(),
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+          letterSpacing: 1.2,
+        ),
       ),
     );
   }
@@ -113,46 +240,60 @@ class _SectionHeader extends StatelessWidget {
 
 /// Settings Tile Widget
 class _SettingsTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
+  final _SettingsTileData data;
   final bool isDark;
-  final VoidCallback onTap;
 
-  const _SettingsTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.isDark,
-    required this.onTap,
-  });
+  const _SettingsTile({required this.data, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: (isDark ? AppColors.secondary : AppColors.primary).withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(
-            icon,
-            color: isDark ? AppColors.secondary : AppColors.primary,
-          ),
+    return InkWell(
+      onTap: data.onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: data.iconColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(data.icon, color: data.iconColor, size: 20),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    data.title,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    data.subtitle,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 20,
+              color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight,
+            ),
+          ],
         ),
-        title: Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.w500),
-        ),
-        subtitle: Text(subtitle),
-        trailing: Icon(
-          Icons.chevron_right,
-          color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
-        ),
-        onTap: onTap,
       ),
     );
   }

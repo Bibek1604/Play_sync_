@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'core/database/hive_service.dart';
+import 'core/database/hive_init.dart';
 import 'app/app.dart';
 
 /// Application Entry Point
@@ -10,8 +10,8 @@ import 'app/app.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize Hive for local storage
-  await HiveService.init();
+  // Initialize Hive with all type adapters and boxes
+  await HiveInit.initialize();
   
   // Run the app with Riverpod state management
   runApp(const ProviderScope(child: PlaySyncApp()));
