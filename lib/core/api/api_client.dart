@@ -89,6 +89,21 @@ class ApiClient {
     );
   }
 
+  // PATCH request
+  Future<Response> patch(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    return _dio.patch(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+    );
+  }
+
   // DELETE request
   Future<Response> delete(
     String path, {
@@ -105,9 +120,10 @@ class ApiClient {
   }
 }
 
-/// Auth Interceptor - Adds token to requests and handles 401 errors
+/// Auth Interceptor - Adds token to requests and handles 401 errors with refresh
 class _AuthInterceptor extends Interceptor {
   final FlutterSecureStorage _storage;
+  bool _isRefreshing = false;
 
   _AuthInterceptor(this._storage);
 
@@ -131,12 +147,76 @@ class _AuthInterceptor extends Interceptor {
   }
 
   @override
-  void onError(DioException err, ErrorInterceptorHandler handler) {
-    // Handle 401 Unauthorized - Token expired
-    if (err.response?.statusCode == 401) {
-      // TODO: Implement token refresh or logout
-      debugPrint('Token expired - Need to refresh or logout');
+  void onError(DioException err, ErrorInterceptorHandler handler) async {
+    // Only handle 401 for non-auth endpoints and avoid refresh loops
+    if (err.response?.statusCode != 401 ||
+        err.requestOptions.path.contains('/auth/') ||
+        _isRefreshing) {
+      return handler.next(err);
     }
-    return handler.next(err);
+
+    _isRefreshing = true;
+    try {
+      final refreshToken = await _storage.read(key: 'refresh_token');
+      if (refreshToken == null) {
+        debugPrint('[Auth] No refresh token — clearing session');
+        await _clearSession();
+        return handler.next(err);
+      }
+
+      debugPrint('[Auth] Access token expired — attempting refresh');
+
+      // Call the refresh-token endpoint directly (no interceptor loop)
+      final dio = Dio(BaseOptions(
+        baseUrl: ApiEndpoints.baseUrl,
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      ));
+
+      final refreshResponse = await dio.post(
+        ApiEndpoints.refreshToken,
+        data: {'refreshToken': refreshToken},
+      );
+
+      final data = refreshResponse.data['data'];
+      final newAccessToken = data['accessToken'] as String?;
+      final newRefreshToken = data['refreshToken'] as String?;
+
+      if (newAccessToken == null) {
+        debugPrint('[Auth] Refresh returned no token — clearing session');
+        await _clearSession();
+        return handler.next(err);
+      }
+
+      // Persist new tokens
+      await _storage.write(key: 'access_token', value: newAccessToken);
+      if (newRefreshToken != null) {
+        await _storage.write(key: 'refresh_token', value: newRefreshToken);
+      }
+
+      debugPrint('[Auth] Token refreshed — retrying original request');
+
+      // Retry original request with new token
+      final retryOptions = err.requestOptions;
+      retryOptions.headers['Authorization'] = 'Bearer $newAccessToken';
+
+      final retryResponse = await dio.fetch(retryOptions);
+      return handler.resolve(retryResponse);
+    } catch (e) {
+      debugPrint('[Auth] Token refresh failed: $e — clearing session');
+      await _clearSession();
+      return handler.next(err);
+    } finally {
+      _isRefreshing = false;
+    }
+  }
+
+  Future<void> _clearSession() async {
+    await Future.wait([
+      _storage.delete(key: 'access_token'),
+      _storage.delete(key: 'refresh_token'),
+      _storage.delete(key: 'user_id'),
+      _storage.delete(key: 'user_email'),
+      _storage.delete(key: 'user_role'),
+    ]);
   }
 }
