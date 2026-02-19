@@ -9,6 +9,8 @@ import '../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/settings/presentation/pages/theme_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
+import '../../features/game/presentation/pages/game_page.dart';
+import '../../features/chat/presentation/pages/chat_page.dart';
 
 /// Application Router
 /// 
@@ -56,6 +58,18 @@ class AppRouter {
       case AppRoutes.theme:
         return _buildRoute(
           const AuthGuard(child: ThemePage()),
+          settings,
+        );
+
+      case AppRoutes.game:
+        return _buildRoute(
+          const AuthGuard(child: GamePage()),
+          settings,
+        );
+
+      case AppRoutes.chat:
+        return _buildRoute(
+          const AuthGuard(child: ChatPage()),
           settings,
         );
 

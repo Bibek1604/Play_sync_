@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/theme_provider.dart';
 import '../providers/language_provider.dart';
 import '../providers/notification_prefs_provider.dart';
-import '../../../../shared/theme/app_colors.dart';
+import '../../../../app/theme/app_colors.dart';
 
 class AppSettingsPage extends ConsumerWidget {
   static const routeName = '/app-settings';
@@ -44,7 +44,7 @@ class AppSettingsPage extends ConsumerWidget {
                   child: CircleAvatar(
                     radius: 14,
                     backgroundColor: c,
-                    child: c.value == accent.value ? const Icon(Icons.check, size: 14, color: Colors.white) : null,
+                    child: c == accent ? const Icon(Icons.check, size: 14, color: Colors.white) : null,
                   ),
                 );
               }).toList(),

@@ -23,4 +23,8 @@ class AppRoutes {
   static const String messages = '/messages';
   static const String events = '/events';
   static const String rankings = '/rankings';
+
+  // Game & Chat
+  static const String game = '/game';
+  static const String chat = '/chat';
 }

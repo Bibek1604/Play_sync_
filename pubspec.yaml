@@ -67,6 +67,15 @@ dependencies:
   # Image Picker
   image_picker: ^1.0.7
 
+  # Persistent Key-Value Storage
+  shared_preferences: ^2.2.3
+
+  # App Info (version, build number)
+  package_info_plus: ^8.0.0
+
+  # WebSocket client for chat
+  web_socket_channel: ^3.0.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

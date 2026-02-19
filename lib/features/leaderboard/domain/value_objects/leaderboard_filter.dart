@@ -1,22 +1,38 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
-
-part 'leaderboard_filter.freezed.dart';
-
 enum LeaderboardPeriod { allTime, monthly, weekly, daily }
 
 enum LeaderboardScope { global, friends, local }
 
-@freezed
-class LeaderboardFilter with _$LeaderboardFilter {
-  const factory LeaderboardFilter({
-    @Default(LeaderboardPeriod.allTime) LeaderboardPeriod period,
-    @Default(LeaderboardScope.global) LeaderboardScope scope,
-    String? sportType,
-    @Default(50) int limit,
-    @Default(0) int offset,
-  }) = _LeaderboardFilter;
+/// Filter parameters for a leaderboard query.
+class LeaderboardFilter {
+  final LeaderboardPeriod period;
+  final LeaderboardScope scope;
+  final String? sportType;
+  final int limit;
+  final int offset;
 
-  const LeaderboardFilter._();
+  const LeaderboardFilter({
+    this.period = LeaderboardPeriod.allTime,
+    this.scope = LeaderboardScope.global,
+    this.sportType,
+    this.limit = 50,
+    this.offset = 0,
+  });
+
+  LeaderboardFilter copyWith({
+    LeaderboardPeriod? period,
+    LeaderboardScope? scope,
+    String? sportType,
+    int? limit,
+    int? offset,
+  }) {
+    return LeaderboardFilter(
+      period: period ?? this.period,
+      scope: scope ?? this.scope,
+      sportType: sportType ?? this.sportType,
+      limit: limit ?? this.limit,
+      offset: offset ?? this.offset,
+    );
+  }
 
   Map<String, String> toQueryParams() {
     return {
@@ -29,4 +45,17 @@ class LeaderboardFilter with _$LeaderboardFilter {
   }
 
   LeaderboardFilter copyWithNextPage() => copyWith(offset: offset + limit);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is LeaderboardFilter &&
+          period == other.period &&
+          scope == other.scope &&
+          sportType == other.sportType &&
+          limit == other.limit &&
+          offset == other.offset;
+
+  @override
+  int get hashCode => Object.hash(period, scope, sportType, limit, offset);
 }
