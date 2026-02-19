@@ -44,6 +44,14 @@ class AppColors {
   static const Color divider = Color(0xFFE0E0E0);
   static const Color disabled = Color(0xFFBDBDBD);
   static const Color shadow = Color(0x1A000000);
+
+  // Extended Palette
+  static const Color emerald500 = Color(0xFF10B981);
+  static const Color gold = Color(0xFFFFD700);
+  static const Color silver = Color(0xFFC0C0C0);
+  static const Color bronze = Color(0xFFCD7F32);
+  static const Color chatBubbleOwn = Color(0xFF2E7D32);
+  static const Color chatBubbleOther = Color(0xFF2C2C2C);
 }
 
 /// Application Typography
