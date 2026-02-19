@@ -31,7 +31,7 @@ class WelcomePage extends ConsumerWidget {
                   width: 110,
                   height: 110,
                   decoration: BoxDecoration(
-                    color: cs.onPrimary.withOpacity(0.15),
+                    color: cs.onPrimary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(32),
                   ),
                   child: Icon(Icons.sports_esports_rounded, size: 64, color: cs.onPrimary),
@@ -49,7 +49,7 @@ class WelcomePage extends ConsumerWidget {
                 Text(
                   'Play together. Win together.',
                   textAlign: TextAlign.center,
-                  style: tt.titleMedium?.copyWith(color: cs.onPrimary.withOpacity(0.85)),
+                  style: tt.titleMedium?.copyWith(color: cs.onPrimary.withValues(alpha: 0.85)),
                 ),
                 const Spacer(flex: 3),
                 SizedBox(

@@ -26,8 +26,8 @@ class OnboardingIllustration extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            cs.primaryContainer.withOpacity(0.5),
-            cs.secondaryContainer.withOpacity(0.3),
+            cs.primaryContainer.withValues(alpha: 0.5),
+            cs.secondaryContainer.withValues(alpha: 0.3),
           ],
         ),
         borderRadius: BorderRadius.circular(28),
@@ -43,11 +43,11 @@ class OnboardingIllustration extends StatelessWidget {
       child: Image.asset(
         step.assetPath,
         fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) => Center(
+        errorBuilder: (_, _, _) => Center(
           child: Icon(
             _fallbackIcons[step.index.clamp(0, _fallbackIcons.length - 1)],
             size: 120,
-            color: cs.primary.withOpacity(0.7),
+            color: cs.primary.withValues(alpha: 0.7),
           ),
         ),
       ),

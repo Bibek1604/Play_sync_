@@ -129,7 +129,7 @@ class _LoginPageState extends ConsumerState<LoginPage> with SingleTickerProvider
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF2E7D32).withOpacity(0.1),
+                            color: const Color(0xFF2E7D32).withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
@@ -210,7 +210,7 @@ class _LoginPageState extends ConsumerState<LoginPage> with SingleTickerProvider
                               backgroundColor: const Color(0xFF2E7D32),
                               foregroundColor: Colors.white,
                               elevation: 4,
-                              shadowColor: const Color(0xFF2E7D32).withOpacity(0.4),
+                              shadowColor: const Color(0xFF2E7D32).withValues(alpha: 0.4),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
                               ),
@@ -319,7 +319,7 @@ class _LoginPageState extends ConsumerState<LoginPage> with SingleTickerProvider
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -345,7 +345,7 @@ class _LoginPageState extends ConsumerState<LoginPage> with SingleTickerProvider
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: Colors.grey.withOpacity(0.2)),
+            borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),

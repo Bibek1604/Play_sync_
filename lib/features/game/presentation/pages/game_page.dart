@@ -325,7 +325,7 @@ class _CreateGameSheetState extends ConsumerState<_CreateGameSheet> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<GameCategory>(
-              value: _category,
+              initialValue: _category,
               decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
               items: GameCategory.values
                   .map((c) => DropdownMenuItem(value: c, child: Text(c.name)))

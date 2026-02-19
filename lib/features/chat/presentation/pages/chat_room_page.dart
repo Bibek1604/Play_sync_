@@ -43,7 +43,7 @@ class _ChatRoomPageState extends ConsumerState<ChatRoomPage> {
     // Scroll to bottom when messages change
     ref.listen(
         chatProvider.select((s) => s.messagesByRoom[widget.roomId]?.length),
-        (_, __) => _scrollToBottom());
+        (_, _) => _scrollToBottom());
 
     final room = state.rooms.firstWhere(
       (r) => r.id == widget.roomId,

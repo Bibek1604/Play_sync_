@@ -18,19 +18,19 @@ class MyRankCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppColors.emerald500.withOpacity(0.8), AppColors.emerald500.withOpacity(0.4)],
+          colors: [AppColors.emerald500.withValues(alpha: 0.8), AppColors.emerald500.withValues(alpha: 0.4)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: AppColors.emerald500.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: AppColors.emerald500.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4))],
       ),
       child: Row(
         children: [
           CircleAvatar(
             radius: 28,
             backgroundImage: entry.profileImageUrl != null ? NetworkImage(entry.profileImageUrl!) : null,
-            backgroundColor: Colors.white.withOpacity(0.3),
+            backgroundColor: Colors.white.withValues(alpha: 0.3),
             child: entry.profileImageUrl == null
                 ? Text(entry.username[0].toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 20))
                 : null,

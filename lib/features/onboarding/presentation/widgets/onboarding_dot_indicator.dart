@@ -19,7 +19,7 @@ class OnboardingDotIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final active = activeColor ?? cs.primary;
-    final inactive = inactiveColor ?? cs.outline.withOpacity(0.4);
+    final inactive = inactiveColor ?? cs.outline.withValues(alpha: 0.4);
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,

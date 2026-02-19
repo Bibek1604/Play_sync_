@@ -48,7 +48,7 @@ class ChatPage extends ConsumerWidget {
                   onRefresh: () => ref.read(chatProvider.notifier).fetchRooms(),
                   child: ListView.separated(
                     itemCount: state.rooms.length,
-                    separatorBuilder: (_, __) =>
+                    separatorBuilder: (_, _) =>
                         Divider(height: 1, indent: 72, color: cs.outlineVariant),
                     itemBuilder: (_, i) {
                       final room = state.rooms[i];

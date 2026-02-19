@@ -64,7 +64,7 @@ class AppSettingsPage extends ConsumerWidget {
           ...notifPrefs.toMap().entries.map((e) => SwitchListTile(
             title: Text(_prettyKey(e.key)),
             value: e.value,
-            activeColor: AppColors.emerald500,
+            activeThumbColor: AppColors.emerald500,
             onChanged: (_) => ref.read(notifPrefsProvider.notifier).toggle(e.key),
           )),
           const SizedBox(height: 32),
