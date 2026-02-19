@@ -9,6 +9,15 @@ import '../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/settings/presentation/pages/theme_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
+import '../../features/leaderboard/presentation/pages/rankings_page.dart';
+import '../../features/game/presentation/pages/available_games_page.dart';
+import '../../features/game/presentation/pages/online_games_page.dart';
+import '../../features/game/presentation/pages/offline_games_page.dart';
+import '../../features/history/presentation/pages/game_history_page.dart';
+import '../../features/chat/presentation/pages/chat_page.dart';
+import '../../features/notifications/presentation/pages/notifications_page.dart';
+import '../../features/game/presentation/pages/game_chat_page.dart';
+import '../../core/widgets/app_shell.dart';
 
 /// Application Router
 /// 
@@ -37,7 +46,7 @@ class AppRouter {
       // Protected Routes (require authentication)
       case AppRoutes.dashboard:
         return _buildRoute(
-          const AuthGuard(child: DashboardPage()),
+          const AuthGuard(child: AppShell()),
           settings,
         );
 
@@ -56,6 +65,55 @@ class AppRouter {
       case AppRoutes.theme:
         return _buildRoute(
           const AuthGuard(child: ThemePage()),
+          settings,
+        );
+
+      case AppRoutes.rankings:
+        return _buildRoute(
+          const AuthGuard(child: RankingsPage()),
+          settings,
+        );
+
+      case AppRoutes.availableGames:
+        return _buildRoute(
+          const AuthGuard(child: AvailableGamesPage()),
+          settings,
+        );
+
+      case AppRoutes.onlineGames:
+        return _buildRoute(
+          const AuthGuard(child: OnlineGamesPage()),
+          settings,
+        );
+
+      case AppRoutes.offlineGames:
+        return _buildRoute(
+          const AuthGuard(child: OfflineGamesPage()),
+          settings,
+        );
+
+      case AppRoutes.gameHistory:
+        return _buildRoute(
+          const AuthGuard(child: GameHistoryPage()),
+          settings,
+        );
+
+      case AppRoutes.chat:
+        final args = settings.arguments as Map<String, dynamic>?;
+        if (args != null && args.containsKey('gameId')) {
+          return _buildRoute(
+            AuthGuard(child: GameChatPage(gameId: args['gameId'])),
+            settings,
+          );
+        }
+        return _buildRoute(
+          const AuthGuard(child: ChatPage()),
+          settings,
+        );
+
+      case AppRoutes.notifications:
+        return _buildRoute(
+          const AuthGuard(child: NotificationsPage()),
           settings,
         );
 
@@ -88,6 +146,9 @@ class AppRouter {
         AppRoutes.settings: (_) => const AuthGuard(child: SettingsPage()),
         AppRoutes.profile: (_) => const AuthGuard(child: ProfilePage()),
         AppRoutes.theme: (_) => const AuthGuard(child: ThemePage()),
+        AppRoutes.rankings: (_) => const AuthGuard(child: RankingsPage()),
+        AppRoutes.availableGames: (_) => const AuthGuard(child: AvailableGamesPage()),
+        AppRoutes.gameHistory: (_) => const AuthGuard(child: GameHistoryPage()),
       };
 }
 

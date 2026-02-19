@@ -23,4 +23,11 @@ class AppRoutes {
   static const String messages = '/messages';
   static const String events = '/events';
   static const String rankings = '/rankings';
+  static const String availableGames = '/available-games';
+  static const String onlineGames = '/online-games';
+  static const String offlineGames = '/offline-games';
+  static const String gameHistory = '/game-history';
+  static const String chat = '/chat';
+  static const String notifications = '/notifications';
+  static const String gameDetail = '/game-detail';
 }
