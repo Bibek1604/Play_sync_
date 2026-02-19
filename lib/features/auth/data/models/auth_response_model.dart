@@ -25,36 +25,57 @@ class AuthResponseModel {
   });
 
   /// Parse from JSON response - handles nested 'data' or 'user' objects
+  ///
+  /// Login / refresh-token response shape:
+  ///   { "success": true, "data": { "accessToken": "...", "refreshToken": "...",
+  ///                                 "user": { "id": "...", "fullName": "...", ... } } }
+  ///
+  /// Register response shape:
+  ///   { "success": true, "data": { "user": { "id": "...", "fullName": "...", ... } } }
   factory AuthResponseModel.fromJson(Map<String, dynamic> json) {
-    // Check if response has nested data/user object
-    final Map<String, dynamic> userData;
+    // Step 1: unwrap the response envelope (always present in backend responses)
+    final Map<String, dynamic> envelopeData;
     if (json.containsKey('data') && json['data'] is Map) {
-      userData = json['data'] as Map<String, dynamic>;
+      envelopeData = json['data'] as Map<String, dynamic>;
+    } else {
+      envelopeData = json;
+    }
+
+    // Step 2: drill into the nested 'user' object inside the envelope if it exists.
+    // Login/refresh: envelopeData = { accessToken, refreshToken, user: {...} }
+    // Register:      envelopeData = { user: {...} }
+    // Older/flat:    envelopeData = { _id/id, fullName, email, ... }
+    final Map<String, dynamic> userData;
+    if (envelopeData.containsKey('user') && envelopeData['user'] is Map) {
+      userData = envelopeData['user'] as Map<String, dynamic>;
     } else if (json.containsKey('user') && json['user'] is Map) {
       userData = json['user'] as Map<String, dynamic>;
     } else {
-      userData = json;
+      userData = envelopeData;
     }
 
-    // Extract token from root or nested object
-    final token = json['token'] ?? 
-                  json['accessToken'] ?? 
-                  json['access_token'] ??
-                  userData['token'] ??
-                  userData['accessToken'];
-    
-    final refreshToken = json['refreshToken'] ?? 
-                         json['refresh_token'] ??
-                         userData['refreshToken'] ??
-                         userData['refresh_token'];
+    // Step 3: tokens live in the envelope, not in the user sub-object
+    final token = envelopeData['accessToken'] ??
+                  envelopeData['token'] ??
+                  envelopeData['access_token'] ??
+                  json['accessToken'] ??
+                  json['token'] ??
+                  json['access_token'];
+
+    final refreshTokenValue = envelopeData['refreshToken'] ??
+                              envelopeData['refresh_token'] ??
+                              json['refreshToken'] ??
+                              json['refresh_token'];
 
     return AuthResponseModel(
-      userId: userData['_id'] ?? userData['userId'] ?? userData['id'],
+      userId: userData['id']?.toString() ??
+              userData['_id']?.toString() ??
+              userData['userId']?.toString(),
       fullName: userData['fullName'] ?? userData['full_name'] ?? userData['name'],
       email: userData['email'] ?? json['email'] ?? '',
       role: userData['role'] ?? json['role'] ?? 'user',
       token: token,
-      refreshToken: refreshToken,
+      refreshToken: refreshTokenValue,
       message: json['message'],
       createdAt: userData['createdAt'] != null
           ? DateTime.tryParse(userData['createdAt'].toString())
