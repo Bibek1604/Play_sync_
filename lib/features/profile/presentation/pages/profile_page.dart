@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:play_sync_new/app/theme/app_colors.dart';
+import 'package:play_sync_new/core/widgets/app_drawer.dart';
 import 'package:play_sync_new/features/profile/presentation/pages/edit_profile_page.dart';
 import 'package:play_sync_new/features/profile/presentation/viewmodel/profile_notifier.dart';
+import 'package:play_sync_new/features/scorecard/presentation/providers/scorecard_state_provider.dart';
 
 /// Profile Page - View user profile
 class ProfilePage extends ConsumerStatefulWidget {
@@ -17,17 +19,30 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   void initState() {
     super.initState();
     // Load profile on init
-    Future.microtask(() => ref.read(profileNotifierProvider.notifier).getProfile());
+    Future.microtask(() {
+      ref.read(profileNotifierProvider.notifier).getProfile();
+      ref.read(scorecardProvider.notifier).loadScorecard();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final profileState = ref.watch(profileNotifierProvider);
+    final scorecardState = ref.watch(scorecardProvider);
+    final scorecard = scorecardState.scorecard;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(
+        elevation: 0,
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu_rounded),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
         title: const Text('Profile'),
         actions: [
           IconButton(
@@ -67,6 +82,43 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                                 isDark: isDark,
                               ),
 
+                              const SizedBox(height: 24),
+
+                              // Gaming Stats Row
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _StatBadge(
+                                      icon: Icons.emoji_events_rounded,
+                                      value: '${scorecard?.points ?? 0}',
+                                      label: 'Points',
+                                      color: AppColors.warning,
+                                      isDark: isDark,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _StatBadge(
+                                      icon: Icons.sports_esports_rounded,
+                                      value: '${scorecard?.gamesPlayed ?? 0}',
+                                      label: 'Games',
+                                      color: AppColors.emerald500,
+                                      isDark: isDark,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _StatBadge(
+                                      icon: Icons.leaderboard_rounded,
+                                      value: '#${scorecard?.rank ?? '-'}',
+                                      label: 'Rank',
+                                      color: AppColors.info,
+                                      isDark: isDark,
+                                    ),
+                                  ),
+                                ],
+                              ),
+
                               const SizedBox(height: 30),
 
                               // Profile Info Cards
@@ -89,58 +141,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                               const SizedBox(height: 12),
 
                               _InfoCard(
-                                icon: Icons.cake,
-                                title: 'Date of Birth',
-                                value: profileState.profile!.dateOfBirth ?? 'Not set',
-                                isDark: isDark,
-                              ),
-
-                              const SizedBox(height: 12),
-
-                              _InfoCard(
                                 icon: Icons.info_outline,
                                 title: 'Bio',
                                 value: profileState.profile!.bio ?? 'No bio yet',
                                 isDark: isDark,
                                 maxLines: 3,
-                              ),
-
-                              const SizedBox(height: 30),
-
-                              // Gaming Info Section
-                              Text(
-                                'Gaming Info',
-                                style: theme.textTheme.titleLarge?.copyWith(
-                                  color: isDark ? AppColors.secondary : AppColors.primaryDark,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-
-                              const SizedBox(height: 16),
-
-                              _InfoCard(
-                                icon: Icons.videogame_asset,
-                                title: 'Gaming Platform',
-                                value: profileState.profile!.gamingPlatform ?? 'Not set',
-                                isDark: isDark,
-                              ),
-
-                              const SizedBox(height: 12),
-
-                              _InfoCard(
-                                icon: Icons.star,
-                                title: 'Skill Level',
-                                value: profileState.profile!.skillLevel ?? 'Not set',
-                                isDark: isDark,
-                              ),
-
-                              const SizedBox(height: 12),
-
-                              _InfoCard(
-                                icon: Icons.sports_esports,
-                                title: 'Favorite Game',
-                                value: profileState.profile!.favouriteGame ?? 'Not set',
-                                isDark: isDark,
                               ),
                             ],
                           ),
@@ -193,11 +198,30 @@ class _ProfileHeader extends StatelessWidget {
                   child: Image.network(
                     profilePicture!,
                     fit: BoxFit.cover,
+                    width: 120,
+                    height: 120,
                     errorBuilder: (context, error, stackTrace) => const Icon(
                       Icons.person,
                       size: 60,
                       color: Colors.white,
                     ),
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Center(
+                        child: SizedBox(
+                          width: 36,
+                          height: 36,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Colors.white,
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                : null,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 )
               : const Icon(
@@ -215,7 +239,7 @@ class _ProfileHeader extends StatelessWidget {
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: isDark ? AppColors.secondary : AppColors.primaryDark,
+            color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
           ),
         ),
 
@@ -226,10 +250,79 @@ class _ProfileHeader extends StatelessWidget {
           email,
           style: TextStyle(
             fontSize: 14,
-            color: isDark ? AppColors.textSecondaryDark : Colors.grey[600],
+            color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Stat Badge Widget for Profile Page
+class _StatBadge extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+  final Color color;
+  final bool isDark;
+
+  const _StatBadge({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.color,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.cardDark : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: color.withValues(alpha: 0.25),
+          width: 1.5,
+        ),
+        boxShadow: [
+          if (!isDark)
+            BoxShadow(
+              color: color.withValues(alpha: 0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -258,7 +351,7 @@ class _InfoCard extends StatelessWidget {
         color: isDark ? AppColors.cardDark : Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isDark ? Colors.grey[800]! : Colors.grey.shade200,
+          color: isDark ? AppColors.borderDefaultDark : AppColors.borderDefaultLight,
         ),
       ),
       child: Row(
@@ -280,7 +373,7 @@ class _InfoCard extends StatelessWidget {
                   title,
                   style: TextStyle(
                     fontSize: 12,
-                    color: isDark ? AppColors.textSecondaryDark : Colors.grey[600],
+                    color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -289,7 +382,7 @@ class _InfoCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? AppColors.secondary : AppColors.primaryDark,
+                    color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
                   ),
                   maxLines: maxLines,
                   overflow: TextOverflow.ellipsis,
@@ -327,7 +420,7 @@ class _ErrorView extends StatelessWidget {
             Icon(
               Icons.error_outline,
               size: 80,
-              color: isDark ? Colors.red[300] : Colors.red,
+              color: AppColors.error,
             ),
             const SizedBox(height: 20),
             Text(
@@ -335,7 +428,7 @@ class _ErrorView extends StatelessWidget {
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: isDark ? AppColors.secondary : AppColors.primaryDark,
+                color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
               ),
             ),
             const SizedBox(height: 10),
@@ -344,7 +437,7 @@ class _ErrorView extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
-                color: isDark ? AppColors.textSecondaryDark : Colors.grey[600],
+                color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
               ),
             ),
             const SizedBox(height: 30),
@@ -375,14 +468,14 @@ class _EmptyView extends StatelessWidget {
           Icon(
             Icons.person_outline,
             size: 80,
-            color: isDark ? Colors.grey[600] : Colors.grey[400],
+            color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight,
           ),
           const SizedBox(height: 20),
           Text(
             'No Profile Data',
             style: TextStyle(
               fontSize: 18,
-              color: isDark ? AppColors.textSecondaryDark : Colors.grey[600],
+              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
             ),
           ),
         ],

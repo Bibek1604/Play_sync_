@@ -76,14 +76,14 @@ class ProfileRemoteDataSource implements IProfileDataSource {
         }
 
         debugPrint('[PROFILE API] Sending as multipart/form-data');
-        response = await _apiClient.put(
+        response = await _apiClient.patch(
           ApiEndpoints.updateProfile,
           data: formData,
         );
       } else {
         // Send as regular JSON
         debugPrint('[PROFILE API] Sending as JSON');
-        response = await _apiClient.put(
+        response = await _apiClient.patch(
           ApiEndpoints.updateProfile,
           data: profileData,
         );

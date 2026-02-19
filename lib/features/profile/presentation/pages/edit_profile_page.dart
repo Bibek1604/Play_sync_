@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,6 +24,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   final _newPasswordController = TextEditingController();
   
   XFile? _selectedImage;
+  Uint8List? _selectedImageBytes;
   final ImagePicker _imagePicker = ImagePicker();
 
   @override
@@ -66,8 +66,10 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
       );
 
       if (image != null) {
+        final bytes = await image.readAsBytes();
         setState(() {
           _selectedImage = image;
+          _selectedImageBytes = bytes;
         });
       }
     } catch (e) {
@@ -80,6 +82,11 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   }
 
   Future<void> _takePhoto() async {
+    if (kIsWeb) {
+      // Camera not supported on web, fallback to gallery
+      await _pickImage();
+      return;
+    }
     try {
       final XFile? image = await _imagePicker.pickImage(
         source: ImageSource.camera,
@@ -89,8 +96,10 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
       );
 
       if (image != null) {
+        final bytes = await image.readAsBytes();
         setState(() {
           _selectedImage = image;
+          _selectedImageBytes = bytes;
         });
       }
     } catch (e) {
@@ -103,6 +112,11 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   }
 
   void _showImageSourceDialog() {
+    if (kIsWeb) {
+      // On web, only gallery is supported — skip the dialog
+      _pickImage();
+      return;
+    }
     showModalBottomSheet(
       context: context,
       builder: (context) => SafeArea(
@@ -223,17 +237,12 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                                 : [AppColors.primary, AppColors.primaryLight],
                           ),
                         ),
-                        child: _selectedImage != null
+                        child: _selectedImage != null && _selectedImageBytes != null
                             ? ClipOval(
-                                child: kIsWeb
-                                    ? Image.network(
-                                        _selectedImage!.path,
-                                        fit: BoxFit.cover,
-                                      )
-                                    : Image.file(
-                                        File(_selectedImage!.path),
-                                        fit: BoxFit.cover,
-                                      ),
+                                child: Image.memory(
+                                  _selectedImageBytes!,
+                                  fit: BoxFit.cover,
+                                ),
                               )
                             : profileState.profile?.profilePicture != null
                                 ? ClipOval(
