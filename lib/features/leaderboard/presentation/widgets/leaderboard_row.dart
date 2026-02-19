@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/leaderboard_entry.dart';
-import '../../../../shared/theme/app_colors.dart';
+import '../../../../app/theme/app_colors.dart';
 
 /// A single animated leaderboard row widget.
 class LeaderboardRow extends StatelessWidget {

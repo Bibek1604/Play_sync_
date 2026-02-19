@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/theme_provider.dart';
-import '../../../../shared/theme/app_colors.dart';
+import '../../../../app/theme/app_colors.dart';
 
 /// Color swatch grid for picking accent color.
 class AccentColorPicker extends ConsumerWidget {

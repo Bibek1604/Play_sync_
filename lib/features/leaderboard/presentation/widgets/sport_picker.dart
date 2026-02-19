@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../domain/value_objects/leaderboard_filter.dart';
-import '../../../../shared/theme/app_colors.dart';
+import '../../../../app/theme/app_colors.dart';
 
 /// Horizontal chip row for selecting sport type filter on leaderboard.
 class SportPicker extends StatelessWidget {

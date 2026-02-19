@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../shared/theme/app_colors.dart';
+import '../../../../app/theme/app_colors.dart';
 
 /// Animated podium showing top-3 players with height variation.
 class LeaderboardPodium extends StatelessWidget {
