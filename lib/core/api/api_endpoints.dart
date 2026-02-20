@@ -73,4 +73,39 @@ class ApiEndpoints {
 
   // ========== ADMIN CODE ==========
   static const String adminCode = 'your-super-secret-key-2025';
+
+  // ========== GAME ENDPOINTS ==========
+  static const String createGame = '/games';
+  static const String getGames = '/games';
+  static const String getMyCreatedGames = '/games/my/created';
+  static const String getMyJoinedGames = '/games/my/joined';
+  static const String getPopularTags = '/games/tags/popular';
+  static String getGameById(String id) => '/games/$id';
+  static String joinGame(String id) => '/games/$id/join';
+  static String leaveGame(String id) => '/games/$id/leave';
+  static String canJoinGame(String id) => '/games/$id/can-join';
+  static String updateGame(String id) => '/games/$id';
+  static String deleteGame(String id) => '/games/$id';
+  static String cancelGame(String id) => '/games/$id/cancel';
+  static String completeGame(String id) => '/games/$id/complete';
+
+  // ========== GAME CHAT ENDPOINTS ==========
+  static String sendChatMessage(String gameId) => '/games/$gameId/chat';
+  static String getChatMessages(String gameId) => '/games/$gameId/chat';
+  static const String getJoinedChatPreview = '/games/my/joined/chat-preview';
+
+  // ========== HISTORY ENDPOINTS ==========
+  static const String getHistory = '/history';
+  static const String getHistoryStats = '/history/stats';
+  static const String getHistoryCount = '/history/count';
+
+  // ========== LEADERBOARD ENDPOINTS ==========
+  static const String getLeaderboard = '/leaderboard';
+  static const String getLeaderboardStats = '/leaderboard/stats';
+
+  // ========== NOTIFICATIONS ENDPOINTS ==========
+  static const String getNotifications = '/notifications';
+  static const String getUnreadNotificationsCount = '/notifications/unread-count';
+  static String markNotificationRead(String id) => '/notifications/$id/read';
+  static const String markAllNotificationsRead = '/notifications/read-all';
 }
