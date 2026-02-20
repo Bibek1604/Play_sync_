@@ -103,6 +103,21 @@ class ApiClient {
       options: options,
     );
   }
+
+  // PATCH request
+  Future<Response> patch(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    return _dio.patch(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+    );
+  }
 }
 
 /// Auth Interceptor - Adds token to requests and handles 401 errors

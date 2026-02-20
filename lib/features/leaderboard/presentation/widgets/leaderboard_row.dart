@@ -22,8 +22,8 @@ class LeaderboardRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: entry.isCurrentUser
-              ? AppColors.emerald500.withOpacity(0.12)
-              : theme.colorScheme.surfaceVariant.withOpacity(0.4),
+              ? AppColors.emerald500.withValues(alpha: 0.12)
+              : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
           borderRadius: BorderRadius.circular(12),
           border: entry.isCurrentUser
               ? Border.all(color: AppColors.emerald500, width: 1.5)
@@ -56,7 +56,7 @@ class LeaderboardRow extends StatelessWidget {
                   Text(
                     '${entry.gamesWon}W · ${(entry.winRate * 100).toStringAsFixed(0)}% WR',
                     style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
                 ],
@@ -75,7 +75,7 @@ class LeaderboardRow extends StatelessWidget {
                 Text(
                   'pts',
                   style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.5),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
                 ),
               ],
@@ -107,7 +107,7 @@ class _RankBadge extends StatelessWidget {
       child: Text(
         '$rank',
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
           fontWeight: FontWeight.w600,
         ),
         textAlign: TextAlign.center,

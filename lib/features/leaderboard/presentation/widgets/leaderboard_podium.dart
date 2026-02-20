@@ -69,7 +69,7 @@ class _PodiumSlot extends StatelessWidget {
         CircleAvatar(
           radius: rank == 1 ? 30 : 24,
           backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl!) : null,
-          backgroundColor: _colors[rank - 1].withOpacity(0.2),
+          backgroundColor: _colors[rank - 1].withValues(alpha: 0.2),
           child: avatarUrl == null
               ? Text(username[0].toUpperCase(), style: TextStyle(fontWeight: FontWeight.bold, fontSize: rank == 1 ? 18 : 14, color: _colors[rank - 1]))
               : null,
@@ -77,12 +77,12 @@ class _PodiumSlot extends StatelessWidget {
         const SizedBox(height: 4),
         Text(_medals[rank - 1], style: const TextStyle(fontSize: 16)),
         Text(username, style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis, maxLines: 1),
-        Text('$points pts', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.6))),
+        Text('$points pts', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
         const SizedBox(height: 4),
         Container(
           height: height,
           decoration: BoxDecoration(
-            color: _colors[rank - 1].withOpacity(0.2),
+            color: _colors[rank - 1].withValues(alpha: 0.2),
             border: Border(top: BorderSide(color: _colors[rank - 1], width: 2)),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
           ),

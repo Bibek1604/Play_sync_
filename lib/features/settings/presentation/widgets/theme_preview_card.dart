@@ -33,7 +33,7 @@ class ThemePreviewCard extends ConsumerWidget {
         _PreviewTile(
           label: 'System',
           icon: Icons.brightness_auto,
-          bg: Theme.of(context).colorScheme.surfaceVariant,
+          bg: Theme.of(context).colorScheme.surfaceContainerHighest,
           fg: Theme.of(context).colorScheme.onSurfaceVariant,
           isSelected: selected == ThemeMode.system,
           onTap: () => ref.read(themeProvider.notifier).setTheme(ThemeMode.system),

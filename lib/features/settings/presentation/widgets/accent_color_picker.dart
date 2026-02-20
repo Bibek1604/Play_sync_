@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/theme_provider.dart';
-import '../../../../app/theme/app_colors.dart';
 
 /// Color swatch grid for picking accent color.
 class AccentColorPicker extends ConsumerWidget {
@@ -15,7 +14,7 @@ class AccentColorPicker extends ConsumerWidget {
       spacing: 12,
       runSpacing: 12,
       children: AccentColorNotifier.presets.map((color) {
-        final selected = color.value == current.value;
+        final selected = color == current;
         return GestureDetector(
           onTap: () => ref.read(accentColorProvider.notifier).setAccent(color),
           child: AnimatedContainer(
@@ -26,7 +25,7 @@ class AccentColorPicker extends ConsumerWidget {
               color: color,
               shape: BoxShape.circle,
               border: selected ? Border.all(color: Colors.white, width: 3) : null,
-              boxShadow: selected ? [BoxShadow(color: color.withOpacity(0.6), blurRadius: 10, spreadRadius: 2)] : null,
+              boxShadow: selected ? [BoxShadow(color: color.withValues(alpha: 0.6), blurRadius: 10, spreadRadius: 2)] : null,
             ),
             child: selected ? const Icon(Icons.check, color: Colors.white, size: 20) : null,
           ),

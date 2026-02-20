@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../domain/entities/app_settings.dart';
@@ -18,7 +17,7 @@ class SettingsRepository {
   /// Load all settings from persistence. Falls back to [AppSettings.defaults].
   Future<AppSettings> load() async {
     final themeIndex = _prefs.getInt(_keyTheme) ?? ThemeMode.system.index;
-    final accentValue = _prefs.getInt(_keyAccent) ?? const Color(0xFF6C63FF).value;
+    final accentValue = _prefs.getInt(_keyAccent) ?? const Color(0xFF6C63FF).toARGB32();
     final lang = _prefs.getString(_keyLang) ?? 'en';
     final compact = _prefs.getBool(_keyCompact) ?? false;
     final reduced = _prefs.getBool(_keyReducedMotion) ?? false;
@@ -43,7 +42,7 @@ class SettingsRepository {
   Future<void> save(AppSettings settings) async {
     await Future.wait([
       _prefs.setInt(_keyTheme, settings.themeMode.index),
-      _prefs.setInt(_keyAccent, settings.accentColor.value),
+      _prefs.setInt(_keyAccent, settings.accentColor.toARGB32()),
       _prefs.setString(_keyLang, settings.languageCode),
       _prefs.setBool(_keyCompact, settings.compactMode),
       _prefs.setBool(_keyReducedMotion, settings.reducedMotion),

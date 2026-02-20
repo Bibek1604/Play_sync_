@@ -55,7 +55,7 @@ class AccentColorNotifier extends StateNotifier<Color> {
   Future<void> setAccent(Color color) async {
     state = color;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_kAccentKey, color.value);
+    await prefs.setInt(_kAccentKey, color.toARGB32());
   }
 }
 
