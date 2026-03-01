@@ -20,8 +20,9 @@ class ApiClient {
         baseUrl: ApiEndpoints.baseUrl,
         connectTimeout: ApiEndpoints.connectionTimeout,
         receiveTimeout: ApiEndpoints.receiveTimeout,
+        contentType: Headers.jsonContentType,
+        responseType: ResponseType.json,
         headers: {
-          'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
       ),

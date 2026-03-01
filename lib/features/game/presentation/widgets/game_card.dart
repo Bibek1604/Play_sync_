@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_theme.dart';
 import '../../domain/entities/game_entity.dart';
 
-/// Small card displaying a single game in the list.
+/// Professional game card with green theme design.
 class GameCard extends StatelessWidget {
   final GameEntity game;
   final VoidCallback? onTap;
@@ -11,76 +13,115 @@ class GameCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      margin: EdgeInsets.zero,
+      elevation: 1,
+      shadowColor: AppColors.textPrimary.withOpacity(0.08),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        side: BorderSide(color: AppColors.border, width: 1),
+      ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: EdgeInsets.all(AppSpacing.lg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Header: Category icon, title, status
               Row(
                 children: [
                   _CategoryIcon(category: game.category),
-                  const SizedBox(width: 10),
+                  SizedBox(width: AppSpacing.md),
                   Expanded(
-                    child: Text(game.title,
-                        style: tt.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-                        overflow: TextOverflow.ellipsis),
+                    child: Text(
+                      game.title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
                   ),
+                  SizedBox(width: AppSpacing.sm),
                   _StatusChip(status: game.status),
                 ],
               ),
+
+              // Description
               if (game.description.isNotEmpty) ...[
-                const SizedBox(height: 6),
-                Text(game.description,
-                    style: tt.bodySmall?.copyWith(color: cs.onSurface.withValues(alpha: 0.6)),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis),
+                SizedBox(height: AppSpacing.sm),
+                Text(
+                  game.description,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.textSecondary,
+                        height: 1.4,
+                      ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ],
-              const SizedBox(height: 10),
-              Row(
+
+              SizedBox(height: AppSpacing.md),
+
+              // Info row: location/online, players, date
+              Wrap(
+                spacing: AppSpacing.lg,
+                runSpacing: AppSpacing.sm,
                 children: [
-                  Icon(game.isOnline ? Icons.wifi : Icons.location_on_outlined,
-                      size: 14, color: cs.outline),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      game.isOnline ? 'Online' : (game.location ?? 'Location TBD'),
-                      style: tt.labelSmall?.copyWith(color: cs.outline),
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                  _InfoItem(
+                    icon: game.isOnline ? Icons.wifi : Icons.location_on_outlined,
+                    text: game.isOnline ? 'Online' : (game.location ?? 'Location TBD'),
+                    color: AppColors.primary,
                   ),
-                  Icon(Icons.group_outlined, size: 14, color: cs.outline),
-                  const SizedBox(width: 4),
-                  Text('${game.currentPlayers}/${game.maxPlayers}',
-                      style: tt.labelSmall?.copyWith(
-                          color: game.isFull ? cs.error : cs.outline)),
-                  const SizedBox(width: 12),
-                  Icon(Icons.calendar_today_outlined, size: 14, color: cs.outline),
-                  const SizedBox(width: 4),
-                  Text(_formatDate(game.scheduledAt),
-                      style: tt.labelSmall?.copyWith(color: cs.outline)),
+                  _InfoItem(
+                    icon: Icons.group_outlined,
+                    text: '${game.currentPlayers}/${game.maxPlayers}',
+                    color: game.isFull ? AppColors.error : AppColors.textSecondary,
+                  ),
+                  _InfoItem(
+                    icon: Icons.calendar_today_outlined,
+                    text: _formatDate(game.scheduledAt),
+                    color: AppColors.textSecondary,
+                  ),
                 ],
               ),
+
+              // Join button (if game is not full and upcoming)
               if (!game.isFull &&
                   game.status == GameStatus.upcoming &&
                   onJoin != null) ...[
-                const SizedBox(height: 10),
+                SizedBox(height: AppSpacing.md),
                 SizedBox(
                   width: double.infinity,
-                  child: FilledButton.tonal(
+                  height: 40,
+                  child: ElevatedButton(
                     onPressed: onJoin,
-                    style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 8)),
-                    child: Text('Join · ${game.spotsLeft} spots left',
-                        style: const TextStyle(fontSize: 13)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.textOnPrimary,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.login, size: 18),
+                        SizedBox(width: AppSpacing.sm),
+                        Text(
+                          'Join • ${game.spotsLeft} spots left',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -96,14 +137,57 @@ class GameCard extends StatelessWidget {
     final diff = d.difference(now);
     if (diff.inDays == 0) {
       final h = diff.inHours;
-      return h <= 0 ? 'Now' : 'In ${h}h';
+      if (h <= 0) return 'Starting now';
+      if (h < 2) return 'In ${diff.inMinutes}min';
+      return 'In ${h}h';
     }
     if (diff.inDays == 1) return 'Tomorrow';
-    if (diff.inDays < 0) return '${-diff.inDays}d ago';
-    return 'In ${diff.inDays}d';
+    if (diff.inDays < 0) {
+      final daysAgo = -diff.inDays;
+      return daysAgo == 1 ? 'Yesterday' : '$daysAgo days ago';
+    }
+    if (diff.inDays < 7) return 'In ${diff.inDays} days';
+    return _shortDate(d);
+  }
+
+  String _shortDate(DateTime d) {
+    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${months[d.month - 1]} ${d.day}';
   }
 }
 
+/// Info item widget for location, players, date
+class _InfoItem extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final Color color;
+
+  const _InfoItem({
+    required this.icon,
+    required this.text,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: color),
+        SizedBox(width: AppSpacing.xs),
+        Text(
+          text,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: color,
+                fontWeight: FontWeight.w500,
+              ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Category icon with professional design
 class _CategoryIcon extends StatelessWidget {
   final GameCategory category;
   const _CategoryIcon({required this.category});
@@ -121,41 +205,49 @@ class _CategoryIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 36,
-      height: 36,
+      width: 44,
+      height: 44,
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primaryContainer,
-        borderRadius: BorderRadius.circular(8),
+        color: AppColors.primaryWithOpacity(0.12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
-      child: Icon(icon, size: 20, color: Theme.of(context).colorScheme.onPrimaryContainer),
+      child: Icon(icon, size: 22, color: AppColors.primary),
     );
   }
 }
 
+/// Status chip with color-coded design
 class _StatusChip extends StatelessWidget {
   final GameStatus status;
   const _StatusChip({required this.status});
 
   @override
   Widget build(BuildContext context) {
-    final (label, color) = switch (status) {
-      GameStatus.upcoming => ('Soon', Colors.blue),
-      GameStatus.live => ('LIVE', Colors.red),
-      GameStatus.completed => ('Done', Colors.grey),
-      GameStatus.cancelled => ('Off', Colors.orange),
+    final (label, bgColor, textColor) = switch (status) {
+      GameStatus.upcoming => ('Upcoming', AppColors.info.withOpacity(0.12), AppColors.info),
+      GameStatus.live => ('LIVE', AppColors.error.withOpacity(0.12), AppColors.error),
+      GameStatus.completed => ('Completed', AppColors.textTertiary.withOpacity(0.12), AppColors.textSecondary),
+      GameStatus.cancelled => ('Cancelled', AppColors.warning.withOpacity(0.12), AppColors.warning),
     };
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(8),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
       ),
-      child: Text(label,
-          style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: color,
-              letterSpacing: 0.4)),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: textColor,
+          letterSpacing: 0.5,
+        ),
+      ),
     );
   }
 }
