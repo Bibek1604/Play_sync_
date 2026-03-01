@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/leaderboard_entry.dart';
-import '../../../../app/theme/app_colors.dart';
-import 'streak_badge.dart';
+import '../../../../core/constants/app_colors.dart';
 
 /// Card showing the current user's own rank and stats in the leaderboard.
 class MyRankCard extends StatelessWidget {
@@ -18,21 +17,21 @@ class MyRankCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppColors.emerald500.withValues(alpha: 0.8), AppColors.emerald500.withValues(alpha: 0.4)],
+          colors: [AppColors.primary.withValues(alpha: 0.8), AppColors.primary.withValues(alpha: 0.4)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: AppColors.emerald500.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4))],
       ),
       child: Row(
         children: [
           CircleAvatar(
             radius: 28,
-            backgroundImage: entry.profileImageUrl != null ? NetworkImage(entry.profileImageUrl!) : null,
+            backgroundImage: entry.avatar != null && entry.avatar!.isNotEmpty ? NetworkImage(entry.avatar!) : null,
             backgroundColor: Colors.white.withValues(alpha: 0.3),
-            child: entry.profileImageUrl == null
-                ? Text(entry.username[0].toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 20))
+            child: entry.avatar == null || entry.avatar!.isEmpty
+                ? Text(entry.initials, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 20))
                 : null,
           ),
           const SizedBox(width: 12),
@@ -45,18 +44,18 @@ class MyRankCard extends StatelessWidget {
                   children: [
                     Text('#${entry.rank}', style: theme.textTheme.headlineSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
                     const SizedBox(width: 8),
-                    StreakBadge(streak: entry.currentStreak),
+                    Text('Lvl ${entry.level}', style: theme.textTheme.labelSmall?.copyWith(color: Colors.white70)),
                   ],
                 ),
-                Text(entry.username, style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70)),
+                Text(entry.fullName, style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70)),
               ],
             ),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text('${entry.totalPoints}', style: theme.textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
-              Text('points', style: theme.textTheme.labelSmall?.copyWith(color: Colors.white60)),
+              Text('${entry.xp}', style: theme.textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
+              Text('XP', style: theme.textTheme.labelSmall?.copyWith(color: Colors.white60)),
               const SizedBox(height: 4),
               Text('${(entry.winRate * 100).toStringAsFixed(0)}% WR', style: theme.textTheme.labelSmall?.copyWith(color: Colors.white70)),
             ],

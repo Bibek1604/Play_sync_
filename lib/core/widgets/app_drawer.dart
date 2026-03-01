@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/routes/app_routes.dart';
+import '../../core/constants/app_colors.dart';
 import '../../features/auth/presentation/providers/auth_notifier.dart';
+import '../../features/profile/presentation/viewmodel/profile_notifier.dart';
 
 /// Side drawer widget shown on demand from any authenticated screen.
 class AppDrawer extends ConsumerWidget {
@@ -11,103 +13,160 @@ class AppDrawer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authNotifierProvider);
+    final profileState = ref.watch(profileNotifierProvider);
     final user = authState.user;
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
+
+    // Prefer latest profile data; fall back to auth cache
+    final fullName = profileState.profile?.fullName
+        ?? user?.fullName
+        ?? '';
+    final email = profileState.profile?.email
+        ?? user?.email
+        ?? '';
+    final avatarUrl = profileState.profile?.avatar;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
+      backgroundColor: isDark ? AppColors.backgroundDark : Colors.white,
+      child: Column(
         children: [
           // ── Header ──────────────────────────────────────────────────────
-          DrawerHeader(
-            decoration: BoxDecoration(color: cs.primary),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(20, 52, 20, 24),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [AppColors.primary, AppColors.primaryDark],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 CircleAvatar(
-                  radius: 28,
-                  backgroundColor: cs.onPrimary.withValues(alpha: 0.2),
-                  child: Icon(Icons.person_rounded,
-                      size: 32, color: cs.onPrimary),
+                  radius: 30,
+                  backgroundColor: Colors.white.withValues(alpha: 0.2),
+                  backgroundImage: avatarUrl != null && avatarUrl.isNotEmpty
+                      ? NetworkImage(avatarUrl)
+                      : null,
+                  child: avatarUrl == null || avatarUrl.isEmpty
+                      ? Text(
+                          fullName.isNotEmpty ? fullName[0].toUpperCase() : '?',
+                          style: const TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        )
+                      : null,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 Text(
-                  user?.fullName ?? user?.email ?? 'Gamer',
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(color: cs.onPrimary),
+                  fullName.isNotEmpty ? fullName : 'Player',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                if (user?.email != null)
+                if (email.isNotEmpty)
                   Text(
-                    user!.email,
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: cs.onPrimary.withValues(alpha: 0.7)),
+                    email,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.75),
+                      fontSize: 13,
+                    ),
                   ),
               ],
             ),
           ),
 
           // ── Nav Items ───────────────────────────────────────────────────
-          _DrawerItem(
-            icon: Icons.home_rounded,
-            label: 'Home',
-            onTap: () => _navigate(context, AppRoutes.dashboard),
-          ),
-          _DrawerItem(
-            icon: Icons.sports_esports_rounded,
-            label: 'Available Games',
-            onTap: () => _navigate(context, AppRoutes.availableGames),
-          ),
-          _DrawerItem(
-            icon: Icons.leaderboard_rounded,
-            label: 'Rankings',
-            onTap: () => _navigate(context, AppRoutes.rankings),
-          ),
-          _DrawerItem(
-            icon: Icons.chat_bubble_rounded,
-            label: 'Chat',
-            onTap: () => _navigate(context, AppRoutes.chat),
-          ),
-          _DrawerItem(
-            icon: Icons.history_rounded,
-            label: 'Game History',
-            onTap: () => _navigate(context, AppRoutes.gameHistory),
-          ),
-          _DrawerItem(
-            icon: Icons.notifications_rounded,
-            label: 'Notifications',
-            onTap: () => _navigate(context, AppRoutes.notifications),
-          ),
-          _DrawerItem(
-            icon: Icons.person_rounded,
-            label: 'Profile',
-            onTap: () => _navigate(context, AppRoutes.profile),
-          ),
-          _DrawerItem(
-            icon: Icons.settings_rounded,
-            label: 'Settings',
-            onTap: () => _navigate(context, AppRoutes.settings),
-          ),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              children: [
+                _DrawerItem(
+                  icon: Icons.home_rounded,
+                  label: 'Home',
+                  isDark: isDark,
+                  onTap: () => _navigate(context, AppRoutes.dashboard),
+                ),
+                _DrawerItem(
+                  icon: Icons.sports_esports_rounded,
+                  label: 'Browse Games',
+                  isDark: isDark,
+                  onTap: () => _navigate(context, AppRoutes.game),
+                ),
+                _DrawerItem(
+                  icon: Icons.wifi_off_rounded,
+                  label: 'Offline Games',
+                  isDark: isDark,
+                  onTap: () => _navigate(context, AppRoutes.offlineGames),
+                ),
+                _DrawerItem(
+                  icon: Icons.wifi_rounded,
+                  label: 'Online Games',
+                  isDark: isDark,
+                  onTap: () => _navigate(context, AppRoutes.onlineGames),
+                ),
+                _DrawerItem(
+                  icon: Icons.leaderboard_rounded,
+                  label: 'Leaderboard',
+                  isDark: isDark,
+                  onTap: () => _navigate(context, AppRoutes.rankings),
+                ),
+                _DrawerItem(
+                  icon: Icons.history_rounded,
+                  label: 'Game History',
+                  isDark: isDark,
+                  onTap: () => _navigate(context, AppRoutes.gameHistory),
+                ),
+                _DrawerItem(
+                  icon: Icons.notifications_rounded,
+                  label: 'Notifications',
+                  isDark: isDark,
+                  onTap: () => _navigate(context, AppRoutes.notifications),
+                ),
+                _DrawerItem(
+                  icon: Icons.person_rounded,
+                  label: 'Profile',
+                  isDark: isDark,
+                  onTap: () => _navigate(context, AppRoutes.profile),
+                ),
+                _DrawerItem(
+                  icon: Icons.settings_rounded,
+                  label: 'Settings',
+                  isDark: isDark,
+                  onTap: () => _navigate(context, AppRoutes.settings),
+                ),
 
-          const Divider(),
+                Divider(
+                  color: isDark ? Colors.grey[800] : Colors.grey.shade200,
+                  height: 24,
+                ),
 
-          // ── Logout ──────────────────────────────────────────────────────
-          _DrawerItem(
-            icon: Icons.logout_rounded,
-            label: 'Logout',
-            color: theme.colorScheme.error,
-            onTap: () async {
-              Navigator.pop(context);
-              await ref.read(authNotifierProvider.notifier).logout();
-              if (context.mounted) {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  AppRoutes.login,
-                  (r) => false,
-                );
-              }
-            },
+                // ── Logout ────────────────────────────────────────────────
+                _DrawerItem(
+                  icon: Icons.logout_rounded,
+                  label: 'Logout',
+                  color: Colors.red,
+                  isDark: isDark,
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await ref.read(authNotifierProvider.notifier).logout();
+                    if (context.mounted) {
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        AppRoutes.login,
+                        (r) => false,
+                      );
+                    }
+                  },
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -115,33 +174,42 @@ class AppDrawer extends ConsumerWidget {
   }
 
   void _navigate(BuildContext context, String route) {
-    Navigator.pop(context); // close drawer
+    Navigator.pop(context);
     Navigator.pushNamed(context, route);
   }
 }
 
 class _DrawerItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color? color;
+  final bool isDark;
+  final VoidCallback onTap;
+
   const _DrawerItem({
     required this.icon,
     required this.label,
+    required this.isDark,
     required this.onTap,
     this.color,
   });
 
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final Color? color;
-
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final effectiveColor = color ?? theme.colorScheme.onSurface;
-
+    final itemColor = color ?? (isDark ? AppColors.secondary : AppColors.primaryDark);
     return ListTile(
-      leading: Icon(icon, color: effectiveColor),
-      title: Text(label, style: TextStyle(color: effectiveColor)),
+      leading: Icon(icon, color: itemColor, size: 22),
+      title: Text(
+        label,
+        style: TextStyle(
+          color: itemColor,
+          fontWeight: FontWeight.w500,
+          fontSize: 15,
+        ),
+      ),
       onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
     );
   }
 }

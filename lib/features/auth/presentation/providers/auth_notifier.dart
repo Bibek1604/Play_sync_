@@ -152,13 +152,22 @@ class AuthNotifier extends StateNotifier<AuthState> {
   /// Logout current user
   Future<void> logout() async {
     state = state.copyWith(status: AuthStatus.loading, clearError: true);
-    
+
     final repository = _ref.read(authRepositoryProvider);
     final result = await repository.logout();
-    
+
     result.fold(
       (failure) => state = state.copyWith(status: AuthStatus.error, error: failure.message),
       (_) => state = const AuthState(status: AuthStatus.unauthenticated),
+    );
+  }
+
+  /// Force-logout when the refresh token is expired / invalid.
+  /// Tokens are already cleared by [ApiClient] before this is called.
+  void forceLogout() {
+    state = const AuthState(
+      status: AuthStatus.unauthenticated,
+      error: 'Session expired. Please login again.',
     );
   }
 }

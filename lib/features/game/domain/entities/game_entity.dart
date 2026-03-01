@@ -1,78 +1,198 @@
 import 'package:equatable/equatable.dart';
 
-enum GameStatus { upcoming, live, completed, cancelled }
+/// Backend game statuses
+enum GameStatus { OPEN, FULL, ENDED, CANCELLED }
 
-enum GameCategory { football, basketball, cricket, tennis, badminton, chess, other }
+/// Backend participant statuses
+enum ParticipantStatus { ACTIVE, LEFT, REMOVED, BANNED }
+
+/// A single participant in a game
+class GameParticipant extends Equatable {
+  final String oderId;
+  final String displayName;
+  final String? avatar;
+  final ParticipantStatus status;
+  final DateTime joinedAt;
+
+  const GameParticipant({
+    required this.oderId,
+    required this.displayName,
+    this.avatar,
+    this.status = ParticipantStatus.ACTIVE,
+    required this.joinedAt,
+  });
+
+  factory GameParticipant.fromJson(Map<String, dynamic> json) {
+    final user = json['userId'];
+    String oderId;
+    String displayName;
+    String? avatar;
+    if (user is Map<String, dynamic>) {
+      oderId = user['_id'] as String? ?? user['id'] as String? ?? '';
+      displayName = user['fullName'] as String? ?? user['email'] as String? ?? '';
+      avatar = user['avatar'] as String?;
+    } else {
+      oderId = user?.toString() ?? '';
+      displayName = '';
+    }
+    return GameParticipant(
+      oderId: oderId,
+      displayName: displayName,
+      avatar: avatar,
+      status: ParticipantStatus.values.firstWhere(
+        (s) => s.name == (json['status'] as String? ?? 'ACTIVE'),
+        orElse: () => ParticipantStatus.ACTIVE,
+      ),
+      joinedAt: DateTime.tryParse(json['joinedAt']?.toString() ?? '') ?? DateTime.now(),
+    );
+  }
+
+  @override
+  List<Object?> get props => [oderId, status];
+}
+
+/// GeoJSON point
+class GeoLocation extends Equatable {
+  final double longitude;
+  final double latitude;
+  final String? address;
+
+  const GeoLocation({required this.longitude, required this.latitude, this.address});
+
+  factory GeoLocation.fromJson(Map<String, dynamic> json) {
+    final coords = json['coordinates'] as List?;
+    return GeoLocation(
+      longitude: (coords != null && coords.length >= 2) ? (coords[0] as num).toDouble() : 0,
+      latitude: (coords != null && coords.length >= 2) ? (coords[1] as num).toDouble() : 0,
+      address: json['address'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'type': 'Point',
+    'coordinates': [longitude, latitude],
+    if (address != null) 'address': address,
+  };
+
+  @override
+  List<Object?> get props => [longitude, latitude];
+}
 
 /// Core game entity matching the backend Game model.
 class GameEntity extends Equatable {
   final String id;
   final String title;
   final String description;
-  final GameCategory category;
+  final String sport;
+  final String category; // "ONLINE" | "OFFLINE"
   final GameStatus status;
-  final String hostId;
-  final String hostName;
+  final String creatorId;
+  final String creatorName;
+  final String? creatorAvatar;
   final int maxPlayers;
   final int currentPlayers;
-  final DateTime scheduledAt;
-  final String? location;
-  final bool isOnline;
-  final List<String> participantIds;
-  final String? thumbnailUrl;
-  final int entryFee;
-  final int prizePool;
+  final DateTime? startTime;
+  final DateTime? endTime;
+  final GeoLocation? location;
+  final List<String> tags;
+  final List<GameParticipant> participants;
+  final String? image;
+  final DateTime createdAt;
+  final DateTime updatedAt;
 
   const GameEntity({
     required this.id,
     required this.title,
-    required this.description,
-    required this.category,
-    required this.status,
-    required this.hostId,
-    required this.hostName,
-    required this.maxPlayers,
-    required this.currentPlayers,
-    required this.scheduledAt,
+    this.description = '',
+    this.sport = '',
+    this.category = 'OFFLINE',
+    this.status = GameStatus.OPEN,
+    required this.creatorId,
+    this.creatorName = '',
+    this.creatorAvatar,
+    this.maxPlayers = 2,
+    this.currentPlayers = 0,
+    this.startTime,
+    this.endTime,
     this.location,
-    this.isOnline = false,
-    required this.participantIds,
-    this.thumbnailUrl,
-    this.entryFee = 0,
-    this.prizePool = 0,
+    this.tags = const [],
+    this.participants = const [],
+    this.image,
+    required this.createdAt,
+    required this.updatedAt,
   });
 
+  bool get isOnline => category == 'ONLINE';
+  bool get isOffline => category == 'OFFLINE';
   bool get isFull => currentPlayers >= maxPlayers;
-  bool get hasStarted => status == GameStatus.live || status == GameStatus.completed;
+  bool get isOpen => status == GameStatus.OPEN;
+  bool get isEnded => status == GameStatus.ENDED;
+  bool get isCancelled => status == GameStatus.CANCELLED;
   int get spotsLeft => maxPlayers - currentPlayers;
 
+  bool isParticipant(String oderId) =>
+      participants.any((p) => p.oderId == oderId && p.status == ParticipantStatus.ACTIVE);
+
+  bool isCreator(String oderId) => creatorId == oderId;
+
   factory GameEntity.fromJson(Map<String, dynamic> json) {
+    // Parse creator (may be populated object or plain string id)
+    final creator = json['creatorId'];
+    String creatorId;
+    String creatorName;
+    String? creatorAvatar;
+    if (creator is Map<String, dynamic>) {
+      creatorId = creator['_id'] as String? ?? creator['id'] as String? ?? '';
+      creatorName = creator['fullName'] as String? ?? creator['email'] as String? ?? '';
+      creatorAvatar = creator['avatar'] as String?;
+    } else {
+      creatorId = creator?.toString() ?? '';
+      creatorName = json['creatorName'] as String? ?? '';
+    }
+
+    final rawParticipants = json['participants'] as List? ?? [];
+    final parsedParticipants = rawParticipants
+        .map((p) => GameParticipant.fromJson(p as Map<String, dynamic>))
+        .toList();
+
     return GameEntity(
-      id: json['_id'] as String? ?? json['id'] as String,
-      title: json['title'] as String,
+      id: json['_id'] as String? ?? json['id'] as String? ?? '',
+      title: json['title'] as String? ?? '',
       description: json['description'] as String? ?? '',
-      category: GameCategory.values.firstWhere(
-        (c) => c.name == (json['category'] as String? ?? 'other'),
-        orElse: () => GameCategory.other,
-      ),
+      sport: json['sport'] as String? ?? '',
+      category: json['category'] as String? ?? 'OFFLINE',
       status: GameStatus.values.firstWhere(
-        (s) => s.name == (json['status'] as String? ?? 'upcoming'),
-        orElse: () => GameStatus.upcoming,
+        (s) => s.name == (json['status'] as String? ?? 'OPEN'),
+        orElse: () => GameStatus.OPEN,
       ),
-      hostId: json['hostId'] as String? ?? '',
-      hostName: json['hostName'] as String? ?? 'Unknown',
+      creatorId: creatorId,
+      creatorName: creatorName,
+      creatorAvatar: creatorAvatar,
       maxPlayers: json['maxPlayers'] as int? ?? 2,
-      currentPlayers: json['currentPlayers'] as int? ?? 0,
-      scheduledAt: DateTime.tryParse(json['scheduledAt'] as String? ?? '') ?? DateTime.now(),
-      location: json['location'] as String?,
-      isOnline: json['isOnline'] as bool? ?? false,
-      participantIds: List<String>.from(json['participantIds'] as List? ?? []),
-      thumbnailUrl: json['thumbnailUrl'] as String?,
-      entryFee: json['entryFee'] as int? ?? 0,
-      prizePool: json['prizePool'] as int? ?? 0,
+      currentPlayers: json['currentPlayers'] as int? ?? parsedParticipants.where((p) => p.status == ParticipantStatus.ACTIVE).length,
+      startTime: DateTime.tryParse(json['startTime']?.toString() ?? ''),
+      endTime: DateTime.tryParse(json['endTime']?.toString() ?? ''),
+      location: json['location'] != null ? GeoLocation.fromJson(json['location'] as Map<String, dynamic>) : null,
+      tags: List<String>.from(json['tags'] as List? ?? []),
+      participants: parsedParticipants,
+      image: json['image'] as String?,
+      createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now(),
+      updatedAt: DateTime.tryParse(json['updatedAt']?.toString() ?? '') ?? DateTime.now(),
     );
   }
 
+  Map<String, dynamic> toCreateJson() => {
+    'title': title,
+    'description': description,
+    'sport': sport,
+    'category': category,
+    'maxPlayers': maxPlayers,
+    if (startTime != null) 'startTime': startTime!.toIso8601String(),
+    if (endTime != null) 'endTime': endTime!.toIso8601String(),
+    if (location != null) 'location': location!.toJson(),
+    if (tags.isNotEmpty) 'tags': tags,
+  };
+
   @override
-  List<Object?> get props => [id, status, currentPlayers];
+  List<Object?> get props => [id, status, currentPlayers, participants];
 }

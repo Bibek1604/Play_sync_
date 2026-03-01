@@ -53,6 +53,7 @@ class ApiEndpoints {
   // ========== PROFILE ENDPOINTS ==========
   static const String getProfile = '/profile';
   static const String updateProfile = '/profile';
+  static String getProfileById(String userId) => '/profile/$userId';
   static const String uploadProfilePicture = '/profile/avatar';
   static const String uploadCoverPicture = '/profile/cover';
   static const String uploadGalleryPictures = '/profile/pictures';
@@ -98,6 +99,9 @@ class ApiEndpoints {
   static const String getHistory = '/history';
   static const String getHistoryStats = '/history/stats';
   static const String getHistoryCount = '/history/count';
+
+  // ========== SCORECARD ENDPOINTS ==========
+  static const String getMyScorecard = '/users/me/scorecard';
 
   // ========== LEADERBOARD ENDPOINTS ==========
   static const String getLeaderboard = '/leaderboard';

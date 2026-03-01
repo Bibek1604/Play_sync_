@@ -1,110 +1,73 @@
 import 'package:flutter/material.dart';
 
-/// PlaySync Design System - Professional Green Theme
-/// Strict color palette for consistent UI across the application
+/// PlaySync Design System — Premium 2026 Light Mode Color Kit
+/// Inspired by Figma, Linear, Slack: minimal, high-contrast, trustworthy.
 class AppColors {
-  // ============================================
-  // PRIMARY BACKGROUNDS
-  // ============================================
-  /// Pure white background for main surfaces
-  static const Color background = Color(0xFFFFFFFF);
+  AppColors._();
 
-  /// Soft light gray for cards, sections, and secondary surfaces
-  static const Color surfaceLight = Color(0xFFF8F9FA);
+  // ── Backgrounds ──────────────────────────────────────────────────────────
+  /// Main scaffold — very light cool-gray/white
+  static const Color background    = Color(0xFFF8FAFC);
+  /// Pure white for cards and elevated surfaces
+  static const Color surface       = Color(0xFFFFFFFF);
+  /// Off-white tertiary surface (input fills, list tiles)
+  static const Color surfaceLight  = Color(0xFFF1F5F9);
+  /// Muted surface (skeleton loaders, disabled areas)
+  static const Color surfaceMuted  = Color(0xFFE2E8F0);
 
-  /// Tertiary background for subtle contrast
-  static const Color surfaceMuted = Color(0xFFF3F4F6);
+  // ── Borders & Dividers ───────────────────────────────────────────────────
+  static const Color border        = Color(0xFFE2E8F0);
+  static const Color borderSubtle  = Color(0xFFF1F5F9);
 
-  // ============================================
-  // PRIMARY ACCENT COLOR - GREEN
-  // ============================================
-  /// Main brand green - used for primary buttons, icons, and focus states
-  static const Color primary = Color(0xFF16A34A);
+  // ── Primary — Indigo ─────────────────────────────────────────────────────
+  static const Color primary       = Color(0xFF6366F1);   // indigo-500
+  static const Color primaryDark   = Color(0xFF4F46E5);   // indigo-600
+  static const Color primaryLight  = Color(0xFFEEF2FF);   // indigo-50
+  static const Color primaryAlt    = Color(0xFF818CF8);   // indigo-400
 
-  /// Alternative primary green shade
-  static const Color primaryAlt = Color(0xFF22C55E);
-
-  /// Hover/pressed state for green elements - darker shade
-  static const Color primaryDark = Color(0xFF15803D);
-
-  /// Light disabled/inactive green state
-  static const Color primaryLight = Color(0xDCEDC5C4);
-
-  // ============================================
-  // TEXT COLORS
-  // ============================================
-  /// Primary text color - dark charcoal for headings and body text
-  static const Color textPrimary = Color(0xFF1F2937);
-
-  /// Secondary text - medium gray for subheadings and hints
-  static const Color textSecondary = Color(0xFF6B7280);
-
-  /// Tertiary text - light gray for disabled or less important text
-  static const Color textTertiary = Color(0xFF9CA3AF);
-
-  /// Text on colored backgrounds (contrasting white)
+  // ── Text ─────────────────────────────────────────────────────────────────
+  static const Color textPrimary   = Color(0xFF0F172A);   // slate-900
+  static const Color textSecondary = Color(0xFF64748B);   // slate-500
+  static const Color textTertiary  = Color(0xFF94A3B8);   // slate-400
   static const Color textOnPrimary = Color(0xFFFFFFFF);
 
-  // ============================================
-  // BORDER & DIVIDER
-  // ============================================
-  /// Light gray border for inputs, cards, and dividers
-  static const Color border = Color(0xFFE5E7EB);
+  // ── Semantic ─────────────────────────────────────────────────────────────
+  /// Emerald — success, online, joined
+  static const Color success       = Color(0xFF10B981);
+  static const Color successLight  = Color(0xFFD1FAE5);
+  static const Color successDark   = Color(0xFF059669);
+  /// Orange — notifications, warnings, pending
+  static const Color warning       = Color(0xFFF97316);
+  static const Color warningLight  = Color(0xFFFFEDD5);
+  static const Color warningDark   = Color(0xFFEA580C);
+  /// Red — errors, destructive
+  static const Color error         = Color(0xFFEF4444);
+  static const Color errorLight    = Color(0xFFFEE2E2);
+  /// Blue — info, links
+  static const Color info          = Color(0xFF3B82F6);
+  static const Color infoLight     = Color(0xFFDBEAFE);
 
-  /// Subtle border for less prominent divisions
-  static const Color borderSubtle = Color(0xFFF3F4F6);
+  // ── Kept for backwards-compat ─────────────────────────────────────────────
+  static const Color secondary         = Color(0xFFF8FAFC);
+  static const Color secondaryDark     = Color(0xFF6366F1);
+  static const Color textSecondaryDark = Color(0xFF94A3B8);
+  static const Color backgroundDark    = Color(0xFF0F172A);
+  static const Color cardDark          = Color(0xFF1E293B);
 
-  // ============================================
-  // SEMANTIC COLORS
-  // ============================================
-  /// Error/negative actions - red
-  static const Color error = Color(0xFFDC2626);
+  // ── Overlay & disabled ───────────────────────────────────────────────────
+  static const Color disabled      = Color(0xFFCBD5E1);
+  static const Color overlay       = Color(0x80000000);
+  static const Color overlayLight  = Color(0x0A000000);
 
-  /// Error light background
-  static const Color errorLight = Color(0xFFFEE2E2);
+  // ── Rank colors ──────────────────────────────────────────────────────────
+  static const Color rankGold   = Color(0xFFF59E0B);
+  static const Color rankSilver = Color(0xFF94A3B8);
+  static const Color rankBronze = Color(0xFFB45309);
 
-  /// Success state - green
-  static const Color success = Color(0xFF059669);
+  // ── Helpers ──────────────────────────────────────────────────────────────
+  static Color primaryWithOpacity(double opacity) =>
+      primary.withValues(alpha: opacity);
 
-  /// Success light background
-  static const Color successLight = Color(0xEDF2F7);
-
-  /// Warning/caution - amber
-  static const Color warning = Color(0xFFF59E0B);
-
-  /// Warning light background
-  static const Color warningLight = Color(0xFFFEF3C7);
-
-  /// Info/notice - blue
-  static const Color info = Color(0xFF0EA5E9);
-
-  /// Info light background
-  static const Color infoLight = Color(0xFFF0F9FF);
-
-  // ============================================
-  // DISABLE & OVERLAY
-  // ============================================
-  /// Disabled element color
-  static const Color disabled = Color(0xFFD1D5DB);
-
-  /// Semi-transparent overlay for modals
-  static const Color overlay = Color(0x99000000);
-
-  /// Light overlay for hover effects
-  static const Color overlayLight = Color(0x08000000);
-
-  // ============================================
-  // HELPER METHODS
-  // ============================================
-
-  /// Get green color with custom opacity (0-1)
-  static Color primaryWithOpacity(double opacity) {
-    return primary.withValues(alpha: opacity);
-  }
-
-  /// Get text color adjusted for theme brightness
-  static Color textForBackground(Color background) {
-    final luminance = background.value >> 24;
-    return luminance > 128 ? textPrimary : textOnPrimary;
-  }
+  static Color withOpacity(Color c, double opacity) =>
+      c.withValues(alpha: opacity);
 }

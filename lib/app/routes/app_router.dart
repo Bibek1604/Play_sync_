@@ -9,6 +9,7 @@ import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/settings/presentation/pages/theme_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/game/presentation/pages/game_page.dart';
+import '../../features/game/presentation/pages/game_detail_page.dart';
 import '../../features/game/presentation/pages/available_games_page.dart';
 import '../../features/game/presentation/pages/online_games_page.dart';
 import '../../features/game/presentation/pages/offline_games_page.dart';
@@ -92,6 +93,15 @@ class AppRouter {
       case AppRoutes.offlineGames:
         return _buildRoute(
           const AuthGuard(child: OfflineGamesPage()),
+          settings,
+        );
+
+      // ── Game Detail ─────────────────────────────────────────────────────
+      case AppRoutes.gameDetail:
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        final gameId = args['gameId'] as String? ?? '';
+        return _buildRoute(
+          AuthGuard(child: GameDetailPage(gameId: gameId)),
           settings,
         );
 

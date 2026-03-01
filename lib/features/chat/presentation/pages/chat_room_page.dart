@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/chat_notifier.dart';
 import '../../domain/entities/chat_message.dart';
+import '../../../../core/widgets/app_drawer.dart';
 
 /// Full chat room screen with message list and input bar.
 class ChatRoomPage extends ConsumerStatefulWidget {
@@ -51,6 +52,7 @@ class _ChatRoomPageState extends ConsumerState<ChatRoomPage> {
     );
 
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(
         titleSpacing: 0,
         title: Row(
@@ -93,6 +95,13 @@ class _ChatRoomPageState extends ConsumerState<ChatRoomPage> {
           IconButton(icon: const Icon(Icons.call_outlined), onPressed: () {}),
           IconButton(
               icon: const Icon(Icons.more_vert), onPressed: () {}),
+          Builder(
+            builder: (ctx) => IconButton(
+              icon: const Icon(Icons.menu_rounded),
+              tooltip: 'Menu',
+              onPressed: () => Scaffold.of(ctx).openDrawer(),
+            ),
+          ),
         ],
       ),
       body: Column(

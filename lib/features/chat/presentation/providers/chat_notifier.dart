@@ -6,6 +6,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'dart:convert';
 import '../../domain/entities/chat_message.dart';
 import '../../../../../core/api/api_endpoints.dart';
+import '../../../auth/presentation/view_model/auth_viewmodel.dart';
 
 // ─── State ───────────────────────────────────────────────────────────────────
 
@@ -68,10 +69,11 @@ class ChatState extends Equatable {
 
 class ChatNotifier extends StateNotifier<ChatState> {
   final Dio _dio;
+  final String _myId;
   WebSocketChannel? _channel;
   StreamSubscription? _wsSub;
 
-  ChatNotifier(this._dio) : super(const ChatState()) {
+  ChatNotifier(this._dio, this._myId) : super(const ChatState()) {
     fetchRooms();
   }
 
@@ -81,7 +83,18 @@ class ChatNotifier extends StateNotifier<ChatState> {
     state = state.copyWith(isLoadingRooms: true, clearError: true);
     try {
       final resp = await _dio.get('${ApiEndpoints.baseUrl}/chat/rooms');
-      final list = (resp.data as List? ?? [])
+      // Backend may wrap as { data: [...] } or return a plain list
+      final raw = resp.data;
+      List<dynamic> rawList;
+      if (raw is List) {
+        rawList = raw;
+      } else if (raw is Map<String, dynamic>) {
+        final inner = raw['data'];
+        rawList = inner is List ? inner : (inner is Map ? (inner['rooms'] as List? ?? []) : []);
+      } else {
+        rawList = [];
+      }
+      final list = rawList
           .map((j) => ChatRoom.fromJson(j as Map<String, dynamic>))
           .toList();
       state = state.copyWith(rooms: list, isLoadingRooms: false);
@@ -107,8 +120,20 @@ class ChatNotifier extends StateNotifier<ChatState> {
   Future<void> _loadMessages(String roomId) async {
     try {
       final resp = await _dio.get('${ApiEndpoints.baseUrl}/chat/rooms/$roomId/messages');
-      final list = (resp.data as List? ?? [])
-          .map((j) => ChatMessage.fromJson(j as Map<String, dynamic>))
+      final raw = resp.data;
+      List<dynamic> rawList;
+      if (raw is List) {
+        rawList = raw;
+      } else if (raw is Map<String, dynamic>) {
+        final inner = raw['data'];
+        rawList = inner is List ? inner : (inner is Map ? (inner['messages'] as List? ?? []) : []);
+      } else {
+        rawList = [];
+      }
+      final list = rawList
+          .map((j) => ChatMessage.fromJson(
+              j as Map<String, dynamic>,
+              currentUserId: _myId.isNotEmpty ? _myId : null))
           .toList();
       final updated = Map<String, List<ChatMessage>>.from(state.messagesByRoom)
         ..[roomId] = list;
@@ -133,7 +158,11 @@ class ChatNotifier extends StateNotifier<ChatState> {
       _wsSub = _channel!.stream.listen(
         (raw) {
           final data = jsonDecode(raw as String) as Map<String, dynamic>;
-          final msg = ChatMessage.fromJson(data);
+          final msg = ChatMessage.fromJson(
+              data,
+              currentUserId: _myId.isNotEmpty ? _myId : null);
+          // Skip own echo — optimistic message already shown on the right.
+          if (msg.isFromMe) return;
           _appendMessage(msg.roomId, msg);
         },
         onError: (_) => state = state.copyWith(isConnected: false),
@@ -223,5 +252,8 @@ class ChatNotifier extends StateNotifier<ChatState> {
 final _chatDioProvider = Provider<Dio>((ref) => Dio());
 
 final chatProvider = StateNotifierProvider<ChatNotifier, ChatState>(
-  (ref) => ChatNotifier(ref.watch(_chatDioProvider)),
+  (ref) {
+    final myId = ref.watch(authViewModelProvider).user?.userId ?? '';
+    return ChatNotifier(ref.watch(_chatDioProvider), myId);
+  },
 );

@@ -1,37 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/leaderboard_entry.dart';
 import '../../domain/value_objects/leaderboard_filter.dart';
+import '../../../../core/api/api_client.dart';
+import '../../../../core/api/api_endpoints.dart';
+import '../../../auth/presentation/providers/auth_notifier.dart';
 
-// Simulated repository — replace with actual remote datasource
-class LeaderboardRepository {
-  Future<List<LeaderboardEntry>> fetchLeaderboard(LeaderboardFilter filter) async {
-    await Future.delayed(const Duration(milliseconds: 800));
-    // Mock data — replace with real API call
-    return List.generate(20, (i) {
-      return LeaderboardEntry(
-        userId: 'user_$i',
-        username: 'Player ${i + 1}',
-        rank: i + 1,
-        totalPoints: 5000 - (i * 200),
-        gamesPlayed: 50 - i,
-        gamesWon: 30 - i,
-        winRate: (30 - i) / (50 - i),
-        currentStreak: i < 3 ? 5 - i : 0,
-        isCurrentUser: i == 4,
-      );
-    });
-  }
-}
+// ── State ─────────────────────────────────────────────────────────────────────
 
-final leaderboardRepoProvider = Provider((ref) => LeaderboardRepository());
-
-// State
 class LeaderboardState {
   final List<LeaderboardEntry> entries;
   final LeaderboardFilter filter;
   final bool isLoading;
   final String? error;
   final bool hasMore;
+  final int totalEntries;
 
   const LeaderboardState({
     this.entries = const [],
@@ -39,6 +21,7 @@ class LeaderboardState {
     this.isLoading = false,
     this.error,
     this.hasMore = true,
+    this.totalEntries = 0,
   });
 
   LeaderboardState copyWith({
@@ -46,51 +29,112 @@ class LeaderboardState {
     LeaderboardFilter? filter,
     bool? isLoading,
     String? error,
+    bool clearError = false,
     bool? hasMore,
+    int? totalEntries,
   }) {
     return LeaderboardState(
       entries: entries ?? this.entries,
       filter: filter ?? this.filter,
       isLoading: isLoading ?? this.isLoading,
-      error: error,
+      error: clearError ? null : (error ?? this.error),
       hasMore: hasMore ?? this.hasMore,
+      totalEntries: totalEntries ?? this.totalEntries,
     );
   }
 }
 
-class LeaderboardNotifier extends StateNotifier<LeaderboardState> {
-  final LeaderboardRepository _repo;
+// ── Notifier ──────────────────────────────────────────────────────────────────
 
-  LeaderboardNotifier(this._repo) : super(const LeaderboardState()) {
+class LeaderboardNotifier extends StateNotifier<LeaderboardState> {
+  final ApiClient _apiClient;
+  final String? _currentUserId;
+
+  LeaderboardNotifier(this._apiClient, this._currentUserId)
+      : super(const LeaderboardState()) {
     load();
   }
 
+  /// Fetch leaderboard from backend: GET /leaderboard?page=&limit=&period=
   Future<void> load() async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final entries = await _repo.fetchLeaderboard(state.filter);
-      state = state.copyWith(entries: entries, isLoading: false, hasMore: entries.length >= state.filter.limit);
+      final filter = state.filter;
+      final resp = await _apiClient.get(
+        ApiEndpoints.getLeaderboard,
+        queryParameters: {
+          'page': filter.offset ~/ filter.limit + 1,
+          'limit': filter.limit,
+          if (filter.period == LeaderboardPeriod.monthly) 'period': 'monthly',
+        },
+      );
+
+      final body = resp.data as Map<String, dynamic>;
+      final data = (body['data'] as Map<String, dynamic>?) ?? body;
+      final list = (data['leaderboard'] as List? ?? [])
+          .map((j) => LeaderboardEntry.fromJson(j as Map<String, dynamic>))
+          .toList();
+
+      // Mark current user
+      final entries = list
+          .map((e) => e.userId == _currentUserId
+              ? e.copyWith(isCurrentUser: true)
+              : e)
+          .toList();
+
+      final pagination = data['pagination'] as Map<String, dynamic>? ?? {};
+      final hasNext = pagination['hasNext'] as bool? ?? false;
+      final total = pagination['total'] as int? ?? entries.length;
+
+      state = state.copyWith(
+        entries: entries,
+        isLoading: false,
+        hasMore: hasNext,
+        totalEntries: total,
+      );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
   Future<void> changeFilter(LeaderboardFilter filter) async {
-    state = state.copyWith(filter: filter, entries: [], hasMore: true);
+    state = state.copyWith(filter: filter.copyWith(offset: 0), entries: [], hasMore: true);
     await load();
   }
 
   Future<void> loadMore() async {
     if (state.isLoading || !state.hasMore) return;
     final nextFilter = state.filter.copyWithNextPage();
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, filter: nextFilter);
     try {
-      final more = await _repo.fetchLeaderboard(nextFilter);
+      final resp = await _apiClient.get(
+        ApiEndpoints.getLeaderboard,
+        queryParameters: {
+          'page': nextFilter.offset ~/ nextFilter.limit + 1,
+          'limit': nextFilter.limit,
+          if (nextFilter.period == LeaderboardPeriod.monthly) 'period': 'monthly',
+        },
+      );
+
+      final body = resp.data as Map<String, dynamic>;
+      final data = (body['data'] as Map<String, dynamic>?) ?? body;
+      final list = (data['leaderboard'] as List? ?? [])
+          .map((j) => LeaderboardEntry.fromJson(j as Map<String, dynamic>))
+          .toList();
+
+      final entries = list
+          .map((e) => e.userId == _currentUserId
+              ? e.copyWith(isCurrentUser: true)
+              : e)
+          .toList();
+
+      final pagination = data['pagination'] as Map<String, dynamic>? ?? {};
+      final hasNext = pagination['hasNext'] as bool? ?? false;
+
       state = state.copyWith(
-        entries: [...state.entries, ...more],
-        filter: nextFilter,
+        entries: [...state.entries, ...entries],
         isLoading: false,
-        hasMore: more.length >= nextFilter.limit,
+        hasMore: hasNext,
       );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -98,6 +142,13 @@ class LeaderboardNotifier extends StateNotifier<LeaderboardState> {
   }
 }
 
-final leaderboardProvider = StateNotifierProvider<LeaderboardNotifier, LeaderboardState>((ref) {
-  return LeaderboardNotifier(ref.read(leaderboardRepoProvider));
+// ── Provider ──────────────────────────────────────────────────────────────────
+
+final leaderboardProvider =
+    StateNotifierProvider<LeaderboardNotifier, LeaderboardState>((ref) {
+  final apiClient = ref.watch(apiClientProvider);
+  // Try to get current user ID from auth state
+  final authState = ref.watch(authNotifierProvider);
+  final userId = authState.user?.userId;
+  return LeaderboardNotifier(apiClient, userId);
 });

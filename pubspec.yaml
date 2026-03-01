@@ -77,6 +77,10 @@ dependencies:
   # App Info (version, build number)
   package_info_plus: ^8.0.0
 
+  # Location / GPS
+  geolocator: ^13.0.2
+  geocoding: ^3.0.0
+
   # WebSocket client for chat
   web_socket_channel: ^3.0.1
 

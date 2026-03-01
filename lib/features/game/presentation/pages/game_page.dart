@@ -3,191 +3,609 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/game_entity.dart';
 import '../providers/game_notifier.dart';
 import '../widgets/game_card.dart';
+import '../widgets/create_game_sheet.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_theme.dart';
+import '../../../../core/widgets/app_drawer.dart';
 
-/// Main games listing page with filter tabs and category chips.
+const _sports = [
+  'All', 'Football', 'Basketball', 'Cricket', 'Chess', 'Tennis', 'Badminton', 'Other'
+];
+const _sportIcons = <String, IconData>{
+  'Football':   Icons.sports_soccer,
+  'Basketball': Icons.sports_basketball,
+  'Cricket':    Icons.sports_cricket,
+  'Chess':      Icons.casino_outlined,
+  'Tennis':     Icons.sports_tennis,
+  'Badminton':  Icons.sports_tennis,
+  'Other':      Icons.sports,
+  'All':        Icons.apps,
+};
+
 class GamePage extends ConsumerStatefulWidget {
   const GamePage({super.key});
-
   @override
   ConsumerState<GamePage> createState() => _GamePageState();
 }
 
 class _GamePageState extends ConsumerState<GamePage>
     with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
+  late final TabController _statusTab;
+  String _selectedSport = 'All';
 
   static const _filters = [
     GameFilter.all,
-    GameFilter.upcoming,
-    GameFilter.live,
-    GameFilter.completed,
+    GameFilter.OPEN,
+    GameFilter.FULL,
+    GameFilter.ENDED,
+    GameFilter.CANCELLED,
   ];
-
-  static const _tabLabels = ['All', 'Upcoming', 'Live', 'Done'];
-  static const _categories = [
-    null,
-    GameCategory.football,
-    GameCategory.basketball,
-    GameCategory.cricket,
-    GameCategory.chess,
-    GameCategory.tennis,
-    GameCategory.badminton,
-    GameCategory.other,
-  ];
-  static const _categoryLabels = [
-    'All',
-    '⚽ Football',
-    '🏀 Basketball',
-    '🏏 Cricket',
-    '♟️ Chess',
-    '🎾 Tennis',
-    '🏸 Badminton',
-    'Other',
+  static const _tabLabels = [
+    ('All', Icons.grid_view_rounded),
+    ('Open', Icons.lock_open_rounded),
+    ('Full', Icons.group_rounded),
+    ('Ended', Icons.check_circle_outline),
+    ('Cancelled', Icons.cancel_outlined),
   ];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: _tabLabels.length, vsync: this);
-    _tabController.addListener(() {
-      if (!_tabController.indexIsChanging) {
-        ref.read(gameProvider.notifier).setFilter(_filters[_tabController.index]);
+    _statusTab = TabController(length: _tabLabels.length, vsync: this);
+    _statusTab.addListener(() {
+      if (!_statusTab.indexIsChanging) {
+        ref.read(gameProvider.notifier).setFilter(_filters[_statusTab.index]);
       }
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(gameProvider.notifier).fetchGames(refresh: true);
     });
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
+    _statusTab.dispose();
     super.dispose();
+  }
+
+  void _showCreate(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const CreateGameSheet(),
+    );
+  }
+
+  void _openDetail(BuildContext context, GameEntity game) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _GameDetailSheet(game: game),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(gameProvider);
-    final cs = Theme.of(context).colorScheme;
+
+    final displayed = _selectedSport == 'All'
+        ? state.filteredGames
+        : state.filteredGames.where((g) => g.sport == _selectedSport).toList();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Games'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: _tabLabels.map((l) => Tab(text: l)).toList(),
-          isScrollable: false,
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            tooltip: 'Host a game',
-            onPressed: () => _showCreateGameSheet(context),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Category filter chips
-          SizedBox(
-            height: 48,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              itemCount: _categories.length,
-              itemBuilder: (_, i) {
-                final selected = state.categoryFilter == _categories[i];
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: FilterChip(
-                    label: Text(_categoryLabels[i]),
-                    selected: selected,
-                    onSelected: (_) =>
-                        ref.read(gameProvider.notifier).setCategoryFilter(_categories[i]),
+      backgroundColor: AppColors.background,
+      drawer: const AppDrawer(),
+      body: NestedScrollView(
+        headerSliverBuilder: (context, _) => [
+          // ── Gradient SliverAppBar ──────────────────────────────
+          SliverAppBar(
+            expandedHeight: 130,
+            pinned: true,
+            floating: false,
+            backgroundColor: AppColors.background,
+            surfaceTintColor: Colors.transparent,
+            flexibleSpace: FlexibleSpaceBar(
+              collapseMode: CollapseMode.pin,
+              background: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [AppColors.primary, AppColors.primaryDark],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                );
-              },
+                ),
+                padding: const EdgeInsets.fromLTRB(20, 52, 20, 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          const Text(
+                            'Discover Games',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${state.games.length} game${state.games.length == 1 ? "" : "s"} available',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.8),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    _GradientButton(
+                      icon: Icons.add,
+                      label: 'Host',
+                      onTap: () => _showCreate(context),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            title: Row(
+              children: [
+                const Text(
+                  'Games',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.add_circle_outline),
+                  tooltip: 'Host a game',
+                  onPressed: () => _showCreate(context),
+                ),
+              ],
             ),
           ),
-          // Game list
-          Expanded(
-            child: state.isLoading && state.games.isEmpty
-                ? const Center(child: CircularProgressIndicator())
-                : state.filteredGames.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.sports_esports,
-                                size: 64,
-                                color: cs.outline.withValues(alpha: 0.4)),
-                            const SizedBox(height: 12),
-                            Text('No games found',
-                                style: Theme.of(context).textTheme.bodyLarge),
-                            const SizedBox(height: 8),
-                            TextButton(
-                              onPressed: () => ref
-                                  .read(gameProvider.notifier)
-                                  .fetchGames(refresh: true),
-                              child: const Text('Refresh'),
-                            ),
-                          ],
-                        ),
-                      )
-                    : RefreshIndicator(
-                        onRefresh: () =>
-                            ref.read(gameProvider.notifier).fetchGames(refresh: true),
-                        child: ListView.builder(
-                          itemCount: state.filteredGames.length +
-                              (state.hasMore ? 1 : 0),
-                          itemBuilder: (_, i) {
-                            if (i == state.filteredGames.length) {
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                ref.read(gameProvider.notifier).fetchGames();
-                              });
-                              return const Padding(
-                                padding: EdgeInsets.all(16),
-                                child: Center(
-                                    child: CircularProgressIndicator()),
-                              );
-                            }
-                            final game = state.filteredGames[i];
-                            return GameCard(
-                              game: game,
-                              onTap: () => _openGameDetail(context, game),
-                              onJoin: () =>
-                                  ref.read(gameProvider.notifier).joinGame(game.id),
-                            );
-                          },
+
+          // ── Category cards ─────────────────────────────────────
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                  AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
+              child: Row(
+                children: [
+                  _CategoryCard(
+                    label: 'All Games',
+                    icon: Icons.sports_esports,
+                    count: state.games.length,
+                    selected: state.categoryFilter == null,
+                    color: AppColors.primary,
+                    onTap: () => ref
+                        .read(gameProvider.notifier)
+                        .setCategoryFilter(null),
+                  ),
+                  SizedBox(width: AppSpacing.sm),
+                  _CategoryCard(
+                    label: 'Online',
+                    icon: Icons.wifi_rounded,
+                    count: state.onlineGames.length,
+                    selected: state.categoryFilter == 'ONLINE',
+                    color: AppColors.info,
+                    onTap: () => ref
+                        .read(gameProvider.notifier)
+                        .setCategoryFilter('ONLINE'),
+                  ),
+                  SizedBox(width: AppSpacing.sm),
+                  _CategoryCard(
+                    label: 'Offline',
+                    icon: Icons.location_on_rounded,
+                    count: state.offlineGames.length,
+                    selected: state.categoryFilter == 'OFFLINE',
+                    color: AppColors.success,
+                    onTap: () => ref
+                        .read(gameProvider.notifier)
+                        .setCategoryFilter('OFFLINE'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Sport filter chips ─────────────────────────────────
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: 46,
+              child: ListView.separated(
+                padding:
+                    EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                scrollDirection: Axis.horizontal,
+                itemCount: _sports.length,
+                separatorBuilder: (_, _) =>
+                    SizedBox(width: AppSpacing.sm),
+                itemBuilder: (_, i) {
+                  final s = _sports[i];
+                  final sel = _selectedSport == s;
+                  return GestureDetector(
+                    onTap: () => setState(() => _selectedSport = s),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md + 2,
+                          vertical: AppSpacing.sm),
+                      decoration: BoxDecoration(
+                        color: sel
+                            ? AppColors.primaryDark
+                            : AppColors.surfaceLight,
+                        borderRadius:
+                            BorderRadius.circular(AppRadius.circle),
+                        border: Border.all(
+                          color: sel
+                              ? AppColors.primaryDark
+                              : AppColors.border,
                         ),
                       ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _sportIcons[s] ?? Icons.sports,
+                            size: 14,
+                            color: sel
+                                ? Colors.white
+                                : AppColors.textSecondary,
+                          ),
+                          SizedBox(width: AppSpacing.xs),
+                          Text(
+                            s,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: sel
+                                  ? Colors.white
+                                  : AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+
+          // ── Status tabs ────────────────────────────────────────
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _StickyTabBar(
+              tabBar: TabBar(
+                controller: _statusTab,
+                isScrollable: true,
+                tabAlignment: TabAlignment.start,
+                indicatorColor: AppColors.primary,
+                labelColor: AppColors.primary,
+                unselectedLabelColor: AppColors.textSecondary,
+                indicatorWeight: 2.5,
+                indicatorSize: TabBarIndicatorSize.label,
+                labelPadding:
+                    const EdgeInsets.symmetric(horizontal: 16),
+                dividerColor: AppColors.border,
+                tabs: _tabLabels
+                    .map((t) => Tab(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(t.$2, size: 14),
+                              const SizedBox(width: 5),
+                              Text(t.$1,
+                                  style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600)),
+                            ],
+                          ),
+                        ))
+                    .toList(),
+              ),
+              backgroundColor: AppColors.background,
+            ),
           ),
         ],
+
+        // ── Game list ────────────────────────────────────────────
+        body: state.isLoading && state.games.isEmpty
+            ? const Center(
+                child: CircularProgressIndicator(
+                    color: AppColors.primary))
+            : displayed.isEmpty
+                ? _EmptyGamesView(
+                    sport: _selectedSport,
+                    category: state.categoryFilter,
+                    onRefresh: () => ref
+                        .read(gameProvider.notifier)
+                        .fetchGames(refresh: true),
+                    onCreate: () => _showCreate(context),
+                  )
+                : RefreshIndicator(
+                    color: AppColors.primary,
+                    onRefresh: () => ref
+                        .read(gameProvider.notifier)
+                        .fetchGames(refresh: true),
+                    child: ListView.builder(
+                      padding: EdgeInsets.fromLTRB(AppSpacing.md,
+                          AppSpacing.sm, AppSpacing.md, 80),
+                      itemCount:
+                          displayed.length + (state.hasMore ? 1 : 0),
+                      itemBuilder: (_, i) {
+                        if (i == displayed.length) {
+                          WidgetsBinding.instance
+                              .addPostFrameCallback((_) {
+                            ref
+                                .read(gameProvider.notifier)
+                                .fetchGames();
+                          });
+                          return const Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Center(
+                                child: CircularProgressIndicator(
+                                    color: AppColors.primary)),
+                          );
+                        }
+                        return GameCard(
+                          game: displayed[i],
+                          onTap: () =>
+                              _openDetail(context, displayed[i]),
+                        );
+                      },
+                    ),
+                  ),
       ),
-    );
-  }
-
-  void _openGameDetail(BuildContext context, GameEntity game) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) => _GameDetailSheet(game: game),
-    );
-  }
-
-  void _showCreateGameSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) => const _CreateGameSheet(),
     );
   }
 }
 
-// ─── Game detail sheet ────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Sticky tab bar delegate
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _StickyTabBar extends SliverPersistentHeaderDelegate {
+  final TabBar tabBar;
+  final Color backgroundColor;
+  const _StickyTabBar(
+      {required this.tabBar, required this.backgroundColor});
+
+  @override
+  double get minExtent => tabBar.preferredSize.height;
+  @override
+  double get maxExtent => tabBar.preferredSize.height;
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(color: backgroundColor, child: tabBar);
+  }
+
+  @override
+  bool shouldRebuild(covariant _StickyTabBar old) =>
+      tabBar != old.tabBar || backgroundColor != old.backgroundColor;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Category card
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _CategoryCard extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final int count;
+  final bool selected;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _CategoryCard({
+    required this.label,
+    required this.icon,
+    required this.count,
+    required this.selected,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding:
+              const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+          decoration: BoxDecoration(
+            color: selected ? color : AppColors.surfaceLight,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(
+              color: selected ? color : AppColors.border,
+              width: selected ? 0 : 1,
+            ),
+            boxShadow: selected
+                ? [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    )
+                  ]
+                : [],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon,
+                  size: 22,
+                  color: selected ? Colors.white : color),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: selected
+                      ? Colors.white
+                      : AppColors.textPrimary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              Text(
+                '$count',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: selected
+                      ? Colors.white.withValues(alpha: 0.85)
+                      : AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Gradient host button (shown in expanded header)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _GradientButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _GradientButton(
+      {required this.icon, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(AppRadius.circle),
+          border: Border.all(
+              color: Colors.white.withValues(alpha: 0.4)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: Colors.white, size: 18),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Empty state view
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _EmptyGamesView extends StatelessWidget {
+  final String sport;
+  final String? category;
+  final VoidCallback onRefresh;
+  final VoidCallback onCreate;
+
+  const _EmptyGamesView({
+    required this.sport,
+    required this.category,
+    required this.onRefresh,
+    required this.onCreate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final desc = [
+      if (sport != 'All') sport,
+      if (category != null) category!.toLowerCase(),
+    ].join(' ');
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppColors.primaryWithOpacity(0.08),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.sports_esports_outlined,
+                  size: 56, color: AppColors.primary),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              desc.isNotEmpty ? 'No $desc games found' : 'No games found',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Be the first to host a game!',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: onRefresh,
+                  icon: const Icon(Icons.refresh, size: 18),
+                  label: const Text('Refresh'),
+                ),
+                const SizedBox(width: 12),
+                ElevatedButton.icon(
+                  onPressed: onCreate,
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Host Game'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Game detail bottom sheet
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _GameDetailSheet extends ConsumerWidget {
   final GameEntity game;
@@ -195,189 +613,268 @@ class _GameDetailSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
-    return DraggableScrollableSheet(
-      expand: false,
-      initialChildSize: 0.65,
-      maxChildSize: 0.95,
-      builder: (_, scrollCtrl) => ListView(
-        controller: scrollCtrl,
-        padding: const EdgeInsets.all(20),
-        children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 16),
-              decoration: BoxDecoration(
-                color: cs.outlineVariant,
-                borderRadius: BorderRadius.circular(2),
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+      ),
+      child: DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.65,
+        maxChildSize: 0.95,
+        builder: (_, ctrl) => ListView(
+          controller: ctrl,
+          padding: EdgeInsets.all(AppSpacing.xl),
+          children: [
+            // Handle bar
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: EdgeInsets.only(bottom: AppSpacing.lg),
+                decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2)),
               ),
             ),
-          ),
-          Text(game.title, style: tt.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          Text(game.description, style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
-          const SizedBox(height: 16),
-          _DetailRow(icon: Icons.category_outlined, label: game.category.name.toUpperCase()),
-          _DetailRow(
-            icon: game.isOnline ? Icons.wifi : Icons.location_on_outlined,
-            label: game.isOnline ? 'Online' : (game.location ?? 'TBD'),
-          ),
-          _DetailRow(icon: Icons.group_outlined, label: '${game.currentPlayers} / ${game.maxPlayers} players'),
-          _DetailRow(icon: Icons.calendar_today_outlined, label: game.scheduledAt.toString().substring(0, 16)),
-          if (game.prizePool > 0)
-            _DetailRow(icon: Icons.emoji_events_outlined, label: 'Prize pool: ₹${game.prizePool}'),
-          const SizedBox(height: 20),
-          if (!game.isFull && game.status == GameStatus.upcoming)
-            FilledButton.icon(
-              icon: const Icon(Icons.login),
-              label: const Text('Join Game'),
-              onPressed: () {
-                ref.read(gameProvider.notifier).joinGame(game.id);
-                Navigator.pop(context);
-              },
-            ),
-          if (game.status == GameStatus.live)
-            FilledButton.icon(
-              icon: const Icon(Icons.play_circle_outline),
-              label: const Text('Game is LIVE'),
-              onPressed: null,
-            ),
-        ],
-      ),
-    );
-  }
-}
 
-class _DetailRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  const _DetailRow({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: Theme.of(context).colorScheme.primary),
-          const SizedBox(width: 10),
-          Text(label, style: Theme.of(context).textTheme.bodyMedium),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Create game sheet ────────────────────────────────────────────────────────
-
-class _CreateGameSheet extends ConsumerStatefulWidget {
-  const _CreateGameSheet();
-
-  @override
-  ConsumerState<_CreateGameSheet> createState() => _CreateGameSheetState();
-}
-
-class _CreateGameSheetState extends ConsumerState<_CreateGameSheet> {
-  final _formKey = GlobalKey<FormState>();
-  final _titleCtrl = TextEditingController();
-  final _descCtrl = TextEditingController();
-  final _locationCtrl = TextEditingController();
-  GameCategory _category = GameCategory.football;
-  bool _isOnline = false;
-  int _maxPlayers = 10;
-
-  @override
-  void dispose() {
-    _titleCtrl.dispose();
-    _descCtrl.dispose();
-    _locationCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-          20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Host a Game',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _titleCtrl,
-              decoration: const InputDecoration(labelText: 'Game title', border: OutlineInputBorder()),
-              validator: (v) => v == null || v.isEmpty ? 'Required' : null,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _descCtrl,
-              decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
-              maxLines: 2,
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<GameCategory>(
-              initialValue: _category,
-              decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
-              items: GameCategory.values
-                  .map((c) => DropdownMenuItem(value: c, child: Text(c.name)))
-                  .toList(),
-              onChanged: (v) => setState(() => _category = v!),
-            ),
-            const SizedBox(height: 12),
+            // Badges row
             Row(
               children: [
-                Expanded(
-                  child: TextFormField(
-                    initialValue: '$_maxPlayers',
-                    keyboardType: TextInputType.number,
-                    decoration:
-                        const InputDecoration(labelText: 'Max players', border: OutlineInputBorder()),
-                    onChanged: (v) => _maxPlayers = int.tryParse(v) ?? 10,
-                  ),
+                _Pill(
+                  icon: game.isOnline ? Icons.wifi : Icons.location_on,
+                  label: game.category,
+                  color: game.isOnline ? AppColors.info : AppColors.success,
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: SwitchListTile(
-                    title: const Text('Online'),
-                    value: _isOnline,
-                    onChanged: (v) => setState(() => _isOnline = v),
-                    contentPadding: EdgeInsets.zero,
-                  ),
+                const SizedBox(width: 8),
+                _Pill(
+                  icon: Icons.sports,
+                  label: game.sport,
+                  color: AppColors.primary,
                 ),
+                const Spacer(),
+                _StatusBadge(game.status),
               ],
             ),
-            if (!_isOnline) ...[
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _locationCtrl,
-                decoration: const InputDecoration(labelText: 'Location', border: OutlineInputBorder()),
+            SizedBox(height: AppSpacing.md),
+
+            // Title
+            Text(game.title,
+                style: tt.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary)),
+            SizedBox(height: AppSpacing.xs),
+            Text('Hosted by ${game.creatorName}',
+                style: tt.bodySmall
+                    ?.copyWith(color: AppColors.textSecondary)),
+            SizedBox(height: AppSpacing.md),
+
+            if (game.description.isNotEmpty)
+              Text(game.description,
+                  style: tt.bodyMedium?.copyWith(
+                      color: AppColors.textSecondary, height: 1.5)),
+
+            SizedBox(height: AppSpacing.xl),
+
+            // Info rows
+            _InfoRow(icon: Icons.group_outlined,
+                label:
+                    '${game.currentPlayers} / ${game.maxPlayers} players'),
+            if (game.startTime != null)
+              _InfoRow(
+                  icon: Icons.calendar_today_outlined,
+                  label: game.startTime.toString().substring(0, 16)),
+            if (!game.isOnline && game.location?.address != null)
+              _InfoRow(
+                  icon: Icons.location_on_outlined,
+                  label: game.location!.address!),
+            _InfoRow(
+                icon: Icons.info_outline,
+                label: 'Status: ${game.status.name}'),
+
+            // Tags
+            if (game.tags.isNotEmpty) ...[
+              SizedBox(height: AppSpacing.lg),
+              Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.xs,
+                children: game.tags
+                    .map((tag) => Chip(
+                          label: Text(tag,
+                              style: const TextStyle(fontSize: 12)),
+                          backgroundColor: AppColors.surfaceLight,
+                          side: const BorderSide(color: AppColors.border),
+                          padding: EdgeInsets.zero,
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                        ))
+                    .toList(),
               ),
             ],
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
+
+            // Participants
+            if (game.participants.isNotEmpty) ...[
+              SizedBox(height: AppSpacing.xl),
+              Text('Participants',
+                  style: tt.titleSmall
+                      ?.copyWith(fontWeight: FontWeight.w600)),
+              SizedBox(height: AppSpacing.sm),
+              ...game.participants
+                  .where((p) => p.status == ParticipantStatus.ACTIVE)
+                  .map((p) => ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        leading: CircleAvatar(
+                          radius: 16,
+                          backgroundColor:
+                              AppColors.primaryWithOpacity(0.1),
+                          backgroundImage: p.avatar != null
+                              ? NetworkImage(p.avatar!)
+                              : null,
+                          child: p.avatar == null
+                              ? Text(
+                                  p.displayName[0].toUpperCase(),
+                                  style: TextStyle(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 12),
+                                )
+                              : null,
+                        ),
+                        title: Text(p.displayName,
+                            style: tt.bodyMedium),
+                      )),
+            ],
+
+            SizedBox(height: AppSpacing.xxl),
+
+            // Action button
+            if (game.isOpen)
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.login_rounded),
+                  label: const Text('Join Game',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w700, fontSize: 15)),
+                  onPressed: () {
+                    ref.read(gameProvider.notifier).joinGame(game.id);
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Game created!')));
-                  }
-                },
-                child: const Text('Create Game'),
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(AppRadius.md)),
+                  ),
+                ),
               ),
-            ),
+            if (game.isEnded || game.isCancelled)
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: OutlinedButton.icon(
+                  icon: Icon(game.isEnded
+                      ? Icons.check_circle_outline
+                      : Icons.cancel_outlined),
+                  label: Text(
+                      game.isEnded ? 'Game Ended' : 'Game Cancelled'),
+                  onPressed: null,
+                ),
+              ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _Pill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  const _Pill({required this.icon, required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(AppRadius.circle),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: color),
+          const SizedBox(width: 4),
+          Text(label,
+              style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12)),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  const _InfoRow({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: AppColors.primary),
+          SizedBox(width: AppSpacing.md),
+          Expanded(
+              child: Text(label,
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.copyWith(color: AppColors.textPrimary))),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  final GameStatus status;
+  const _StatusBadge(this.status);
+
+  Color get _color => switch (status) {
+        GameStatus.OPEN => AppColors.success,
+        GameStatus.FULL => AppColors.warning,
+        GameStatus.ENDED => AppColors.info,
+        GameStatus.CANCELLED => AppColors.error,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: _color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        status.name,
+        style: TextStyle(
+            color: _color,
+            fontSize: 11,
+            fontWeight: FontWeight.bold),
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../app/routes/app_routes.dart';
+import '../../../../core/constants/app_colors.dart';
 import '../providers/auth_notifier.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -10,14 +11,15 @@ class LoginPage extends ConsumerStatefulWidget {
   ConsumerState<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends ConsumerState<LoginPage> with SingleTickerProviderStateMixin {
-  final _emailController = TextEditingController();
+class _LoginPageState extends ConsumerState<LoginPage>
+    with SingleTickerProviderStateMixin {
+  final _emailController    = TextEditingController();
   final _passwordController = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
-  bool _isPasswordVisible = false;
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
+  final _formKey            = GlobalKey<FormState>();
+  bool _isPasswordVisible   = false;
+  late final AnimationController _animationController;
+  late final Animation<double> _fadeAnimation;
+  late final Animation<Offset>  _slideAnimation;
 
   @override
   void initState() {
@@ -30,9 +32,11 @@ class _LoginPageState extends ConsumerState<LoginPage> with SingleTickerProvider
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
+      begin: const Offset(0, 0.25),
       end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeOut));
+    ).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    );
     _animationController.forward();
   }
 
@@ -47,13 +51,12 @@ class _LoginPageState extends ConsumerState<LoginPage> with SingleTickerProvider
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final email = _emailController.text.trim();
+    final email    = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    final result = await ref.read(authNotifierProvider.notifier).login(
-          email: email,
-          password: password,
-        );
+    final result = await ref
+        .read(authNotifierProvider.notifier)
+        .login(email: email, password: password);
 
     result.fold(
       (failure) {
@@ -61,12 +64,12 @@ class _LoginPageState extends ConsumerState<LoginPage> with SingleTickerProvider
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.error_outline, color: Colors.white),
-                const SizedBox(width: 12),
+                const Icon(Icons.error_outline, color: Colors.white, size: 18),
+                const SizedBox(width: 10),
                 Expanded(child: Text(failure.message)),
               ],
             ),
-            backgroundColor: Colors.red.shade600,
+            backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             margin: const EdgeInsets.all(16),
@@ -78,12 +81,13 @@ class _LoginPageState extends ConsumerState<LoginPage> with SingleTickerProvider
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.check_circle_outline, color: Colors.white),
-                const SizedBox(width: 12),
-                Expanded(child: Text('Welcome back, ${user.fullName ?? user.email}!')),
+                const Icon(Icons.check_circle_outline, color: Colors.white, size: 18),
+                const SizedBox(width: 10),
+                Expanded(
+                    child: Text('Welcome back, ${user.fullName ?? user.email}!')),
               ],
             ),
-            backgroundColor: const Color(0xFF2E7D32),
+            backgroundColor: AppColors.success,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             margin: const EdgeInsets.all(16),
@@ -98,200 +102,237 @@ class _LoginPageState extends ConsumerState<LoginPage> with SingleTickerProvider
   Widget build(BuildContext context) {
     final authState = ref.watch(authNotifierProvider);
     final isLoading = authState.isLoading;
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+
+    // Show session-expired / error banner
+    ref.listen<AuthState>(authNotifierProvider, (prev, next) {
+      if (next.error != null && prev?.error != next.error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.lock_outline, color: Colors.white, size: 18),
+                const SizedBox(width: 10),
+                Expanded(child: Text(next.error!)),
+              ],
+            ),
+            backgroundColor: AppColors.warning,
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            margin: const EdgeInsets.all(16),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    });
 
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isDark
-                ? [const Color(0xFF1A1A2E), const Color(0xFF16213E)]
-                : [const Color(0xFFF8F9FA), const Color(0xFFE8F5E9)],
-          ),
-        ),
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Logo/Icon
-                        Container(
-                          padding: const EdgeInsets.all(20),
+      backgroundColor: AppColors.surface,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: SlideTransition(
+                position: _slideAnimation,
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 32),
+
+                      // ── Logo ──────────────────────────────────────
+                      Center(
+                        child: Container(
+                          width: 76,
+                          height: 76,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF2E7D32).withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
+                            color: AppColors.primaryLight,
+                            borderRadius: BorderRadius.circular(22),
+                            border: Border.all(
+                              color: AppColors.primary.withValues(alpha: 0.2),
+                              width: 1.5,
+                            ),
                           ),
                           child: const Icon(
                             Icons.sports_esports_rounded,
-                            size: 64,
-                            color: Color(0xFF2E7D32),
+                            size: 40,
+                            color: AppColors.primary,
                           ),
                         ),
-                        const SizedBox(height: 24),
-                        // Title
-                        Text(
-                          'Play Sync',
-                          style: theme.textTheme.headlineLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF2E7D32),
-                            letterSpacing: 1.2,
+                      ),
+                      const SizedBox(height: 20),
+
+                      // ── Heading ───────────────────────────────────
+                      const Center(
+                        child: Text(
+                          'PlaySync',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.primary,
+                            letterSpacing: -0.8,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Welcome back! Sign in to continue',
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      ),
+                      const SizedBox(height: 6),
+                      const Center(
+                        child: Text(
+                          'Welcome back — sign in to continue',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.textSecondary,
                           ),
                         ),
-                        const SizedBox(height: 48),
-                        // Email Field
-                        _buildTextField(
-                          controller: _emailController,
-                          label: 'Email Address',
-                          hint: 'Enter your email',
-                          icon: Icons.email_outlined,
-                          keyboardType: TextInputType.emailAddress,
-                          enabled: !isLoading,
-                          isDark: isDark,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your email';
-                            }
-                            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                              return 'Please enter a valid email';
-                            }
-                            return null;
-                          },
+                      ),
+                      const SizedBox(height: 40),
+
+                      // ── Email ─────────────────────────────────────
+                      _buildTextField(
+                        controller: _emailController,
+                        label: 'Email address',
+                        hint: 'you@example.com',
+                        icon: Icons.email_outlined,
+                        keyboardType: TextInputType.emailAddress,
+                        enabled: !isLoading,
+                        validator: (v) {
+                          if (v == null || v.isEmpty) return 'Enter your email';
+                          if (!RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$')
+                              .hasMatch(v)) {
+                            return 'Enter a valid email';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      // ── Password ──────────────────────────────────
+                      _buildTextField(
+                        controller: _passwordController,
+                        label: 'Password',
+                        hint: 'Your password',
+                        icon: Icons.lock_outline,
+                        obscureText: !_isPasswordVisible,
+                        enabled: !isLoading,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _isPasswordVisible
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                            color: AppColors.textTertiary,
+                            size: 20,
+                          ),
+                          onPressed: () => setState(
+                              () => _isPasswordVisible = !_isPasswordVisible),
                         ),
-                        const SizedBox(height: 20),
-                        // Password Field
-                        _buildTextField(
-                          controller: _passwordController,
-                          label: 'Password',
-                          hint: 'Enter your password',
-                          icon: Icons.lock_outlined,
-                          obscureText: !_isPasswordVisible,
-                          enabled: !isLoading,
-                          isDark: isDark,
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _isPasswordVisible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                              color: Colors.grey[600],
+                        validator: (v) {
+                          if (v == null || v.isEmpty) return 'Enter your password';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 28),
+
+                      // ── Sign In button ────────────────────────────
+                      SizedBox(
+                        height: 54,
+                        child: ElevatedButton(
+                          onPressed: isLoading ? null : _handleLogin,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
                             ),
-                            onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your password';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 32),
-                        // Login Button
-                        SizedBox(
-                          width: double.infinity,
-                          height: 56,
-                          child: ElevatedButton(
-                            onPressed: isLoading ? null : _handleLogin,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF2E7D32),
-                              foregroundColor: Colors.white,
-                              elevation: 4,
-                              shadowColor: const Color(0xFF2E7D32).withValues(alpha: 0.4),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                            child: isLoading
-                                ? const SizedBox(
-                                    height: 24,
-                                    width: 24,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : const Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.login_rounded, size: 22),
-                                      SizedBox(width: 10),
-                                      Text(
-                                        'Sign In',
-                                        style: TextStyle(
-                                          fontSize: 17,
-                                          fontWeight: FontWeight.w600,
-                                          letterSpacing: 0.5,
-                                        ),
+                          child: isLoading
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.login_rounded, size: 20),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Sign In',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: 0.3,
                                       ),
-                                    ],
-                                  ),
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-                        // Divider
-                        Row(
-                          children: [
-                            Expanded(child: Divider(color: Colors.grey[400])),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              child: Text(
-                                'New to Play Sync?',
-                                style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                              ),
-                            ),
-                            Expanded(child: Divider(color: Colors.grey[400])),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                        // Register Link
-                        SizedBox(
-                          width: double.infinity,
-                          height: 56,
-                          child: OutlinedButton(
-                            onPressed: isLoading
-                                ? null
-                                : () => Navigator.pushReplacementNamed(context, AppRoutes.signup),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFF2E7D32),
-                              side: const BorderSide(color: Color(0xFF2E7D32), width: 2),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.person_add_outlined, size: 22),
-                                SizedBox(width: 10),
-                                Text(
-                                  'Create Account',
-                                  style: TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: 0.5,
-                                  ),
+                                    ),
+                                  ],
                                 ),
-                              ],
+                        ),
+                      ),
+                      const SizedBox(height: 28),
+
+                      // ── Divider ───────────────────────────────────
+                      Row(
+                        children: [
+                          const Expanded(
+                              child: Divider(color: AppColors.border)),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            child: Text(
+                              'New to PlaySync?',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textTertiary,
+                              ),
                             ),
                           ),
+                          const Expanded(
+                              child: Divider(color: AppColors.border)),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+
+                      // ── Create account button ─────────────────────
+                      SizedBox(
+                        height: 54,
+                        child: OutlinedButton(
+                          onPressed: isLoading
+                              ? null
+                              : () => Navigator.pushReplacementNamed(
+                                  context, AppRoutes.signup),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                            side: BorderSide(
+                                color: AppColors.primary.withValues(alpha: 0.4),
+                                width: 1.5),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.person_add_outlined, size: 20),
+                              SizedBox(width: 8),
+                              Text(
+                                'Create Account',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 32),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 40),
+                    ],
                   ),
                 ),
               ),
@@ -307,60 +348,54 @@ class _LoginPageState extends ConsumerState<LoginPage> with SingleTickerProvider
     required String label,
     required String hint,
     required IconData icon,
-    required bool isDark,
     TextInputType keyboardType = TextInputType.text,
     bool obscureText = false,
     bool enabled = true,
     Widget? suffixIcon,
     String? Function(String?)? validator,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        obscureText: obscureText,
-        enabled: enabled,
-        validator: validator,
-        style: TextStyle(fontSize: 16, color: isDark ? Colors.white : Colors.black87),
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: hint,
-          prefixIcon: Icon(icon, color: const Color(0xFF2E7D32)),
-          suffixIcon: suffixIcon,
-          filled: true,
-          fillColor: isDark ? const Color(0xFF2A2A3E) : Colors.white,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 2),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Colors.red, width: 1),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Colors.red, width: 2),
-          ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      obscureText: obscureText,
+      enabled: enabled,
+      validator: validator,
+      style: const TextStyle(
+          fontSize: 15,
+          color: AppColors.textPrimary,
+          fontWeight: FontWeight.w500),
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        prefixIcon: Icon(icon, color: AppColors.textTertiary, size: 20),
+        suffixIcon: suffixIcon,
+        filled: true,
+        fillColor: AppColors.background,
+        labelStyle: const TextStyle(
+            color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+        hintStyle: const TextStyle(color: AppColors.textTertiary),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.error),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.error, width: 1.5),
+        ),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       ),
     );
   }

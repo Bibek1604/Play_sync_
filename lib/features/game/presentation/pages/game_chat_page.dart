@@ -4,6 +4,8 @@ import 'package:socket_io_client/socket_io_client.dart' as io;
 
 import '../../../../core/api/secure_storage_provider.dart';
 import '../../../../core/services/socket_service.dart';
+import '../../../auth/presentation/view_model/auth_viewmodel.dart';
+import '../../../../core/widgets/app_drawer.dart';
 
 /// Real-time chat page for a specific game room.
 ///
@@ -31,6 +33,7 @@ class _GameChatPageState extends ConsumerState<GameChatPage> {
   io.Socket? _socket;
   final List<_ChatMsg> _messages = [];
   bool _isConnected = false;
+  String _myId = '';
 
   @override
   void initState() {
@@ -42,6 +45,9 @@ class _GameChatPageState extends ConsumerState<GameChatPage> {
     final storage = ref.read(secureStorageProvider);
     final token = await storage.read(key: 'access_token') ?? '';
     if (token.isEmpty) return;
+
+    // Identify current user so we can mark own messages correctly.
+    _myId = ref.read(authViewModelProvider).user?.userId ?? '';
 
     _socket = SocketService.instance.getSocket(token: token);
 
@@ -58,11 +64,15 @@ class _GameChatPageState extends ConsumerState<GameChatPage> {
       ..on('new-message', (data) {
         if (!mounted) return;
         final map = data as Map<String, dynamic>;
+        final senderId = map['senderId'] as String? ?? '';
+        final isOwn = _myId.isNotEmpty && senderId == _myId;
+        // Skip echo of own optimistic message already shown.
+        if (isOwn) return;
         setState(() {
           _messages.add(_ChatMsg(
             content: map['content'] as String? ?? '',
             senderName: map['senderName'] as String? ?? 'User',
-            senderId: map['senderId'] as String? ?? '',
+            senderId: senderId,
             timestamp: DateTime.tryParse(
                     map['timestamp'] as String? ?? '') ??
                 DateTime.now(),
@@ -153,6 +163,7 @@ class _GameChatPageState extends ConsumerState<GameChatPage> {
     final cs = theme.colorScheme;
 
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -168,6 +179,15 @@ class _GameChatPageState extends ConsumerState<GameChatPage> {
             ),
           ],
         ),
+        actions: [
+          Builder(
+            builder: (ctx) => IconButton(
+              icon: const Icon(Icons.menu_rounded),
+              tooltip: 'Menu',
+              onPressed: () => Scaffold.of(ctx).openDrawer(),
+            ),
+          ),
+        ],
       ),
       body: Column(
         children: [

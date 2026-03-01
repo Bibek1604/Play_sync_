@@ -12,7 +12,7 @@ abstract interface class IProfileRepository {
   Future<Either<Failure, ProfileEntity>> updateProfile({
     String? fullName,
     String? phone,
-    String? favouriteGame,
+    String? favoriteGame,
     String? place,
     String? currentPassword,
     String? changePassword,

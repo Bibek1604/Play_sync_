@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'routes/app_router.dart';
 import 'theme/theme_provider.dart';
+import '../core/providers/socket_provider.dart';
 
 /// PlaySync Application Root Widget
 /// 
@@ -13,6 +14,9 @@ class PlaySyncApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
+
+    // Initialize socket connection (auto-connects when authenticated)
+    ref.watch(socketProvider);
 
     return MaterialApp(
       title: 'PlaySync',

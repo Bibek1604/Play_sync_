@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../app/theme/app_colors.dart';
+import '../../../../core/constants/app_colors.dart';
 
 /// Animated podium showing top-3 players with height variation.
 class LeaderboardPodium extends StatelessWidget {
@@ -58,7 +58,7 @@ class _PodiumSlot extends StatelessWidget {
   });
 
   static const _medals = ['🥇', '🥈', '🥉'];
-  static const _colors = [AppColors.emerald500, Color(0xFFC0C0C0), Color(0xFFCD7F32)];
+  static const _colors = [AppColors.primary, Color(0xFFC0C0C0), Color(0xFFCD7F32)];
 
   @override
   Widget build(BuildContext context) {

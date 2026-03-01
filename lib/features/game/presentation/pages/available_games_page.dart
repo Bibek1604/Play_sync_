@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/game_entity.dart';
 import '../providers/game_notifier.dart';
 import '../widgets/game_card.dart';
+import '../../../../core/widgets/app_drawer.dart';
 
 /// Displays all available (open) games regardless of category.
 class AvailableGamesPage extends ConsumerWidget {
@@ -13,6 +14,7 @@ class AvailableGamesPage extends ConsumerWidget {
     final state = ref.watch(gameProvider);
 
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(
         title: const Text('Available Games'),
         actions: [
@@ -21,11 +23,18 @@ class AvailableGamesPage extends ConsumerWidget {
             onPressed: () =>
                 ref.read(gameProvider.notifier).fetchGames(refresh: true),
           ),
+          Builder(
+            builder: (ctx) => IconButton(
+              icon: const Icon(Icons.menu_rounded),
+              tooltip: 'Menu',
+              onPressed: () => Scaffold.of(ctx).openDrawer(),
+            ),
+          ),
         ],
       ),
       body: _GameList(
         games: state.games
-            .where((g) => g.status == GameStatus.upcoming)
+            .where((g) => g.status == GameStatus.OPEN)
             .toList(),
         isLoading: state.isLoading,
         error: state.error,

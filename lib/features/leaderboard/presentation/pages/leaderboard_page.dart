@@ -1,27 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_theme.dart';
 import '../providers/leaderboard_provider.dart';
 import '../widgets/leaderboard_row.dart';
 import '../widgets/leaderboard_podium.dart';
+import '../widgets/xp_bar_chart.dart';
 import '../../domain/value_objects/leaderboard_filter.dart';
+import '../../../../core/widgets/app_drawer.dart';
 
 class LeaderboardPage extends ConsumerWidget {
   static const routeName = '/leaderboard';
-
   const LeaderboardPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(leaderboardProvider);
+    final state    = ref.watch(leaderboardProvider);
     final notifier = ref.read(leaderboardProvider.notifier);
 
     return Scaffold(
+      backgroundColor: AppColors.background,
+      drawer: const AppDrawer(),
       appBar: AppBar(
         title: const Text('Leaderboard'),
+        backgroundColor: AppColors.surface,
+        surfaceTintColor: Colors.transparent,
+        scrolledUnderElevation: 0.5,
+        shadowColor: AppColors.border,
         actions: [
           IconButton(
-            icon: const Icon(Icons.filter_list_rounded),
+            icon: const Icon(Icons.tune_rounded, color: AppColors.textSecondary),
+            tooltip: 'Filter',
             onPressed: () => _showFilterSheet(context, ref, state.filter),
+          ),
+          Builder(
+            builder: (ctx) => IconButton(
+              icon: const Icon(Icons.menu_rounded),
+              tooltip: 'Menu',
+              onPressed: () => Scaffold.of(ctx).openDrawer(),
+            ),
           ),
         ],
       ),
@@ -29,9 +46,12 @@ class LeaderboardPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildBody(BuildContext context, LeaderboardState state, LeaderboardNotifier notifier) {
+  Widget _buildBody(BuildContext context, LeaderboardState state,
+      LeaderboardNotifier notifier) {
     if (state.isLoading && state.entries.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.primary),
+      );
     }
 
     if (state.error != null && state.entries.isEmpty) {
@@ -39,11 +59,18 @@ class LeaderboardPage extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const Icon(Icons.error_outline,
+                size: 48, color: AppColors.textTertiary),
             const SizedBox(height: 12),
-            Text(state.error!, textAlign: TextAlign.center),
+            Text(state.error!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: AppColors.textSecondary)),
             const SizedBox(height: 16),
-            FilledButton(onPressed: notifier.load, child: const Text('Retry')),
+            FilledButton(
+              onPressed: notifier.load,
+              style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
+              child: const Text('Retry'),
+            ),
           ],
         ),
       );
@@ -53,39 +80,116 @@ class LeaderboardPage extends ConsumerWidget {
     final rest = state.entries.skip(3).toList();
 
     return RefreshIndicator(
+      color: AppColors.primary,
       onRefresh: notifier.load,
       child: CustomScrollView(
         slivers: [
-          if (top3.length == 3)
-            SliverToBoxAdapter(
-              child: LeaderboardPodium(
-                firstUsername: top3[0].username,
-                secondUsername: top3[1].username,
-                thirdUsername: top3[2].username,
-                firstAvatarUrl: top3[0].profileImageUrl,
-                secondAvatarUrl: top3[1].profileImageUrl,
-                thirdAvatarUrl: top3[2].profileImageUrl,
-                firstPoints: top3[0].totalPoints,
-                secondPoints: top3[1].totalPoints,
-                thirdPoints: top3[2].totalPoints,
+          // ── Filter pill ──────────────────────────────────────────
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: Row(
+                children: [
+                  _FilterPill(
+                    label: state.filter.scope.name,
+                    icon: Icons.public_rounded,
+                  ),
+                  const SizedBox(width: 8),
+                  _FilterPill(
+                    label: state.filter.period.name,
+                    icon: Icons.calendar_today_rounded,
+                  ),
+                ],
               ),
             ),
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (ctx, i) {
-                if (i == rest.length) {
-                  if (state.isLoading) return const Padding(padding: EdgeInsets.all(16), child: Center(child: CircularProgressIndicator()));
-                  if (state.hasMore) {
-                    return Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: OutlinedButton(onPressed: notifier.loadMore, child: const Text('Load more')),
-                    );
+          ),
+
+          // ── Podium ────────────────────────────────────────────────
+          if (top3.length == 3)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: LeaderboardPodium(
+                  firstUsername:  top3[0].fullName,
+                  secondUsername: top3[1].fullName,
+                  thirdUsername:  top3[2].fullName,
+                  firstAvatarUrl:  top3[0].avatar,
+                  secondAvatarUrl: top3[1].avatar,
+                  thirdAvatarUrl:  top3[2].avatar,
+                  firstPoints:  top3[0].xp,
+                  secondPoints: top3[1].xp,
+                  thirdPoints:  top3[2].xp,
+                ),
+              ),
+            ),
+
+          // ── XP Bar Chart ──────────────────────────────────────────
+          if (state.entries.isNotEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: Container(
+                  padding: EdgeInsets.all(AppSpacing.lg),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'XP Distribution',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      SizedBox(height: AppSpacing.md),
+                      XpBarChart(entries: state.entries),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+          // ── Rest of the list ──────────────────────────────────────
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (ctx, i) {
+                  if (i == rest.length) {
+                    if (state.isLoading) {
+                      return const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Center(
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2.5, color: AppColors.primary)));
+                    }
+                    if (state.hasMore) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: OutlinedButton(
+                          onPressed: notifier.loadMore,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                            side: BorderSide(
+                                color: AppColors.primary.withValues(alpha: 0.4)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: const Text('Load more'),
+                        ),
+                      );
+                    }
+                    return const SizedBox(height: 32);
                   }
-                  return const SizedBox(height: 32);
-                }
-                return LeaderboardRow(entry: rest[i]);
-              },
-              childCount: rest.length + 1,
+                  return LeaderboardRow(entry: rest[i]);
+                },
+                childCount: rest.length + 1,
+              ),
             ),
           ),
         ],
@@ -93,22 +197,67 @@ class LeaderboardPage extends ConsumerWidget {
     );
   }
 
-  void _showFilterSheet(BuildContext context, WidgetRef ref, LeaderboardFilter current) {
+  void _showFilterSheet(
+      BuildContext context, WidgetRef ref, LeaderboardFilter current) {
     showModalBottomSheet(
       context: context,
-      builder: (_) => _LeaderboardFilterSheet(current: current, onApply: (f) => ref.read(leaderboardProvider.notifier).changeFilter(f)),
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => _LeaderboardFilterSheet(
+        current: current,
+        onApply: (f) => ref.read(leaderboardProvider.notifier).changeFilter(f),
+      ),
     );
   }
 }
 
+// ── Filter Pill ────────────────────────────────────────────────────────────────
+
+class _FilterPill extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  const _FilterPill({required this.label, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.primaryLight,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: AppColors.primary),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: const TextStyle(
+                color: AppColors.primary,
+                fontSize: 12,
+                fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Filter Sheet ───────────────────────────────────────────────────────────────
+
 class _LeaderboardFilterSheet extends StatefulWidget {
   final LeaderboardFilter current;
   final void Function(LeaderboardFilter) onApply;
-
-  const _LeaderboardFilterSheet({required this.current, required this.onApply});
+  const _LeaderboardFilterSheet(
+      {required this.current, required this.onApply});
 
   @override
-  State<_LeaderboardFilterSheet> createState() => _LeaderboardFilterSheetState();
+  State<_LeaderboardFilterSheet> createState() =>
+      _LeaderboardFilterSheetState();
 }
 
 class _LeaderboardFilterSheetState extends State<_LeaderboardFilterSheet> {
@@ -119,49 +268,125 @@ class _LeaderboardFilterSheetState extends State<_LeaderboardFilterSheet> {
   void initState() {
     super.initState();
     _period = widget.current.period;
-    _scope = widget.current.scope;
+    _scope  = widget.current.scope;
   }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.fromLTRB(
+          24, 24, 24, 24 + MediaQuery.of(context).viewInsets.bottom),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Filter Leaderboard', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          Text('Period', style: Theme.of(context).textTheme.labelMedium),
-          Wrap(
-            spacing: 8,
-            children: LeaderboardPeriod.values.map((p) => ChoiceChip(
-              label: Text(p.name),
-              selected: _period == p,
-              onSelected: (_) => setState(() => _period = p),
-            )).toList(),
-          ),
-          const SizedBox(height: 12),
-          Text('Scope', style: Theme.of(context).textTheme.labelMedium),
-          Wrap(
-            spacing: 8,
-            children: LeaderboardScope.values.map((s) => ChoiceChip(
-              label: Text(s.name),
-              selected: _scope == s,
-              onSelected: (_) => setState(() => _scope = s),
-            )).toList(),
+          // Handle bar
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
           ),
           const SizedBox(height: 20),
+          const Text(
+            'Filter Leaderboard',
+            style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary),
+          ),
+          const SizedBox(height: 20),
+
+          // Period
+          const Text('Period',
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                  letterSpacing: 0.5)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: LeaderboardPeriod.values
+                .map((p) => ChoiceChip(
+                      label: Text(p.name),
+                      selected: _period == p,
+                      selectedColor: AppColors.primaryLight,
+                      labelStyle: TextStyle(
+                          color: _period == p
+                              ? AppColors.primary
+                              : AppColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13),
+                      side: BorderSide(
+                          color: _period == p
+                              ? AppColors.primary.withValues(alpha: 0.4)
+                              : AppColors.border),
+                      backgroundColor: AppColors.surface,
+                      onSelected: (_) => setState(() => _period = p),
+                    ))
+                .toList(),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Scope
+          const Text('Scope',
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                  letterSpacing: 0.5)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: LeaderboardScope.values
+                .map((s) => ChoiceChip(
+                      label: Text(s.name),
+                      selected: _scope == s,
+                      selectedColor: AppColors.primaryLight,
+                      labelStyle: TextStyle(
+                          color: _scope == s
+                              ? AppColors.primary
+                              : AppColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13),
+                      side: BorderSide(
+                          color: _scope == s
+                              ? AppColors.primary.withValues(alpha: 0.4)
+                              : AppColors.border),
+                      backgroundColor: AppColors.surface,
+                      onSelected: (_) => setState(() => _scope = s),
+                    ))
+                .toList(),
+          ),
+
+          const SizedBox(height: 24),
+
           SizedBox(
             width: double.infinity,
+            height: 50,
             child: FilledButton(
               onPressed: () {
                 Navigator.pop(context);
-                widget.onApply(widget.current.copyWith(period: _period, scope: _scope, offset: 0));
+                widget.onApply(widget.current
+                    .copyWith(period: _period, scope: _scope, offset: 0));
               },
-              child: const Text('Apply'),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
+              ),
+              child: const Text('Apply Filters',
+                  style: TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.w700)),
             ),
           ),
+          const SizedBox(height: 8),
         ],
       ),
     );

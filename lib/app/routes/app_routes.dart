@@ -21,6 +21,7 @@ class AppRoutes {
 
   // Game Routes
   static const String game = '/game';
+  static const String gameDetail = '/game-detail';
   static const String availableGames = '/available-games';
   static const String onlineGames = '/online-games';
   static const String offlineGames = '/offline-games';

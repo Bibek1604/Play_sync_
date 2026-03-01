@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:play_sync_new/app/theme/app_colors.dart';
+import 'package:play_sync_new/core/constants/app_colors.dart';
 import 'package:play_sync_new/features/profile/presentation/state/profile_state.dart';
 import 'package:play_sync_new/features/profile/presentation/viewmodel/profile_notifier.dart';
 
@@ -35,11 +35,11 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
       final profile = ref.read(profileNotifierProvider).profile;
       if (profile != null) {
         _fullNameController.text = profile.fullName ?? '';
-        _phoneController.text = profile.phoneNumber ?? '';
-        _locationController.text = profile.location ?? '';
+        _phoneController.text = profile.phone ?? '';
+        _locationController.text = profile.place ?? '';
         
-        if (profile.favouriteGame != null && profile.favouriteGame!.isNotEmpty) {
-          _favoriteGameController.text = profile.favouriteGame!;
+        if (profile.favoriteGame != null && profile.favoriteGame!.isNotEmpty) {
+          _favoriteGameController.text = profile.favoriteGame!;
         }
       }
     });
@@ -135,7 +135,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
       await ref.read(profileNotifierProvider.notifier).updateProfile(
             fullName: _fullNameController.text.trim(),
             phone: _phoneController.text.trim(),
-            favouriteGame: _favoriteGameController.text.trim(),
+            favoriteGame: _favoriteGameController.text.trim(),
             place: _locationController.text.trim(),
             currentPassword: _oldPasswordController.text.isNotEmpty ? _oldPasswordController.text : null,
             changePassword: _newPasswordController.text.isNotEmpty ? _newPasswordController.text : null,
@@ -235,10 +235,10 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                                         fit: BoxFit.cover,
                                       ),
                               )
-                            : profileState.profile?.profilePicture != null
+                            : profileState.profile?.avatar != null
                                 ? ClipOval(
                                     child: Image.network(
-                                      profileState.profile!.profilePicture!,
+                                      profileState.profile!.avatar!,
                                       fit: BoxFit.cover,
                                       errorBuilder: (context, error, stackTrace) =>
                                           const Icon(Icons.person, size: 60, color: Colors.white),

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,12 +9,28 @@ import 'package:play_sync_new/core/api/secure_storage_provider.dart';
 
 final apiClientProvider = Provider<ApiClient>((ref) {
   final secureStorage = ref.watch(secureStorageProvider);
-  return ApiClient(secureStorage);
+  final client = ApiClient(secureStorage);
+  ref.onDispose(client.dispose);
+  return client;
+});
+
+/// Fires a single `void` event whenever the backend returns 401 and the
+/// refresh-token exchange also fails (i.e. the session is truly dead).
+final unauthorizedStreamProvider = StreamProvider<void>((ref) {
+  return ref.watch(apiClientProvider).onUnauthorized;
 });
 
 class ApiClient {
   late final Dio _dio;
   final FlutterSecureStorage _secureStorage;
+  bool _isRefreshing = false;
+
+  /// Broadcasts a `void` event when a 401 cannot be recovered via refresh.
+  final StreamController<void> _unauthorizedCtrl =
+      StreamController<void>.broadcast();
+  Stream<void> get onUnauthorized => _unauthorizedCtrl.stream;
+
+  void dispose() => _unauthorizedCtrl.close();
 
   ApiClient(this._secureStorage) {
     _dio = Dio(
@@ -22,16 +40,12 @@ class ApiClient {
         receiveTimeout: ApiEndpoints.receiveTimeout,
         contentType: Headers.jsonContentType,
         responseType: ResponseType.json,
-        headers: {
-          'Accept': 'application/json',
-        },
+        headers: {'Accept': 'application/json'},
       ),
     );
 
-    // Add Auth Interceptor for adding token to requests
-    _dio.interceptors.add(_AuthInterceptor(_secureStorage));
+    _dio.interceptors.add(_AuthInterceptor(this));
 
-    // Logger for debugging (only in debug mode)
     if (kDebugMode) {
       _dio.interceptors.add(
         LogInterceptor(
@@ -46,113 +60,130 @@ class ApiClient {
   }
 
   Dio get dio => _dio;
+  FlutterSecureStorage get storage => _secureStorage;
 
-  // GET request
-  Future<Response> get(
-    String path, {
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-  }) async {
-    return _dio.get(
-      path,
-      queryParameters: queryParameters,
-      options: options,
-    );
+  // ── Token helpers ──────────────────────────────────────────────────────
+
+  Future<String?> get accessToken => _secureStorage.read(key: 'access_token');
+  Future<String?> get refreshToken => _secureStorage.read(key: 'refresh_token');
+
+  Future<void> saveTokens({required String access, required String refresh}) async {
+    await _secureStorage.write(key: 'access_token', value: access);
+    await _secureStorage.write(key: 'refresh_token', value: refresh);
   }
 
-  // POST request
-  Future<Response> post(
-    String path, {
-    dynamic data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-  }) async {
-    return _dio.post(
-      path,
-      data: data,
-      queryParameters: queryParameters,
-      options: options,
-    );
+  Future<void> clearTokens() async {
+    await _secureStorage.delete(key: 'access_token');
+    await _secureStorage.delete(key: 'refresh_token');
+    await _secureStorage.delete(key: 'user_id');
   }
 
-  // PUT request
-  Future<Response> put(
-    String path, {
-    dynamic data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-  }) async {
-    return _dio.put(
-      path,
-      data: data,
-      queryParameters: queryParameters,
-      options: options,
-    );
+  /// Attempt to refresh the access token using the stored refresh token.
+  /// Returns true on success.
+  Future<bool> refreshAccessToken() async {
+    if (_isRefreshing) return false;
+    _isRefreshing = true;
+    try {
+      final storedRefresh = await _secureStorage.read(key: 'refresh_token');
+      if (storedRefresh == null) return false;
+
+      // Use a fresh Dio to avoid interceptor recursion
+      final freshDio = Dio(BaseOptions(
+        baseUrl: ApiEndpoints.baseUrl,
+        contentType: Headers.jsonContentType,
+      ));
+
+      final resp = await freshDio.post(
+        ApiEndpoints.refreshToken,
+        data: {'refreshToken': storedRefresh},
+      );
+
+      final data = resp.data as Map<String, dynamic>;
+      final newAccess = data['accessToken'] as String? ??
+          (data['data'] as Map<String, dynamic>?)?['accessToken'] as String?;
+      final newRefresh = data['refreshToken'] as String? ??
+          (data['data'] as Map<String, dynamic>?)?['refreshToken'] as String? ??
+          storedRefresh;
+
+      if (newAccess != null) {
+        await saveTokens(access: newAccess, refresh: newRefresh);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('[ApiClient] Token refresh failed: $e');
+      return false;
+    } finally {
+      _isRefreshing = false;
+    }
   }
 
-  // DELETE request
-  Future<Response> delete(
-    String path, {
-    dynamic data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-  }) async {
-    return _dio.delete(
-      path,
-      data: data,
-      queryParameters: queryParameters,
-      options: options,
-    );
-  }
+  // ── HTTP verbs ─────────────────────────────────────────────────────────
 
-  // PATCH request
-  Future<Response> patch(
-    String path, {
-    dynamic data,
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-  }) async {
-    return _dio.patch(
-      path,
-      data: data,
-      queryParameters: queryParameters,
-      options: options,
-    );
-  }
+  Future<Response> get(String path, {Map<String, dynamic>? queryParameters, Options? options}) =>
+      _dio.get(path, queryParameters: queryParameters, options: options);
+
+  Future<Response> post(String path, {dynamic data, Map<String, dynamic>? queryParameters, Options? options}) =>
+      _dio.post(path, data: data, queryParameters: queryParameters, options: options);
+
+  Future<Response> put(String path, {dynamic data, Map<String, dynamic>? queryParameters, Options? options}) =>
+      _dio.put(path, data: data, queryParameters: queryParameters, options: options);
+
+  Future<Response> delete(String path, {dynamic data, Map<String, dynamic>? queryParameters, Options? options}) =>
+      _dio.delete(path, data: data, queryParameters: queryParameters, options: options);
+
+  Future<Response> patch(String path, {dynamic data, Map<String, dynamic>? queryParameters, Options? options}) =>
+      _dio.patch(path, data: data, queryParameters: queryParameters, options: options);
 }
 
-/// Auth Interceptor - Adds token to requests and handles 401 errors
+/// Auth Interceptor — attaches token & auto-refreshes on 401.
 class _AuthInterceptor extends Interceptor {
-  final FlutterSecureStorage _storage;
+  final ApiClient _client;
 
-  _AuthInterceptor(this._storage);
+  _AuthInterceptor(this._client);
+
+  /// Paths that must NOT carry a Bearer token.
+  static const _publicPaths = [
+    '/auth/login',
+    '/auth/register',
+    '/auth/refresh-token',
+    '/auth/forgot-password',
+    '/auth/reset-password',
+  ];
 
   @override
-  void onRequest(
-    RequestOptions options,
-    RequestInterceptorHandler handler,
-  ) async {
-    // Skip adding token for auth endpoints
-    if (options.path.contains('/auth/') || options.path.contains('/api/auth/')) {
-      return handler.next(options);
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
+    final isPublic = _publicPaths.any((p) => options.path.contains(p));
+    if (!isPublic) {
+      final token = await _client.accessToken;
+      if (token != null) {
+        options.headers['Authorization'] = 'Bearer $token';
+      }
     }
-
-    // Get token from secure storage
-    final token = await _storage.read(key: 'access_token');
-    if (token != null) {
-      options.headers['Authorization'] = 'Bearer $token';
-    }
-
-    return handler.next(options);
+    handler.next(options);
   }
 
   @override
-  void onError(DioException err, ErrorInterceptorHandler handler) {
-    // Handle 401 Unauthorized - Token expired
+  void onError(DioException err, ErrorInterceptorHandler handler) async {
     if (err.response?.statusCode == 401) {
-      // TODO: Implement token refresh or logout
-      debugPrint('Token expired - Need to refresh or logout');
+      final success = await _client.refreshAccessToken();
+      if (success) {
+        // Retry original request with the new token
+        final opts = err.requestOptions;
+        final newToken = await _client.accessToken;
+        opts.headers['Authorization'] = 'Bearer $newToken';
+        try {
+          final resp = await _client.dio.fetch(opts);
+          return handler.resolve(resp);
+        } on DioException catch (e) {
+          return handler.next(e);
+        }
+      } else {
+        // Refresh failed — session is dead.  Clear tokens and notify listeners.
+        await _client.clearTokens();
+        _client._unauthorizedCtrl.add(null);
+      }
     }
-    return handler.next(err);
+    handler.next(err);
   }
 }

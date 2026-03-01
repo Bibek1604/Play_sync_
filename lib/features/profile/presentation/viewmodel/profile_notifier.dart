@@ -63,7 +63,7 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
   Future<void> updateProfile({
     String? fullName,
     String? phone,
-    String? favouriteGame,
+    String? favoriteGame,
     String? place,
     String? currentPassword,
     String? changePassword,
@@ -74,7 +74,7 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
     final params = UpdateProfileParams(
       fullName: fullName,
       phone: phone,
-      favouriteGame: favouriteGame,
+      favoriteGame: favoriteGame,
       place: place,
       currentPassword: currentPassword,
       changePassword: changePassword,
@@ -125,7 +125,7 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
         debugPrint('[PROFILE NOTIFIER] Picture uploaded successfully: $imageUrl');
         
         // Update profile with new picture URL
-        final updatedProfile = state.profile?.copyWith(profilePicture: imageUrl);
+        final updatedProfile = state.profile?.copyWith(avatar: imageUrl);
         
         state = state.copyWith(
           isUploadingPicture: false,

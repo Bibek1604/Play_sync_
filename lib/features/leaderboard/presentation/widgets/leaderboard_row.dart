@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/leaderboard_entry.dart';
-import '../../../../app/theme/app_colors.dart';
+import '../../../../core/constants/app_colors.dart';
 
 /// A single animated leaderboard row widget.
 class LeaderboardRow extends StatelessWidget {
@@ -22,11 +22,11 @@ class LeaderboardRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: entry.isCurrentUser
-              ? AppColors.emerald500.withValues(alpha: 0.12)
+              ? AppColors.primary.withValues(alpha: 0.12)
               : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
           borderRadius: BorderRadius.circular(12),
           border: entry.isCurrentUser
-              ? Border.all(color: AppColors.emerald500, width: 1.5)
+              ? Border.all(color: AppColors.primary, width: 1.5)
               : null,
         ),
         child: Row(
@@ -35,11 +35,11 @@ class LeaderboardRow extends StatelessWidget {
             const SizedBox(width: 12),
             CircleAvatar(
               radius: 20,
-              backgroundImage: entry.profileImageUrl != null
-                  ? NetworkImage(entry.profileImageUrl!)
+              backgroundImage: entry.avatar != null && entry.avatar!.isNotEmpty
+                  ? NetworkImage(entry.avatar!)
                   : null,
-              child: entry.profileImageUrl == null
-                  ? Text(entry.username[0].toUpperCase(),
+              child: entry.avatar == null || entry.avatar!.isEmpty
+                  ? Text(entry.initials,
                       style: const TextStyle(fontWeight: FontWeight.bold))
                   : null,
             ),
@@ -49,12 +49,12 @@ class LeaderboardRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    entry.username,
+                    entry.fullName,
                     style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    '${entry.gamesWon}W · ${(entry.winRate * 100).toStringAsFixed(0)}% WR',
+                    '${entry.wins}W · ${(entry.winRate * 100).toStringAsFixed(0)}% WR',
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
@@ -66,10 +66,10 @@ class LeaderboardRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '${entry.totalPoints}',
+                  '${entry.xp}',
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: isTop3 ? AppColors.emerald500 : null,
+                    color: isTop3 ? AppColors.primary : null,
                   ),
                 ),
                 Text(
