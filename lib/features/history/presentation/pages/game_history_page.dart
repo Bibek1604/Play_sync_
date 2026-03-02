@@ -65,7 +65,6 @@ class _GameHistoryPageState extends ConsumerState<GameHistoryPage>
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      drawer: const AppDrawer(),
       body: NestedScrollView(
         headerSliverBuilder: (context, _) => [
           SliverAppBar(
@@ -73,6 +72,10 @@ class _GameHistoryPageState extends ConsumerState<GameHistoryPage>
             pinned: true,
             floating: false,
             expandedHeight: 200,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios_rounded),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
             flexibleSpace: FlexibleSpaceBar(
               collapseMode: CollapseMode.pin,
               background: _UserBanner(
@@ -98,14 +101,6 @@ class _GameHistoryPageState extends ConsumerState<GameHistoryPage>
                 tooltip: 'Refresh',
                 onPressed: _refreshAll,
               ),
-              Builder(
-                builder: (ctx) => IconButton(
-                  icon: const Icon(Icons.menu_rounded),
-                  tooltip: 'Menu',
-                  onPressed: () => Scaffold.of(ctx).openDrawer(),
-                ),
-              ),
-              SizedBox(width: AppSpacing.sm),
             ],
             bottom: TabBar(
               controller: _tabs,
@@ -440,9 +435,9 @@ class _HistoryCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.cardDark : Colors.white,
+          color: isDark ? AppColors.cardDark : AppColors.background,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey.shade200),
+          border: Border.all(color: isDark ? AppColors.borderDark : AppColors.border),
           boxShadow: [
             if (!isDark)
               BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2)),

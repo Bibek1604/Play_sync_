@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/constants/app_colors.dart';
 import '../providers/theme_provider.dart';
 
 /// Shows three preview cards for light / dark / system theme modes.
@@ -73,7 +74,7 @@ class _PreviewTile extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             border: isSelected
                 ? Border.all(color: Theme.of(context).colorScheme.primary, width: 2.5)
-                : Border.all(color: Colors.grey.shade300),
+                : Border.all(color: AppColors.border),
           ),
           child: Column(
             children: [
@@ -83,7 +84,7 @@ class _PreviewTile extends StatelessWidget {
               if (isSelected)
                 const Padding(
                   padding: EdgeInsets.only(top: 6),
-                  child: Icon(Icons.check_circle, color: Colors.green, size: 18),
+                  child: Icon(Icons.check_circle, color: AppColors.success, size: 18),
                 ),
             ],
           ),

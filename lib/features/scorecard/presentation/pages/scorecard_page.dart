@@ -16,8 +16,11 @@ class ScorecardPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      drawer: const AppDrawer(),
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_rounded),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
         scrolledUnderElevation: 0.5,
@@ -30,13 +33,6 @@ class ScorecardPage extends ConsumerWidget {
             icon: const Icon(Icons.refresh_rounded,
                 color: AppColors.textSecondary),
             onPressed: () => ref.read(scorecardProvider.notifier).fetch(),
-          ),
-          Builder(
-            builder: (ctx) => IconButton(
-              icon: const Icon(Icons.menu_rounded),
-              tooltip: 'Menu',
-              onPressed: () => Scaffold.of(ctx).openDrawer(),
-            ),
           ),
         ],
       ),

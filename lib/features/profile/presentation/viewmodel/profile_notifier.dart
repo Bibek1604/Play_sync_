@@ -123,16 +123,19 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
       },
       (imageUrl) {
         debugPrint('[PROFILE NOTIFIER] Picture uploaded successfully: $imageUrl');
-        
-        // Update profile with new picture URL
+
+        // Immediately reflect the new URL so the UI doesn't wait for re-fetch.
         final updatedProfile = state.profile?.copyWith(avatar: imageUrl);
-        
         state = state.copyWith(
           isUploadingPicture: false,
           profile: updatedProfile,
           successMessage: 'Profile picture updated successfully',
           clearError: true,
         );
+
+        // Re-fetch the full profile from the server so Hive / Riverpod state
+        // contains the authoritative URL (e.g. Cloudinary final URL).
+        getProfile();
       },
     );
   }

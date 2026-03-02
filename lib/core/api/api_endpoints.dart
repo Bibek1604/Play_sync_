@@ -81,7 +81,7 @@ class ApiEndpoints {
   static const String getMyCreatedGames = '/games/my/created';
   static const String getMyJoinedGames = '/games/my/joined';
   static const String getPopularTags = '/games/tags/popular';
-  static String getGameById(String id) => '/games/$id';
+  static String getGameById(String id) => '/games/$id?details=true';
   static String joinGame(String id) => '/games/$id/join';
   static String leaveGame(String id) => '/games/$id/leave';
   static String canJoinGame(String id) => '/games/$id/can-join';
@@ -112,4 +112,35 @@ class ApiEndpoints {
   static const String getUnreadNotificationsCount = '/notifications/unread-count';
   static String markNotificationRead(String id) => '/notifications/$id/read';
   static const String markAllNotificationsRead = '/notifications/read-all';
+
+  // ========== TOURNAMENT ENDPOINTS ==========
+  static const String getTournaments = '/tournaments';
+  static const String createTournament = '/tournaments';
+  static const String getMyTournaments = '/tournaments/mine/list';
+  static String getTournamentById(String id) => '/tournaments/$id';
+  static String updateTournament(String id) => '/tournaments/$id';
+  static String deleteTournament(String id) => '/tournaments/$id';
+
+  // ========== TOURNAMENT PAYMENT (eSewa) ==========
+  static String initiatePayment(String id) => '/tournaments/$id/pay';
+  static const String verifyPayment = '/tournaments/payment/verify';
+  static String getPaymentStatus(String id) => '/tournaments/$id/payment-status';
+  static String checkChatAccess(String id) => '/tournaments/$id/chat-access';
+  static const String getDashboardTransactions = '/tournaments/dashboard/transactions';
+  static String getTournamentPayments(String id) => '/tournaments/$id/payments';
+
+  // ========== ADMIN ENDPOINTS ==========
+  static const String getAdminStats = '/admin/stats';
+  static const String getAdminUsers = '/admin/users';
+  static String getAdminUserById(String id) => '/admin/users/$id';
+  static const String getAdminGames = '/admin/games';
+  static const String getAdminOnlineGames = '/admin/games/online';
+  static const String getAdminOfflineGames = '/admin/games/offline';
+  static String getAdminGameById(String id) => '/admin/games/$id';
+
+  // ========== PASSWORD ENDPOINTS ==========
+  static const String forgotPassword = '/auth/forgot-password';
+  static const String resetPassword = '/auth/reset-password';
+  static const String changePassword = '/profile/change-password';
+  static const String getAllUsers = '/auth/users';
 }

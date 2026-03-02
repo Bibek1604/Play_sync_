@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/constants/app_colors.dart';
 import '../providers/chat_notifier.dart';
 import '../../domain/entities/chat_message.dart';
 import '../../../../core/widgets/app_drawer.dart';
@@ -81,7 +82,7 @@ class _ChatRoomPageState extends ConsumerState<ChatRoomPage> {
                   Text('Connected',
                       style: TextStyle(
                           fontSize: 11,
-                          color: Colors.green.shade400))
+                          color: AppColors.success))
                 else
                   Text('Offline',
                       style: TextStyle(

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/dashboard/presentation/pages/dashboard_page.dart';
-import '../../features/game/presentation/pages/game_page.dart';
+import '../../features/game/presentation/pages/my_game_chats_page.dart';
 import '../../features/leaderboard/presentation/pages/leaderboard_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
@@ -22,7 +22,7 @@ class AppShell extends ConsumerWidget {
 
   static const List<Widget> _tabs = [
     DashboardPage(),
-    GamePage(),
+    MyGameChatsPage(),
     LeaderboardPage(),
     ProfilePage(),
     SettingsPage(),
@@ -35,9 +35,9 @@ class AppShell extends ConsumerWidget {
       label: 'Home',
     ),
     NavigationDestination(
-      icon: Icon(Icons.sports_esports_outlined),
-      selectedIcon: Icon(Icons.sports_esports_rounded),
-      label: 'Games',
+      icon: Icon(Icons.chat_bubble_outline_rounded),
+      selectedIcon: Icon(Icons.chat_bubble_rounded),
+      label: 'Chats',
     ),
     NavigationDestination(
       icon: Icon(Icons.leaderboard_outlined),

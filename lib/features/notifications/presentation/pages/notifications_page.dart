@@ -20,8 +20,11 @@ class NotificationsPage extends ConsumerWidget {
     return Scaffold(
       backgroundColor:
           isDark ? AppColors.backgroundDark : AppColors.background,
-      drawer: const AppDrawer(),
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_rounded),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         backgroundColor:
             isDark ? AppColors.backgroundDark : AppColors.background,
         title: Row(
@@ -72,13 +75,6 @@ class NotificationsPage extends ConsumerWidget {
                 .read(notificationsProvider.notifier)
                 .fetchNotifications(),
           ),
-          Builder(
-            builder: (ctx) => IconButton(
-              icon: const Icon(Icons.menu_rounded),
-              tooltip: 'Menu',
-              onPressed: () => Scaffold.of(ctx).openDrawer(),
-            ),
-          ),
         ],
       ),
       body: state.isLoading && state.notifications.isEmpty
@@ -93,8 +89,8 @@ class NotificationsPage extends ConsumerWidget {
                       Icon(Icons.error_outline,
                           size: 64,
                           color: isDark
-                              ? Colors.grey[600]
-                              : Colors.grey[400]),
+                              ? AppColors.textSecondaryDark
+                              : AppColors.textTertiary),
                       const SizedBox(height: 12),
                       Text(
                         state.error!,
@@ -133,8 +129,8 @@ class NotificationsPage extends ConsumerWidget {
                             Icon(Icons.notifications_none,
                                 size: 64,
                                 color: isDark
-                                    ? Colors.grey[600]
-                                    : Colors.grey[400]),
+                                    ? AppColors.textSecondaryDark
+                                    : AppColors.textTertiary),
                             const SizedBox(height: 12),
                             Center(
                               child: Text(

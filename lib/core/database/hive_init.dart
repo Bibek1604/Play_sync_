@@ -49,6 +49,10 @@ class HiveInit {
       HiveTableConstant.leaderboardBox,
       HiveTableConstant.notificationsBox,
       HiveTableConstant.chatBox,
+      HiveTableConstant.tournamentsBox,
+      HiveTableConstant.tournamentChatBox,
+      HiveTableConstant.tournamentPaymentsBox,
+      HiveTableConstant.adminBox,
       HiveTableConstant.preferencesBox,
       // Legacy boxes for backward compatibility
       HiveTableConstant.userBoxName,

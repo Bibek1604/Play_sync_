@@ -45,7 +45,7 @@ class ThemePage extends ConsumerWidget {
             // Theme Options
             _ThemeOptionCard(
               icon: Icons.brightness_auto,
-              iconColor: Colors.blue,
+              iconColor: AppColors.primary,
               title: 'System Default',
               subtitle: 'Follow system theme settings',
               isSelected: currentThemeMode == ThemeMode.system,
@@ -69,7 +69,7 @@ class ThemePage extends ConsumerWidget {
 
             _ThemeOptionCard(
               icon: Icons.dark_mode,
-              iconColor: Colors.indigo,
+              iconColor: AppColors.primaryDark,
               title: 'Dark Theme',
               subtitle: 'Easy on the eyes in low light',
               isSelected: currentThemeMode == ThemeMode.dark,
@@ -151,7 +151,7 @@ class _ThemeOptionCard extends StatelessWidget {
               : (isDark ? AppColors.cardDark : Colors.white),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? selectedColor : (isDark ? Colors.grey[700]! : Colors.grey[300]!),
+            color: isSelected ? selectedColor : (isDark ? AppColors.borderDark : AppColors.border),
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -191,7 +191,7 @@ class _ThemeOptionCard extends StatelessWidget {
             ),
             Icon(
               isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-              color: isSelected ? selectedColor : (isDark ? Colors.grey[600] : Colors.grey[400]),
+              color: isSelected ? selectedColor : (isDark ? AppColors.textSecondaryDark : AppColors.textTertiary),
             ),
           ],
         ),

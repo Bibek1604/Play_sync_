@@ -22,6 +22,10 @@ class HiveTableConstant {
   static const int participantDtoTypeId = 11;
   static const int activityLogTypeId = 12;
   // Add new feature types starting at 13
+  static const int tournamentDtoTypeId = 13;
+  static const int tournamentPaymentDtoTypeId = 14;
+  static const int tournamentChatMessageTypeId = 15;
+  static const int adminStatsDtoTypeId = 16;
 
   // ===== BOX NAMES =====
   // Authentication (dynamic, no Hive model adapter)
@@ -35,6 +39,10 @@ class HiveTableConstant {
   static const String notificationsBox = 'notifications_metadata';
   static const String scorecardBox = 'scorecard';
   static const String chatBox = 'chat_cache';
+  static const String tournamentsBox = 'tournaments';
+  static const String tournamentChatBox = 'tournament_chat_cache';
+  static const String tournamentPaymentsBox = 'tournament_payments';
+  static const String adminBox = 'admin_cache';
 
   // Preferences / misc
   static const String preferencesBox = 'preferences';

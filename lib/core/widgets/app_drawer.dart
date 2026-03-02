@@ -143,7 +143,7 @@ class AppDrawer extends ConsumerWidget {
                 ),
 
                 Divider(
-                  color: isDark ? Colors.grey[800] : Colors.grey.shade200,
+                  color: isDark ? AppColors.borderDark : AppColors.border,
                   height: 24,
                 ),
 
@@ -151,7 +151,7 @@ class AppDrawer extends ConsumerWidget {
                 _DrawerItem(
                   icon: Icons.logout_rounded,
                   label: 'Logout',
-                  color: Colors.red,
+                  color: AppColors.error,
                   isDark: isDark,
                   onTap: () async {
                     Navigator.pop(context);

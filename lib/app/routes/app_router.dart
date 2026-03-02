@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/constants/app_colors.dart';
 import 'app_routes.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
@@ -19,6 +20,13 @@ import '../../features/leaderboard/presentation/pages/leaderboard_page.dart';
 import '../../features/scorecard/scorecard.dart';
 import '../../features/history/presentation/pages/game_history_page.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
+import '../../features/tournament/presentation/pages/tournament_list_page.dart';
+import '../../features/tournament/presentation/pages/tournament_detail_page.dart';
+import '../../features/tournament/presentation/pages/create_tournament_page.dart';
+import '../../features/tournament/presentation/pages/tournament_chat_page.dart';
+import '../../features/tournament/presentation/pages/tournament_payments_page.dart';
+import '../../features/tournament/presentation/pages/esewa_payment_page.dart';
+import '../../features/tournament/domain/entities/tournament_entity.dart';
 import '../../core/widgets/app_shell.dart';
 
 /// Application Router
@@ -150,6 +158,65 @@ class AppRouter {
           settings,
         );
 
+      // ── Tournament routes ─────────────────────────────────────────────────
+      case AppRoutes.tournaments:
+        return _buildRoute(
+          const AuthGuard(child: TournamentListPage()),
+          settings,
+        );
+
+      case AppRoutes.tournamentDetail:
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        final tournamentId = args['tournamentId'] as String? ?? '';
+        return _buildRoute(
+          AuthGuard(child: TournamentDetailPage(tournamentId: tournamentId)),
+          settings,
+        );
+
+      case AppRoutes.tournamentCreate:
+        final args = settings.arguments as Map<String, dynamic>?;
+        final existing = args?['tournament'] as TournamentEntity?;
+        return _buildRoute(
+          AuthGuard(child: CreateTournamentPage(existingTournament: existing)),
+          settings,
+        );
+
+      case AppRoutes.tournamentChat:
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        return _buildRoute(
+          AuthGuard(
+            child: TournamentChatPage(
+              tournamentId: args['tournamentId'] as String? ?? '',
+              tournamentName: args['tournamentName'] as String? ?? 'Chat',
+            ),
+          ),
+          settings,
+        );
+
+      case AppRoutes.tournamentPayments:
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        return _buildRoute(
+          AuthGuard(
+            child: TournamentPaymentsPage(
+              tournamentId: args['tournamentId'] as String? ?? '',
+            ),
+          ),
+          settings,
+        );
+
+      case AppRoutes.esewaPayment:
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        return _buildRoute(
+          AuthGuard(
+            child: EsewaPaymentPage(
+              paymentUrl: args['paymentUrl'] as String? ?? '',
+              params: args['params'] as Map<String, dynamic>? ?? {},
+              tournamentId: args['tournamentId'] as String? ?? '',
+            ),
+          ),
+          settings,
+        );
+
       // ── Fallback ──────────────────────────────────────────────────────────
       default:
         return _buildRoute(
@@ -182,13 +249,13 @@ class _UnknownRoutePage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 80, color: Colors.grey),
+            const Icon(Icons.error_outline, size: 80, color: AppColors.textTertiary),
             const SizedBox(height: 16),
             const Text('Page Not Found',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Text('The requested page does not exist.',
-                style: TextStyle(fontSize: 16, color: Colors.grey[600])),
+                style: TextStyle(fontSize: 16, color: AppColors.textSecondary)),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () => Navigator.pushNamedAndRemoveUntil(

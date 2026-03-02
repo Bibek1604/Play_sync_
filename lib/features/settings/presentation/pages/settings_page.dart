@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../profile/presentation/pages/edit_profile_page.dart';
-import '../../../../core/widgets/app_drawer.dart';
 
 /// Settings Page — Account settings only.
 class SettingsPage extends ConsumerWidget {
@@ -13,8 +12,11 @@ class SettingsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      drawer: const AppDrawer(),
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_rounded),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
         scrolledUnderElevation: 0.5,
@@ -26,15 +28,6 @@ class SettingsPage extends ConsumerWidget {
               .titleLarge
               ?.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w700),
         ),
-        actions: [
-          Builder(
-            builder: (ctx) => IconButton(
-              icon: const Icon(Icons.menu_rounded, color: AppColors.textSecondary),
-              tooltip: 'Menu',
-              onPressed: () => Scaffold.of(ctx).openDrawer(),
-            ),
-          ),
-        ],
       ),
       body: ListView(
         padding: EdgeInsets.symmetric(

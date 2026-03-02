@@ -7,6 +7,7 @@ import '../widgets/create_game_sheet.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/widgets/app_drawer.dart';
+import '../../../../features/auth/presentation/providers/auth_notifier.dart';
 
 const _sports = [
   'All', 'Football', 'Basketball', 'Cricket', 'Chess', 'Tennis', 'Badminton', 'Other'
@@ -91,6 +92,7 @@ class _GamePageState extends ConsumerState<GamePage>
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(gameProvider);
+    final currentUserId = ref.watch(authNotifierProvider).user?.userId;
 
     final displayed = _selectedSport == 'All'
         ? state.filteredGames
@@ -355,8 +357,18 @@ class _GamePageState extends ConsumerState<GamePage>
                         }
                         return GameCard(
                           game: displayed[i],
+                          currentUserId: currentUserId,
                           onTap: () =>
                               _openDetail(context, displayed[i]),
+                          onJoin: () => ref
+                              .read(gameProvider.notifier)
+                              .joinGame(displayed[i].id),
+                          onLeave: () => ref
+                              .read(gameProvider.notifier)
+                              .leaveGame(displayed[i].id),
+                          onDelete: () => ref
+                              .read(gameProvider.notifier)
+                              .cancelGame(displayed[i].id),
                         );
                       },
                     ),

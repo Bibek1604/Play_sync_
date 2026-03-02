@@ -708,7 +708,7 @@ class _Step3Location extends StatelessWidget {
           _SectionLabel('Region / District *'),
           SizedBox(height: AppSpacing.sm),
           DropdownButtonFormField<String>(
-            value: district,
+            initialValue: district,
             hint: const Text('Select a district'),
             isExpanded: true,
             decoration: _inputDec(icon: Icons.location_on_outlined),

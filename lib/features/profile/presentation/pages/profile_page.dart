@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:play_sync_new/core/api/api_client.dart';
 import 'package:play_sync_new/core/api/api_endpoints.dart';
 import 'package:play_sync_new/core/constants/app_colors.dart';
@@ -80,8 +81,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         _isOwnProfile ? ref.watch(profileNotifierProvider).profile : _visitedProfile;
 
     return Scaffold(
-      drawer: const AppDrawer(),
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_rounded),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: Text(_isOwnProfile ? 'Profile' : (profile?.fullName ?? 'Profile')),
         actions: [
           if (_isOwnProfile)
@@ -97,13 +101,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                 }
               },
             ),
-          Builder(
-            builder: (ctx) => IconButton(
-              icon: const Icon(Icons.menu_rounded),
-              tooltip: 'Menu',
-              onPressed: () => Scaffold.of(ctx).openDrawer(),
-            ),
-          ),
         ],
       ),
       body: isLoading
@@ -296,9 +293,9 @@ class _StatsRow extends StatelessWidget {
       children: [
         _StatTile(label: 'Games', value: '${profile.totalGames}', isDark: isDark),
         const SizedBox(width: 12),
-        _StatTile(label: 'Wins', value: '${profile.wins}', isDark: isDark, color: Colors.green),
+        _StatTile(label: 'Wins', value: '${profile.wins}', isDark: isDark, color: AppColors.success),
         const SizedBox(width: 12),
-        _StatTile(label: 'Losses', value: '${profile.losses}', isDark: isDark, color: Colors.red),
+        _StatTile(label: 'Losses', value: '${profile.losses}', isDark: isDark, color: AppColors.error),
         const SizedBox(width: 12),
         _StatTile(
           label: 'Win Rate',
@@ -325,10 +322,10 @@ class _StatTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.cardDark : Colors.white,
+          color: isDark ? AppColors.cardDark : AppColors.background,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isDark ? Colors.grey[800]! : Colors.grey.shade200,
+            color: isDark ? AppColors.borderDark : AppColors.border,
           ),
         ),
         child: Column(
@@ -346,7 +343,7 @@ class _StatTile extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: 11,
-                color: isDark ? AppColors.textSecondaryDark : Colors.grey[600],
+                color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
               ),
             ),
           ],
@@ -391,18 +388,38 @@ class _ProfileHeader extends StatelessWidget {
           ),
           child: profile.avatar != null && profile.avatar!.isNotEmpty
               ? ClipOval(
-                  child: Image.network(
-                    profile.avatar!,
+                  child: CachedNetworkImage(
+                    // Use the avatar URL itself as the cache key so that after
+                    // an upload (URL changes) the old image is not served from
+                    // disk cache.
+                    cacheKey: profile.avatar!,
+                    imageUrl: profile.avatar!,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Text(
-                      profile.initials,
-                      style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.white),
+                    width: 120,
+                    height: 120,
+                    placeholder: (_, __) => const Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    errorWidget: (_, __, ___) => Center(
+                      child: Text(
+                        profile.initials,
+                        style: const TextStyle(
+                          fontSize: 40,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   ),
                 )
-              : Text(
-                  profile.initials,
-                  style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.white),
+              : Center(
+                  child: Text(
+                    profile.initials,
+                    style: const TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
+                  ),
                 ),
         ),
 
@@ -425,7 +442,7 @@ class _ProfileHeader extends StatelessWidget {
           profile.email ?? '',
           style: TextStyle(
             fontSize: 14,
-            color: isDark ? AppColors.textSecondaryDark : Colors.grey[600],
+            color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
           ),
         ),
 
@@ -469,10 +486,10 @@ class _InfoCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.cardDark : Colors.white,
+        color: isDark ? AppColors.cardDark : AppColors.background,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isDark ? Colors.grey[800]! : Colors.grey.shade200,
+          color: isDark ? AppColors.borderDark : AppColors.border,
         ),
       ),
       child: Row(
@@ -494,7 +511,7 @@ class _InfoCard extends StatelessWidget {
                   title,
                   style: TextStyle(
                     fontSize: 12,
-                    color: isDark ? AppColors.textSecondaryDark : Colors.grey[600],
+                    color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -541,7 +558,7 @@ class _ErrorView extends StatelessWidget {
             Icon(
               Icons.error_outline,
               size: 80,
-              color: isDark ? Colors.red[300] : Colors.red,
+              color: isDark ? AppColors.error.withValues(alpha: 0.7) : AppColors.error,
             ),
             const SizedBox(height: 20),
             Text(
@@ -558,7 +575,7 @@ class _ErrorView extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
-                color: isDark ? AppColors.textSecondaryDark : Colors.grey[600],
+                color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: 30),
@@ -589,14 +606,14 @@ class _EmptyView extends StatelessWidget {
           Icon(
             Icons.person_outline,
             size: 80,
-            color: isDark ? Colors.grey[600] : Colors.grey[400],
+            color: isDark ? AppColors.textSecondaryDark : AppColors.textTertiary,
           ),
           const SizedBox(height: 20),
           Text(
             'No Profile Data',
             style: TextStyle(
               fontSize: 18,
-              color: isDark ? AppColors.textSecondaryDark : Colors.grey[600],
+              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
             ),
           ),
         ],

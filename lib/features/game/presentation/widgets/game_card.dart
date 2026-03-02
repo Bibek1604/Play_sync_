@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
+import '../../../../app/routes/app_routes.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../domain/entities/game_entity.dart';
 
-/// GameCard — shows game info with role-based action buttons.
+/// GameCard — shows game info with state-driven action buttons.
 ///
-/// Permissions:
-///   • Creator  → Delete button (no Join)
-///   • Participant (not creator) → Leave button
-///   • Others (open game) → Join button
+/// Button logic (state-driven, never error-driven):
+///   • Creator + OPEN  → "Go to Chat" + "Cancel Game"
+///   • Participant (not creator) + OPEN → "Go to Chat" + "Leave Game"
+///   • Not joined + OPEN + not full → "Join Game"
+///   • Not joined + OPEN + full → "Game Full" (disabled)
+///   • ENDED   → "View Results"
+///   • CANCELLED → badge only, no action
 class GameCard extends StatelessWidget {
   final GameEntity game;
   final String? currentUserId;
@@ -32,6 +36,9 @@ class GameCard extends StatelessWidget {
 
   bool get _isParticipant =>
       currentUserId != null && game.isParticipant(currentUserId!);
+
+  /// Whether the current user is involved in the game (creator or participant)
+  bool get _isJoined => _isCreator || _isParticipant;
 
   @override
   Widget build(BuildContext context) {
@@ -115,19 +122,17 @@ class GameCard extends StatelessWidget {
                 ],
               ),
 
-              // ── Action button ─────────────────────────────────────
-              if (game.isOpen) ...[
-                SizedBox(height: AppSpacing.md),
-                _ActionButton(
-                  isCreator: _isCreator,
-                  isParticipant: _isParticipant,
-                  isFull: game.isFull,
-                  spotsLeft: game.spotsLeft,
-                  onJoin: onJoin,
-                  onLeave: onLeave,
-                  onDelete: onDelete,
-                ),
-              ],
+              // ── Action buttons (state-driven) ──────────────────────
+              SizedBox(height: AppSpacing.md),
+              _ActionButtons(
+                context: context,
+                game: game,
+                isCreator: _isCreator,
+                isJoined: _isJoined,
+                onJoin: onJoin,
+                onLeave: onLeave,
+                onDelete: onDelete,
+              ),
             ],
           ),
         ),
@@ -136,71 +141,106 @@ class GameCard extends StatelessWidget {
   }
 }
 
-// ── Action Button ──────────────────────────────────────────────────────────────
+// ── State-driven Action Buttons ────────────────────────────────────────────────
 
-class _ActionButton extends StatelessWidget {
+class _ActionButtons extends StatelessWidget {
+  final BuildContext context;
+  final GameEntity game;
   final bool isCreator;
-  final bool isParticipant;
-  final bool isFull;
-  final int spotsLeft;
+  final bool isJoined;
   final VoidCallback? onJoin;
   final VoidCallback? onLeave;
   final VoidCallback? onDelete;
 
-  const _ActionButton({
+  const _ActionButtons({
+    required this.context,
+    required this.game,
     required this.isCreator,
-    required this.isParticipant,
-    required this.isFull,
-    required this.spotsLeft,
+    required this.isJoined,
     this.onJoin,
     this.onLeave,
     this.onDelete,
   });
 
+  void _goToChat() {
+    Navigator.pushNamed(
+      context,
+      AppRoutes.gameChat,
+      arguments: {'gameId': game.id, 'gameTitle': game.title},
+    );
+  }
+
   @override
-  Widget build(BuildContext context) {
-    // ── Creator: show Delete only ───────────────────────────────
-    if (isCreator) {
-      return SizedBox(
-        width: double.infinity,
-        height: 40,
-        child: OutlinedButton.icon(
-          onPressed: onDelete,
-          icon: const Icon(Icons.delete_outline_rounded, size: 18),
-          label: const Text('Delete Game',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.error,
-            side: const BorderSide(color: AppColors.error, width: 1.5),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.md)),
+  Widget build(BuildContext _) {
+    // ── CANCELLED → no actions ──────────────────────────────────
+    if (game.status == GameStatus.CANCELLED) {
+      return const SizedBox.shrink();
+    }
+
+    // ── ENDED → View Results ────────────────────────────────────
+    if (game.status == GameStatus.ENDED) {
+      return const SizedBox.shrink();
+    }
+
+    // ── OPEN / FULL: joined user (creator or participant) ───────
+    if (isJoined) {
+      return Column(
+        children: [
+          // Primary: Go to Chat
+          SizedBox(
+            width: double.infinity,
+            height: 40,
+            child: ElevatedButton.icon(
+              onPressed: _goToChat,
+              icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
+              label: const Text('Go to Chat',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.md)),
+              ),
+            ),
           ),
-        ),
+          SizedBox(height: AppSpacing.sm),
+          // Secondary: Cancel (creator) or Leave (participant)
+          SizedBox(
+            width: double.infinity,
+            height: 36,
+            child: isCreator
+                ? OutlinedButton.icon(
+                    onPressed: onDelete,
+                    icon: const Icon(Icons.cancel_outlined, size: 16),
+                    label: const Text('Cancel Game',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.error,
+                      side: const BorderSide(color: AppColors.error, width: 1.2),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.md)),
+                    ),
+                  )
+                : OutlinedButton.icon(
+                    onPressed: onLeave,
+                    icon: const Icon(Icons.exit_to_app_rounded, size: 16),
+                    label: const Text('Leave Game',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.warning,
+                      side: const BorderSide(color: AppColors.warning, width: 1.2),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.md)),
+                    ),
+                  ),
+          ),
+        ],
       );
     }
 
-    // ── Participant: show Leave ─────────────────────────────────
-    if (isParticipant) {
-      return SizedBox(
-        width: double.infinity,
-        height: 40,
-        child: OutlinedButton.icon(
-          onPressed: onLeave,
-          icon: const Icon(Icons.exit_to_app_rounded, size: 18),
-          label: const Text('Leave Game',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.warning,
-            side: const BorderSide(color: AppColors.warning, width: 1.5),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.md)),
-          ),
-        ),
-      );
-    }
-
-    // ── Others: show Join (if open & not full) ──────────────────
-    if (isFull) {
+    // ── OPEN: not joined, but full ──────────────────────────────
+    if (game.isFull) {
       return Container(
         width: double.infinity,
         height: 40,
@@ -219,6 +259,7 @@ class _ActionButton extends StatelessWidget {
       );
     }
 
+    // ── OPEN: not joined, has spots ─────────────────────────────
     return SizedBox(
       width: double.infinity,
       height: 40,
@@ -226,7 +267,7 @@ class _ActionButton extends StatelessWidget {
         onPressed: onJoin,
         icon: const Icon(Icons.login_rounded, size: 18),
         label: Text(
-          'Join · $spotsLeft ${spotsLeft == 1 ? 'spot' : 'spots'} left',
+          'Join · ${game.spotsLeft} ${game.spotsLeft == 1 ? 'spot' : 'spots'} left',
           style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
         ),
         style: ElevatedButton.styleFrom(

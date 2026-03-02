@@ -1,7 +1,17 @@
 import 'package:equatable/equatable.dart';
+import '../../../../core/api/api_endpoints.dart';
 
 /// Backend game statuses
 enum GameStatus { OPEN, FULL, ENDED, CANCELLED }
+
+/// Resolves a possibly-relative image URL to a full URL.
+/// Returns null if the input is null or empty.
+String? _resolveImageUrl(String? url) {
+  if (url == null || url.isEmpty) return null;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  // Relative path like /uploads/... — prepend server base
+  return '${ApiEndpoints.imageBaseUrl}$url';
+}
 
 /// Backend participant statuses
 enum ParticipantStatus { ACTIVE, LEFT, REMOVED, BANNED }
@@ -30,7 +40,7 @@ class GameParticipant extends Equatable {
     if (user is Map<String, dynamic>) {
       oderId = user['_id'] as String? ?? user['id'] as String? ?? '';
       displayName = user['fullName'] as String? ?? user['email'] as String? ?? '';
-      avatar = user['avatar'] as String?;
+      avatar = _resolveImageUrl(user['profilePicture'] as String? ?? user['avatar'] as String?);
     } else {
       oderId = user?.toString() ?? '';
       displayName = '';
@@ -144,7 +154,7 @@ class GameEntity extends Equatable {
     if (creator is Map<String, dynamic>) {
       creatorId = creator['_id'] as String? ?? creator['id'] as String? ?? '';
       creatorName = creator['fullName'] as String? ?? creator['email'] as String? ?? '';
-      creatorAvatar = creator['avatar'] as String?;
+      creatorAvatar = _resolveImageUrl(creator['profilePicture'] as String? ?? creator['avatar'] as String?);
     } else {
       creatorId = creator?.toString() ?? '';
       creatorName = json['creatorName'] as String? ?? '';

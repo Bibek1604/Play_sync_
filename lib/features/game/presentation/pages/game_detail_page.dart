@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:play_sync_new/app/routes/app_routes.dart';
 import 'package:play_sync_new/core/constants/app_colors.dart';
 import 'package:play_sync_new/features/game/domain/entities/game_entity.dart';
 import 'package:play_sync_new/features/game/presentation/providers/game_notifier.dart';
 import 'package:play_sync_new/features/auth/presentation/providers/auth_notifier.dart';
-import 'package:play_sync_new/core/widgets/app_drawer.dart';
 
 /// Detailed view of a single game with join/leave/cancel actions.
 class GameDetailPage extends ConsumerStatefulWidget {
@@ -41,6 +41,15 @@ class _GameDetailPageState extends ConsumerState<GameDetailPage> {
   bool get _isParticipant => _currentUserId != null && 
       _game?.isParticipant(_currentUserId!) == true && 
       !_isCreator;
+
+  void _goToChat() {
+    if (_game == null) return;
+    Navigator.pushNamed(
+      context,
+      AppRoutes.gameChat,
+      arguments: {'gameId': _game!.id, 'gameTitle': _game!.title},
+    );
+  }
 
   @override
   void initState() {
@@ -82,13 +91,13 @@ class _GameDetailPageState extends ConsumerState<GameDetailPage> {
       await _fetchGame();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Joined game!'), backgroundColor: Colors.green),
+          const SnackBar(content: Text('Joined game!'), backgroundColor: AppColors.success),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to join: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Failed to join: $e'), backgroundColor: AppColors.error),
         );
       }
     } finally {
@@ -103,13 +112,13 @@ class _GameDetailPageState extends ConsumerState<GameDetailPage> {
       await _fetchGame();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Left game'), backgroundColor: Colors.orange),
+          const SnackBar(content: Text('Left game'), backgroundColor: AppColors.warning),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to leave: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Failed to leave: $e'), backgroundColor: AppColors.error),
         );
       }
     } finally {
@@ -127,7 +136,7 @@ class _GameDetailPageState extends ConsumerState<GameDetailPage> {
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('No')),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Yes, Cancel', style: TextStyle(color: Colors.red)),
+            child: const Text('Yes, Cancel', style: TextStyle(color: AppColors.error)),
           ),
         ],
       ),
@@ -140,13 +149,59 @@ class _GameDetailPageState extends ConsumerState<GameDetailPage> {
       await _fetchGame();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Game cancelled'), backgroundColor: Colors.red),
+          const SnackBar(content: Text('Game cancelled'), backgroundColor: AppColors.error),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to cancel: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Failed to cancel: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _actionLoading = false);
+    }
+  }
+
+  Future<void> _deleteGame() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Game'),
+        content: const Text('Are you sure you want to permanently delete this game? All chat messages will also be deleted. This cannot be undone.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('No')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Yes, Delete', style: TextStyle(color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    setState(() => _actionLoading = true);
+    try {
+      final success = await ref.read(gameProvider.notifier).deleteGame(widget.gameId);
+      if (mounted) {
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Game deleted'), backgroundColor: AppColors.success),
+          );
+          Navigator.of(context).pop(); // Go back after deletion
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(ref.read(gameProvider).error ?? 'Failed to delete game'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete: $e'), backgroundColor: AppColors.error),
         );
       }
     } finally {
@@ -159,18 +214,12 @@ class _GameDetailPageState extends ConsumerState<GameDetailPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      drawer: const AppDrawer(),
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_rounded),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: Text(_game?.title ?? 'Game Details'),
-        actions: [
-          Builder(
-            builder: (ctx) => IconButton(
-              icon: const Icon(Icons.menu_rounded),
-              tooltip: 'Menu',
-              onPressed: () => Scaffold.of(ctx).openDrawer(),
-            ),
-          ),
-        ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -179,7 +228,7 @@ class _GameDetailPageState extends ConsumerState<GameDetailPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                      const Icon(Icons.error_outline, size: 48, color: AppColors.error),
                       const SizedBox(height: 12),
                       Text(_error!, textAlign: TextAlign.center),
                       const SizedBox(height: 16),
@@ -200,6 +249,8 @@ class _GameDetailPageState extends ConsumerState<GameDetailPage> {
                         onJoin: _joinGame,
                         onLeave: _leaveGame,
                         onCancel: _cancelGame,
+                        onDelete: _deleteGame,
+                        onGoToChat: _goToChat,
                       ),
                     ),
     );
@@ -215,6 +266,8 @@ class _GameContent extends StatelessWidget {
   final VoidCallback onJoin;
   final VoidCallback onLeave;
   final VoidCallback onCancel;
+  final VoidCallback onDelete;
+  final VoidCallback onGoToChat;
 
   const _GameContent({
     required this.game,
@@ -225,6 +278,8 @@ class _GameContent extends StatelessWidget {
     required this.onJoin,
     required this.onLeave,
     required this.onCancel,
+    required this.onDelete,
+    required this.onGoToChat,
   });
 
   @override
@@ -371,9 +426,9 @@ class _GameContent extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.cardDark : Colors.white,
+              color: isDark ? AppColors.cardDark : AppColors.background,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey.shade200),
+              border: Border.all(color: isDark ? AppColors.borderDark : AppColors.border),
             ),
             child: Row(
               children: [
@@ -412,7 +467,25 @@ class _GameContent extends StatelessWidget {
         if (actionLoading)
           const Center(child: CircularProgressIndicator())
         else if (game.isOpen) ...[
-          // Creator: Cancel Game button only
+          // Go to Chat button for participants and creators
+          if (isCreator || isParticipant) ...[
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: onGoToChat,
+                icon: const Icon(Icons.chat_bubble_rounded),
+                label: const Text('Go to Chat', style: TextStyle(fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          // Creator: Cancel + Delete buttons
           if (isCreator) ...[
             SizedBox(
               width: double.infinity,
@@ -422,8 +495,23 @@ class _GameContent extends StatelessWidget {
                 icon: const Icon(Icons.cancel_outlined),
                 label: const Text('Cancel Game', style: TextStyle(fontWeight: FontWeight.bold)),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.red,
-                  side: const BorderSide(color: Colors.red, width: 1.5),
+                  foregroundColor: AppColors.error,
+                  side: const BorderSide(color: AppColors.error, width: 1.5),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: OutlinedButton.icon(
+                onPressed: onDelete,
+                icon: const Icon(Icons.delete_forever_rounded),
+                label: const Text('Delete Game', style: TextStyle(fontWeight: FontWeight.bold)),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.error,
+                  side: BorderSide(color: AppColors.error.withValues(alpha: 0.5), width: 1.5),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
@@ -439,8 +527,8 @@ class _GameContent extends StatelessWidget {
                 icon: const Icon(Icons.exit_to_app_rounded),
                 label: const Text('Leave Game', style: TextStyle(fontWeight: FontWeight.bold)),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.orange,
-                  side: const BorderSide(color: Colors.orange, width: 1.5),
+                  foregroundColor: AppColors.warning,
+                  side: const BorderSide(color: AppColors.warning, width: 1.5),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
@@ -472,16 +560,16 @@ class _GameContent extends StatelessWidget {
               width: double.infinity,
               height: 48,
               decoration: BoxDecoration(
-                color: isDark ? AppColors.cardDark : Colors.grey.shade100,
+                color: isDark ? AppColors.cardDark : AppColors.surfaceLight,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade300),
+                border: Border.all(color: AppColors.border),
               ),
               child: const Center(
                 child: Text(
                   'Game Full',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Colors.grey,
+                    color: AppColors.textTertiary,
                   ),
                 ),
               ),
@@ -494,20 +582,38 @@ class _GameContent extends StatelessWidget {
             width: double.infinity,
             height: 48,
             decoration: BoxDecoration(
-              color: isDark ? AppColors.cardDark : Colors.grey.shade100,
+              color: isDark ? AppColors.cardDark : AppColors.surfaceLight,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade300),
+              border: Border.all(color: AppColors.border),
             ),
             child: Center(
               child: Text(
                 game.isEnded ? 'Game Ended' : 'Game Cancelled',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: game.isEnded ? Colors.grey : Colors.red.shade300,
+                  color: game.isEnded ? AppColors.textTertiary : AppColors.error,
                 ),
               ),
             ),
           ),
+          // Creator can still delete ended/cancelled games
+          if (isCreator) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: OutlinedButton.icon(
+                onPressed: onDelete,
+                icon: const Icon(Icons.delete_forever_rounded),
+                label: const Text('Delete Game', style: TextStyle(fontWeight: FontWeight.bold)),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.error,
+                  side: BorderSide(color: AppColors.error.withValues(alpha: 0.5), width: 1.5),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+          ],
         ],
 
         const SizedBox(height: 30),
@@ -529,9 +635,9 @@ class _InfoRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.cardDark : Colors.white,
+        color: isDark ? AppColors.cardDark : AppColors.background,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey.shade200),
+        border: Border.all(color: isDark ? AppColors.borderDark : AppColors.border),
       ),
       child: Row(
         children: [
@@ -561,16 +667,16 @@ class _StatusChip extends StatelessWidget {
     Color color;
     switch (status) {
       case GameStatus.OPEN:
-        color = Colors.green;
+        color = AppColors.success;
         break;
       case GameStatus.FULL:
-        color = Colors.orange;
+        color = AppColors.warning;
         break;
       case GameStatus.ENDED:
-        color = Colors.grey;
+        color = AppColors.textTertiary;
         break;
       case GameStatus.CANCELLED:
-        color = Colors.red;
+        color = AppColors.error;
         break;
     }
     return Container(

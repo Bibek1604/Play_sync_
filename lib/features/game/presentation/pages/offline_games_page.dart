@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_theme.dart';
-import '../../../../core/widgets/app_drawer.dart';
 import '../../../auth/presentation/providers/auth_notifier.dart';
 import '../providers/game_notifier.dart';
 import '../widgets/game_card.dart';
@@ -103,8 +102,11 @@ class _OfflineGamesPageState extends ConsumerState<OfflineGamesPage> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      drawer: const AppDrawer(),
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_rounded),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
         scrolledUnderElevation: 0.5,
@@ -118,14 +120,6 @@ class _OfflineGamesPageState extends ConsumerState<OfflineGamesPage> {
             onPressed: () =>
                 ref.read(gameProvider.notifier).fetchGames(refresh: true),
           ),
-          Builder(
-            builder: (ctx) => IconButton(
-              icon: const Icon(Icons.menu_rounded),
-              tooltip: 'Menu',
-              onPressed: () => Scaffold.of(ctx).openDrawer(),
-            ),
-          ),
-          SizedBox(width: AppSpacing.sm),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(56),

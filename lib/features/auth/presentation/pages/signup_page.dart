@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/routes/app_routes.dart';
+import '../../../../core/constants/app_colors.dart';
 import '../providers/auth_notifier.dart';
 
 class SignupPage extends ConsumerStatefulWidget {
@@ -37,7 +38,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Please agree to Terms & Conditions'),
-          backgroundColor: Colors.orange,
+          backgroundColor: AppColors.warning,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
@@ -57,7 +58,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(failure.message),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
@@ -147,7 +148,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                         const SizedBox(height: 8),
                         Text(
                           'Join PlaySync and start gaming with friends',
-                          style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                          style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
                         ),
                       ],
                     ),
@@ -160,18 +161,18 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                       padding: const EdgeInsets.all(12),
                       margin: const EdgeInsets.only(bottom: 20),
                       decoration: BoxDecoration(
-                        color: Colors.red.shade50,
+                        color: AppColors.error.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.red.shade200),
+                        border: Border.all(color: AppColors.error.withValues(alpha: 0.4)),
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.error_outline, color: Colors.red.shade700),
+                          Icon(Icons.error_outline, color: AppColors.error),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
                               authState.error!,
-                              style: TextStyle(color: Colors.red.shade700),
+                              style: TextStyle(color: AppColors.error),
                             ),
                           ),
                         ],
@@ -282,7 +283,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                       Expanded(
                         child: RichText(
                           text: TextSpan(
-                            style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                             children: const [
                               TextSpan(text: 'I agree to the '),
                               TextSpan(
@@ -364,15 +365,15 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                   // Divider
                   Row(
                     children: [
-                      Expanded(child: Divider(color: Colors.grey[300])),
+                      Expanded(child: Divider(color: AppColors.border)),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
                           'or sign up with',
-                          style: TextStyle(color: Colors.grey[500], fontSize: 14),
+                          style: TextStyle(color: AppColors.textTertiary, fontSize: 14),
                         ),
                       ),
-                      Expanded(child: Divider(color: Colors.grey[300])),
+                      Expanded(child: Divider(color: AppColors.border)),
                     ],
                   ),
 
@@ -396,7 +397,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                     children: [
                       Text(
                         'Already have an account? ',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                        style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
                       ),
                       GestureDetector(
                         onTap: () => Navigator.pushReplacementNamed(context, '/login'),
@@ -451,7 +452,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
           style: const TextStyle(fontSize: 16),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: Colors.grey[400], fontSize: 16),
+            hintStyle: TextStyle(color: AppColors.textTertiary, fontSize: 16),
             prefixIcon: Icon(prefixIcon, color: const Color(0xFF2E7D32)),
             suffixIcon: suffixIcon,
             filled: true,
@@ -470,11 +471,11 @@ class _SignupPageState extends ConsumerState<SignupPage> {
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: Colors.red),
+              borderSide: const BorderSide(color: AppColors.error),
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: Colors.red, width: 2),
+              borderSide: const BorderSide(color: AppColors.error, width: 2),
             ),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           ),
@@ -490,10 +491,10 @@ class _SignupPageState extends ConsumerState<SignupPage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.grey.shade300),
+          border: Border.all(color: AppColors.border),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withValues(alpha: 0.1),
+              color: AppColors.textTertiary.withValues(alpha: 0.1),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -502,14 +503,14 @@ class _SignupPageState extends ConsumerState<SignupPage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 24, color: Colors.grey[700]),
+            Icon(icon, size: 24, color: AppColors.borderDark),
             const SizedBox(width: 8),
             Text(
               label,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: Colors.grey[700],
+                color: AppColors.borderDark,
               ),
             ),
           ],

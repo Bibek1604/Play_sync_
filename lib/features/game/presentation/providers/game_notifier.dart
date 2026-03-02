@@ -221,6 +221,7 @@ class GameNotifier extends StateNotifier<GameState> {
     try {
       await _api.post(ApiEndpoints.joinGame(gameId));
       await fetchGames(refresh: true);
+      await fetchMyJoinedGames(); // keep joined-games list in sync
       return true;
     } on DioException catch (e) {
       state = state.copyWith(error: _errorMsg(e));
@@ -232,6 +233,7 @@ class GameNotifier extends StateNotifier<GameState> {
     try {
       await _api.post(ApiEndpoints.leaveGame(gameId));
       await fetchGames(refresh: true);
+      await fetchMyJoinedGames(); // remove from joined-games list
       return true;
     } on DioException catch (e) {
       state = state.copyWith(error: _errorMsg(e));

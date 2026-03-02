@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/constants/app_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/auth/presentation/providers/auth_notifier.dart';
 import '../core/ui/responsive.dart';
@@ -237,10 +238,10 @@ class DashboardScreen extends ConsumerWidget {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.background,
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withValues(alpha: 0.2),
+              color: AppColors.textTertiary.withValues(alpha: 0.2),
               blurRadius: 10,
               offset: const Offset(0, -5),
             ),
@@ -251,9 +252,9 @@ class DashboardScreen extends ConsumerWidget {
             final onTablet = isTablet(context);
             return BottomNavigationBar(
               type: BottomNavigationBarType.fixed,
-              backgroundColor: Colors.white,
-              selectedItemColor: const Color(0xFF2E7D32),
-              unselectedItemColor: Colors.grey,
+              backgroundColor: AppColors.background,
+              selectedItemColor: AppColors.primary,
+              unselectedItemColor: AppColors.textTertiary,
               currentIndex: 0,
               selectedFontSize: onTablet ? 14 : 12,
               unselectedFontSize: 12,
@@ -328,7 +329,7 @@ class DashboardScreen extends ConsumerWidget {
                 subtitle,
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey[600],
+                  color: AppColors.textSecondary,
                 ),
               ),
             ],
@@ -347,12 +348,12 @@ class DashboardScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.1),
+            color: AppColors.textTertiary.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -366,7 +367,7 @@ class DashboardScreen extends ConsumerWidget {
               color: const Color(0xFFF1F8E9),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: const Color(0xFF2E7D32), size: 24),
+            child: Icon(icon, color: AppColors.primary, size: 24),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -386,7 +387,7 @@ class DashboardScreen extends ConsumerWidget {
                   subtitle,
                   style: TextStyle(
                     fontSize: 13,
-                    color: Colors.grey[600],
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ],
@@ -396,7 +397,7 @@ class DashboardScreen extends ConsumerWidget {
             time,
             style: TextStyle(
               fontSize: 12,
-              color: Colors.grey[500],
+              color: AppColors.textTertiary,
             ),
           ),
         ],

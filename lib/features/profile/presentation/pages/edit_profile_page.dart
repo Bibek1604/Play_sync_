@@ -156,7 +156,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(next.error!),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error,
           ),
         );
         ref.read(profileNotifierProvider.notifier).clearError();
@@ -166,7 +166,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(next.successMessage!),
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.success,
           ),
         );
         ref.read(profileNotifierProvider.notifier).clearSuccess();
@@ -436,7 +436,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: isDark ? Colors.grey[700]! : Colors.grey.shade300,
+            color: isDark ? AppColors.borderDark : AppColors.border,
           ),
         ),
         focusedBorder: OutlineInputBorder(

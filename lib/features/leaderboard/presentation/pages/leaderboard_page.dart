@@ -20,8 +20,11 @@ class LeaderboardPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      drawer: const AppDrawer(),
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_rounded),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: const Text('Leaderboard'),
         backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
@@ -32,13 +35,6 @@ class LeaderboardPage extends ConsumerWidget {
             icon: const Icon(Icons.tune_rounded, color: AppColors.textSecondary),
             tooltip: 'Filter',
             onPressed: () => _showFilterSheet(context, ref, state.filter),
-          ),
-          Builder(
-            builder: (ctx) => IconButton(
-              icon: const Icon(Icons.menu_rounded),
-              tooltip: 'Menu',
-              onPressed: () => Scaffold.of(ctx).openDrawer(),
-            ),
           ),
         ],
       ),

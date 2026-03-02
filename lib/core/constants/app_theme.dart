@@ -33,7 +33,7 @@ class AppTheme {
       appBarTheme: const AppBarTheme(
         elevation: 0,
         scrolledUnderElevation: 0.5,
-        backgroundColor:     AppColors.surface,
+        backgroundColor:     AppColors.background,
         foregroundColor:     AppColors.textPrimary,
         centerTitle:         false,
         surfaceTintColor:    Colors.transparent,
@@ -44,7 +44,7 @@ class AppTheme {
           color: AppColors.textPrimary,
           letterSpacing: -0.2,
         ),
-        iconTheme: IconThemeData(color: AppColors.textSecondary, size: 22),
+        iconTheme: IconThemeData(color: AppColors.textPrimary, size: 22),
         systemOverlayStyle: SystemUiOverlayStyle.dark,
       ),
 
@@ -256,7 +256,7 @@ class AppTheme {
       ),
 
       // ── Icon Theme ────────────────────────────────────────────────────
-      iconTheme: const IconThemeData(color: AppColors.textSecondary, size: 22),
+      iconTheme: const IconThemeData(color: AppColors.textPrimary, size: 22),
     );
   }
 

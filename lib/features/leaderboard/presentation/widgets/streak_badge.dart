@@ -12,7 +12,7 @@ class StreakBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     if (streak == 0) return const SizedBox.shrink();
 
-    final color = streak >= 5 ? Colors.orange : (streak >= 3 ? Colors.amber : AppColors.primary);
+    final color = streak >= 5 ? AppColors.warning : (streak >= 3 ? Colors.amber : AppColors.primary);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

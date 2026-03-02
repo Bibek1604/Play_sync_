@@ -45,6 +45,14 @@ class AppColors {
   static const Color disabled = Color(0xFFBDBDBD);
   static const Color shadow = Color(0x1A000000);
 
+  // Borders & Dividers
+  static const Color border = Color(0xFFE5E7EB);
+  static const Color borderSubtle = Color(0xFFF1F5F9);
+  static const Color borderDark = Color(0xFF374151);
+
+  // Text Tertiary
+  static const Color textTertiary = Color(0xFF9CA3AF);
+
   // Extended Palette
   static const Color emerald500 = Color(0xFF10B981);
   static const Color gold = Color(0xFFFFD700);

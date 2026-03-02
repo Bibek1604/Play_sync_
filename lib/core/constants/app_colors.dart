@@ -1,34 +1,36 @@
 import 'package:flutter/material.dart';
 
-/// PlaySync Design System — Premium 2026 Light Mode Color Kit
-/// Inspired by Figma, Linear, Slack: minimal, high-contrast, trustworthy.
+/// PlaySync Design System — Clean, Professional Color Kit
+/// Background: Pure white · Primary: Green · Text: Dark charcoal
+/// Rule: No blue in primary/secondary. Green = action. Gray = structure.
 class AppColors {
   AppColors._();
 
   // ── Backgrounds ──────────────────────────────────────────────────────────
-  /// Main scaffold — very light cool-gray/white
-  static const Color background    = Color(0xFFF8FAFC);
-  /// Pure white for cards and elevated surfaces
-  static const Color surface       = Color(0xFFFFFFFF);
+  /// Main scaffold — pure white
+  static const Color background    = Color(0xFFFFFFFF);
+  /// Card surfaces — very light gray
+  static const Color surface       = Color(0xFFF8F9FA);
   /// Off-white tertiary surface (input fills, list tiles)
   static const Color surfaceLight  = Color(0xFFF1F5F9);
   /// Muted surface (skeleton loaders, disabled areas)
   static const Color surfaceMuted  = Color(0xFFE2E8F0);
 
   // ── Borders & Dividers ───────────────────────────────────────────────────
-  static const Color border        = Color(0xFFE2E8F0);
+  static const Color border        = Color(0xFFE5E7EB);
   static const Color borderSubtle  = Color(0xFFF1F5F9);
+  static const Color borderDark    = Color(0xFF374151);   // gray-700 (dark mode borders)
 
-  // ── Primary — Indigo ─────────────────────────────────────────────────────
-  static const Color primary       = Color(0xFF6366F1);   // indigo-500
-  static const Color primaryDark   = Color(0xFF4F46E5);   // indigo-600
-  static const Color primaryLight  = Color(0xFFEEF2FF);   // indigo-50
-  static const Color primaryAlt    = Color(0xFF818CF8);   // indigo-400
+  // ── Primary — Green ──────────────────────────────────────────────────────
+  static const Color primary       = Color(0xFF16A34A);   // green-600
+  static const Color primaryDark   = Color(0xFF15803D);   // green-700 (hover)
+  static const Color primaryLight  = Color(0xFFF0FDF4);   // green-50
+  static const Color primaryAlt    = Color(0xFF22C55E);   // green-500
 
   // ── Text ─────────────────────────────────────────────────────────────────
-  static const Color textPrimary   = Color(0xFF0F172A);   // slate-900
-  static const Color textSecondary = Color(0xFF64748B);   // slate-500
-  static const Color textTertiary  = Color(0xFF94A3B8);   // slate-400
+  static const Color textPrimary   = Color(0xFF1F2937);   // gray-800 (dark charcoal)
+  static const Color textSecondary = Color(0xFF6B7280);   // gray-500
+  static const Color textTertiary  = Color(0xFF9CA3AF);   // gray-400
   static const Color textOnPrimary = Color(0xFFFFFFFF);
 
   // ── Semantic ─────────────────────────────────────────────────────────────
@@ -43,14 +45,14 @@ class AppColors {
   /// Red — errors, destructive
   static const Color error         = Color(0xFFEF4444);
   static const Color errorLight    = Color(0xFFFEE2E2);
-  /// Blue — info, links
-  static const Color info          = Color(0xFF3B82F6);
-  static const Color infoLight     = Color(0xFFDBEAFE);
+  /// Teal — info, links (no blue)
+  static const Color info          = Color(0xFF0D9488);
+  static const Color infoLight     = Color(0xFFCCFBF1);
 
   // ── Kept for backwards-compat ─────────────────────────────────────────────
   static const Color secondary         = Color(0xFFF8FAFC);
-  static const Color secondaryDark     = Color(0xFF6366F1);
-  static const Color textSecondaryDark = Color(0xFF94A3B8);
+  static const Color secondaryDark     = Color(0xFF16A34A);
+  static const Color textSecondaryDark = Color(0xFF9CA3AF);
   static const Color backgroundDark    = Color(0xFF0F172A);
   static const Color cardDark          = Color(0xFF1E293B);
 

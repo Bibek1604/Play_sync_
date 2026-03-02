@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../core/constants/app_colors.dart';
 import '../providers/auth_notifier.dart';
 import 'login_page.dart';
 
@@ -65,8 +67,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> with SingleTickerPr
   }
 
   Color _getStrengthColor(double strength) {
-    if (strength <= 0.25) return Colors.red;
-    if (strength <= 0.5) return Colors.orange;
+    if (strength <= 0.25) return AppColors.error;
+    if (strength <= 0.5) return AppColors.warning;
     if (strength <= 0.75) return Colors.yellow.shade700;
     return const Color(0xFF2E7D32);
   }
@@ -108,7 +110,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> with SingleTickerPr
                 Expanded(child: Text(failure.message)),
               ],
             ),
-            backgroundColor: Colors.red.shade600,
+            backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             margin: const EdgeInsets.all(16),
@@ -197,7 +199,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> with SingleTickerPr
                         Text(
                           'Create your account to get started',
                           style: theme.textTheme.bodyLarge?.copyWith(
-                            color: isDark ? Colors.grey[400] : Colors.grey[600],
+                            color: isDark ? AppColors.textTertiary : AppColors.textSecondary,
                           ),
                         ),
                         const SizedBox(height: 40),
@@ -255,7 +257,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> with SingleTickerPr
                           suffixIcon: IconButton(
                             icon: Icon(
                               _isPasswordVisible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                              color: Colors.grey[600],
+                              color: AppColors.textSecondary,
                             ),
                             onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
                           ),
@@ -284,7 +286,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> with SingleTickerPr
                                         borderRadius: BorderRadius.circular(4),
                                         child: LinearProgressIndicator(
                                           value: passwordStrength,
-                                          backgroundColor: Colors.grey.withValues(alpha: 0.2),
+                                          backgroundColor: AppColors.textTertiary.withValues(alpha: 0.2),
                                           valueColor: AlwaysStoppedAnimation<Color>(
                                             _getStrengthColor(passwordStrength),
                                           ),
@@ -320,7 +322,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> with SingleTickerPr
                           suffixIcon: IconButton(
                             icon: Icon(
                               _isConfirmPasswordVisible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                              color: Colors.grey[600],
+                              color: AppColors.textSecondary,
                             ),
                             onPressed: () => setState(() => _isConfirmPasswordVisible = !_isConfirmPasswordVisible),
                           ),
@@ -380,15 +382,15 @@ class _RegisterPageState extends ConsumerState<RegisterPage> with SingleTickerPr
                         // Divider
                         Row(
                           children: [
-                            Expanded(child: Divider(color: Colors.grey[400])),
+                            Expanded(child: Divider(color: AppColors.textTertiary)),
                             Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 16),
                               child: Text(
                                 'Already have an account?',
-                                style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                                style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
                               ),
                             ),
-                            Expanded(child: Divider(color: Colors.grey[400])),
+                            Expanded(child: Divider(color: AppColors.textTertiary)),
                           ],
                         ),
                         const SizedBox(height: 24),
@@ -488,7 +490,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> with SingleTickerPr
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
+            borderSide: BorderSide(color: AppColors.textTertiary.withValues(alpha: 0.2)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
@@ -496,11 +498,11 @@ class _RegisterPageState extends ConsumerState<RegisterPage> with SingleTickerPr
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Colors.red, width: 1),
+            borderSide: const BorderSide(color: AppColors.error, width: 1),
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Colors.red, width: 2),
+            borderSide: const BorderSide(color: AppColors.error, width: 2),
           ),
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/constants/app_colors.dart';
+
 /// Primary button for authentication actions (Login, Sign Up)
 class AuthPrimaryButton extends StatelessWidget {
   final String text;
@@ -105,7 +107,7 @@ class AuthSocialButton extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          side: BorderSide(color: Colors.grey.shade300),
+          side: BorderSide(color: AppColors.border),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
