@@ -1,11 +1,15 @@
 import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dio/dio.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
-import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:socket_io_client/socket_io_client.dart' as io;
 import '../../domain/entities/chat_message.dart';
+import '../../data/repositories/chat_repository.dart';
+import '../../../../../core/api/api_client.dart';
 import '../../../../../core/api/api_endpoints.dart';
+import '../../../../../core/api/secure_storage_provider.dart';
+import '../../../../../core/services/socket_service.dart';
+import '../../../auth/presentation/providers/auth_notifier.dart';
 import '../../../auth/presentation/view_model/auth_viewmodel.dart';
 
 // ─── State ───────────────────────────────────────────────────────────────────
@@ -14,18 +18,24 @@ class ChatState extends Equatable {
   final List<ChatRoom> rooms;
   final Map<String, List<ChatMessage>> messagesByRoom;
   final String? activeRoomId;
-  final bool isConnected;
   final bool isSending;
   final bool isLoadingRooms;
+  final bool isLoadingMessages;
+  final bool isLoadingMore;
+  final bool hasMore;
+  final String? nextCursor;
   final String? error;
 
   const ChatState({
     this.rooms = const [],
     this.messagesByRoom = const {},
     this.activeRoomId,
-    this.isConnected = false,
     this.isSending = false,
     this.isLoadingRooms = false,
+    this.isLoadingMessages = false,
+    this.isLoadingMore = false,
+    this.hasMore = false,
+    this.nextCursor,
     this.error,
   });
 
@@ -42,175 +52,357 @@ class ChatState extends Equatable {
     List<ChatRoom>? rooms,
     Map<String, List<ChatMessage>>? messagesByRoom,
     String? activeRoomId,
-    bool? isConnected,
     bool? isSending,
     bool? isLoadingRooms,
+    bool? isLoadingMessages,
+    bool? isLoadingMore,
+    bool? hasMore,
+    String? nextCursor,
     String? error,
     bool clearError = false,
     bool clearRoom = false,
+    bool clearCursor = false,
   }) {
     return ChatState(
       rooms: rooms ?? this.rooms,
       messagesByRoom: messagesByRoom ?? this.messagesByRoom,
       activeRoomId: clearRoom ? null : (activeRoomId ?? this.activeRoomId),
-      isConnected: isConnected ?? this.isConnected,
       isSending: isSending ?? this.isSending,
       isLoadingRooms: isLoadingRooms ?? this.isLoadingRooms,
+      isLoadingMessages: isLoadingMessages ?? this.isLoadingMessages,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      hasMore: hasMore ?? this.hasMore,
+      nextCursor: clearCursor ? null : (nextCursor ?? this.nextCursor),
       error: clearError ? null : (error ?? this.error),
     );
   }
 
   @override
-  List<Object?> get props =>
-      [rooms, messagesByRoom, activeRoomId, isConnected, isSending, isLoadingRooms, error];
+  List<Object?> get props => [
+        rooms,
+        messagesByRoom,
+        activeRoomId,
+        isSending,
+        isLoadingRooms,
+        isLoadingMessages,
+        isLoadingMore,
+        hasMore,
+        nextCursor,
+        error
+      ];
 }
 
 // ─── Notifier ────────────────────────────────────────────────────────────────
 
+/// Chat notifier for the Messages tab.
+///
+/// Rooms are built from the user's joined/created games via existing endpoints.
+/// Messages use the existing game-chat routes — no new backend routes needed:
+///   GET  /games/:gameId/chat  (history)
+///   POST /games/:gameId/chat  (REST fallback send)
+///
+/// Real-time uses the **same** Socket.IO events as GameChatPage:
+///   Emit:   join:game  gameId
+///           leave:game gameId
+///           chat:send  { gameId, content }  (with ack)
+///   Listen: chat:message  <ChatMessageDTO>
 class ChatNotifier extends StateNotifier<ChatState> {
-  final Dio _dio;
-  final String _myId;
-  WebSocketChannel? _channel;
-  StreamSubscription? _wsSub;
+  final ApiClient _api;
+  final ChatRepository _chatRepo;
+  String _myId;
+  final FlutterSecureStorage _storage;
 
-  ChatNotifier(this._dio, this._myId) : super(const ChatState()) {
+  io.Socket? _socket;
+  String? _socketRoomId;
+
+  // Dedup & optimistic-send tracking (mirrors GameChatPage)
+  final Set<String> _seenMsgIds = {};
+  final Set<String> _pendingTempIds = {};
+
+  ChatNotifier(this._api, this._chatRepo, this._myId, this._storage) : super(const ChatState()) {
+    _resolveMyId();
     fetchRooms();
   }
 
-  // ── Room loading ──────────────────────────────────────────────────────────
+  /// Ensure _myId is populated — falls back to secure storage if auth providers
+  /// hadn't loaded yet when the provider was constructed.
+  Future<void> _resolveMyId() async {
+    if (_myId.isNotEmpty) return;
+    final id = (await _storage.read(key: 'user_id') ?? '').trim();
+    if (id.isNotEmpty) _myId = id;
+  }
 
+  // ── Rooms ─────────────────────────────────────────────────────────────────
+
+  /// Build room list from user's joined + created games (existing endpoints).
   Future<void> fetchRooms() async {
     state = state.copyWith(isLoadingRooms: true, clearError: true);
     try {
-      final resp = await _dio.get('${ApiEndpoints.baseUrl}/chat/rooms');
-      // Backend may wrap as { data: [...] } or return a plain list
-      final raw = resp.data;
-      List<dynamic> rawList;
-      if (raw is List) {
-        rawList = raw;
-      } else if (raw is Map<String, dynamic>) {
-        final inner = raw['data'];
-        rawList = inner is List ? inner : (inner is Map ? (inner['rooms'] as List? ?? []) : []);
-      } else {
-        rawList = [];
+      final results = await Future.wait([
+        _api.get(ApiEndpoints.getMyJoinedGames),
+        _api.get(ApiEndpoints.getMyCreatedGames),
+      ]);
+
+      final seen = <String>{};
+      final rooms = <ChatRoom>[];
+
+      for (final resp in results) {
+        final raw = resp.data;
+        List<dynamic> list = [];
+        if (raw is List) {
+          list = raw;
+        } else if (raw is Map<String, dynamic>) {
+          final inner = raw['data'];
+          if (inner is List) {
+            list = inner;
+          } else if (inner is Map) {
+            list = (inner['games'] as List?) ?? (inner['data'] as List?) ?? [];
+          }
+        }
+        for (final item in list) {
+          final j = item as Map<String, dynamic>;
+          final id = j['_id'] as String? ?? j['id'] as String? ?? '';
+          if (id.isEmpty || !seen.add(id)) continue;
+          rooms.add(ChatRoom(
+            id: id,
+            name: j['title'] as String? ?? 'Game Chat',
+            avatarUrl: j['imageUrl'] as String? ?? j['image'] as String?,
+            lastMessage: j['lastMessage'] as String?,
+            isGroupChat: true,
+          ));
+        }
       }
-      final list = rawList
-          .map((j) => ChatRoom.fromJson(j as Map<String, dynamic>))
-          .toList();
-      state = state.copyWith(rooms: list, isLoadingRooms: false);
-    } on DioException {
-      // Demo rooms when offline
-      state = state.copyWith(rooms: _mockRooms(), isLoadingRooms: false);
+
+      state = state.copyWith(rooms: rooms, isLoadingRooms: false);
+    } catch (_) {
+      state = state.copyWith(isLoadingRooms: false);
     }
   }
 
-  // ── Room selection + WebSocket ────────────────────────────────────────────
+  // ── Open / close room ─────────────────────────────────────────────────────
 
   Future<void> openRoom(String roomId) async {
-    state = state.copyWith(activeRoomId: roomId);
+    state = state.copyWith(activeRoomId: roomId, isLoadingMessages: true);
     await _loadMessages(roomId);
-    _connectWebSocket(roomId);
+    await _connectSocket(roomId);
   }
 
   void closeRoom() {
-    _disconnect();
+    _disconnectSocket();
     state = state.copyWith(clearRoom: true);
+  }
+
+  /// Called when the user leaves a game from GameChatPage.
+  /// Removes the room and its messages from the chat section.
+  void leaveRoom(String gameId) {
+    if (state.activeRoomId == gameId) {
+      _disconnectSocket();
+    }
+    final updatedRooms = state.rooms.where((r) => r.id != gameId).toList();
+    final updatedMessages =
+        Map<String, List<ChatMessage>>.from(state.messagesByRoom)
+          ..remove(gameId);
+    state = state.copyWith(
+      rooms: updatedRooms,
+      messagesByRoom: updatedMessages,
+      clearRoom: state.activeRoomId == gameId,
+    );
   }
 
   Future<void> _loadMessages(String roomId) async {
     try {
-      final resp = await _dio.get('${ApiEndpoints.baseUrl}/chat/rooms/$roomId/messages');
-      final raw = resp.data;
-      List<dynamic> rawList;
-      if (raw is List) {
-        rawList = raw;
-      } else if (raw is Map<String, dynamic>) {
-        final inner = raw['data'];
-        rawList = inner is List ? inner : (inner is Map ? (inner['messages'] as List? ?? []) : []);
-      } else {
-        rawList = [];
+      final result = await _chatRepo.getChatHistory(roomId);
+
+      _seenMsgIds.clear();
+      final msgs = <ChatMessage>[];
+      // API returns newest-first; reverse so oldest appears at top
+      for (final msg in result.messages.reversed) {
+        if (msg.id.isNotEmpty) _seenMsgIds.add(msg.id);
+        msgs.add(msg);
       }
-      final list = rawList
-          .map((j) => ChatMessage.fromJson(
-              j as Map<String, dynamic>,
-              currentUserId: _myId.isNotEmpty ? _myId : null))
-          .toList();
+
       final updated = Map<String, List<ChatMessage>>.from(state.messagesByRoom)
-        ..[roomId] = list;
-      state = state.copyWith(messagesByRoom: updated);
-    } on DioException {
-      // Use existing or empty
-      if (!state.messagesByRoom.containsKey(roomId)) {
-        final updated = Map<String, List<ChatMessage>>.from(state.messagesByRoom)
-          ..[roomId] = _mockMessages(roomId);
-        state = state.copyWith(messagesByRoom: updated);
-      }
-    }
-  }
-
-  void _connectWebSocket(String roomId) {
-    _disconnect();
-    try {
-      final wsUrl = ApiEndpoints.baseUrl.replaceFirst('http', 'ws');
-      _channel = WebSocketChannel.connect(Uri.parse('$wsUrl/chat/ws/$roomId'));
-      state = state.copyWith(isConnected: true);
-
-      _wsSub = _channel!.stream.listen(
-        (raw) {
-          final data = jsonDecode(raw as String) as Map<String, dynamic>;
-          final msg = ChatMessage.fromJson(
-              data,
-              currentUserId: _myId.isNotEmpty ? _myId : null);
-          // Skip own echo — optimistic message already shown on the right.
-          if (msg.isFromMe) return;
-          _appendMessage(msg.roomId, msg);
-        },
-        onError: (_) => state = state.copyWith(isConnected: false),
-        onDone: () => state = state.copyWith(isConnected: false),
+        ..[roomId] = msgs;
+      state = state.copyWith(
+        messagesByRoom: updated,
+        isLoadingMessages: false,
+        hasMore: result.hasMore,
+        nextCursor: result.nextCursor,
       );
     } catch (_) {
-      state = state.copyWith(isConnected: false);
+      state = state.copyWith(isLoadingMessages: false);
     }
   }
 
-  void _disconnect() {
-    _wsSub?.cancel();
-    _channel?.sink.close();
-    _channel = null;
-    _wsSub = null;
+  /// Loads older messages for the active room (pagination).
+  /// Call this when the user scrolls to the top of the chat.
+  Future<void> loadMoreMessages() async {
+    final roomId = state.activeRoomId;
+    if (roomId == null || state.isLoadingMore || !state.hasMore) return;
+
+    state = state.copyWith(isLoadingMore: true);
+
+    try {
+      final result = await _chatRepo.getChatHistory(
+        roomId,
+        before: state.nextCursor,
+      );
+
+      final older = <ChatMessage>[];
+      for (final msg in result.messages.reversed) {
+        if (msg.id.isNotEmpty && !_seenMsgIds.add(msg.id)) continue; // skip dups
+        older.add(msg);
+      }
+
+      final current = List<ChatMessage>.from(state.messagesByRoom[roomId] ?? []);
+      current.insertAll(0, older);
+
+      final updated = Map<String, List<ChatMessage>>.from(state.messagesByRoom)
+        ..[roomId] = current;
+      state = state.copyWith(
+        messagesByRoom: updated,
+        isLoadingMore: false,
+        hasMore: result.hasMore,
+        nextCursor: result.nextCursor,
+      );
+    } catch (_) {
+      state = state.copyWith(isLoadingMore: false);
+    }
   }
 
-  // ── Sending ───────────────────────────────────────────────────────────────
+  // ── Socket (same events as GameChatPage) ─────────────────────────────────
+
+  Future<void> _connectSocket(String roomId) async {
+    _disconnectSocket();
+    final token = await _storage.read(key: 'access_token') ?? '';
+    if (token.isEmpty) return;
+
+    _socketRoomId = roomId;
+    _socket = SocketService.instance.getSocket(token: token);
+
+    if (_socket!.connected) {
+      _socket!.emit('join:game', roomId);
+    }
+
+    _socket!
+      ..on('connect', (_) {
+        if (!mounted) return;
+        _socket!.emit('join:game', roomId);
+      })
+      ..on('disconnect', (_) {
+        if (!mounted) return;
+      })
+      ..on('chat:message', (data) {
+        if (!mounted) return;
+        final raw = data as Map<String, dynamic>;
+
+        // Only handle messages for the active room
+        final gameId = (raw['gameId'] as String? ?? '').trim();
+        if (gameId.isNotEmpty && gameId != roomId) return;
+
+        // Dedup
+        final msgId = (raw['_id'] as String? ?? '').trim();
+        if (msgId.isNotEmpty && !_seenMsgIds.add(msgId)) return;
+
+        final msg = _parseDTO(raw, roomId);
+
+        // Robust isMe check
+        final isMe = _myId.isNotEmpty && (
+          msg.senderId.trim() == _myId.trim() || 
+          msg.senderName.trim().toLowerCase() == 'me' ||
+          msg.senderName.trim().toLowerCase() == 'you'
+        );
+
+        if (isMe) {
+          final msgs = List<ChatMessage>.from(state.messagesByRoom[roomId] ?? []);
+          // Replace matching temp message
+          final idx = msgs.indexWhere(
+              (m) => m.id.startsWith('tmp_') && _pendingTempIds.contains(m.id));
+          
+          if (idx != -1) {
+            final oldId = msgs[idx].id;
+            _pendingTempIds.remove(oldId);
+            msgs[idx] = msg;
+            final updated = Map<String, List<ChatMessage>>.from(state.messagesByRoom)
+              ..[roomId] = msgs;
+            state = state.copyWith(messagesByRoom: updated);
+            _seenMsgIds.add(msg.id);
+            debugPrint('[Chat] Deduplicated: Replaced temp $oldId with $msgId');
+            return;
+          }
+        }
+
+        // Dupe guard: skip if already loaded correctly
+        final exists = (state.messagesByRoom[roomId] ?? []).any((m) => m.id == msg.id);
+        if (exists && msg.id.isNotEmpty) return;
+
+        _appendMessage(roomId, msg);
+      });
+  }
+
+  void _disconnectSocket() {
+    if (_socket != null && _socketRoomId != null) {
+      _socket!.emit('leave:game', _socketRoomId);
+      _socket!.off('chat:message');
+      _socket!.off('connect');
+      _socket!.off('disconnect');
+    }
+    _socket = null;
+    _socketRoomId = null;
+  }
+
+  // ── Send ──────────────────────────────────────────────────────────────────
 
   Future<void> sendMessage(String content) async {
     final roomId = state.activeRoomId;
     if (roomId == null || content.trim().isEmpty) return;
 
+    final trimmed = content.trim();
+    final tempId = 'tmp_${DateTime.now().millisecondsSinceEpoch}';
+
     final optimistic = ChatMessage(
-      id: 'tmp_${DateTime.now().millisecondsSinceEpoch}',
+      id: tempId,
       roomId: roomId,
-      senderId: 'me',
+      senderId: _myId.isNotEmpty ? _myId : 'me',
       senderName: 'Me',
-      content: content.trim(),
+      content: trimmed,
       sentAt: DateTime.now(),
-      isFromMe: true,
     );
+
+    _pendingTempIds.add(tempId);
     _appendMessage(roomId, optimistic);
     state = state.copyWith(isSending: true);
 
     try {
-      if (_channel != null && state.isConnected) {
-        _channel!.sink.add(jsonEncode({'type': 'message', 'content': content.trim()}));
-      } else {
-        await _dio.post(
-          '${ApiEndpoints.baseUrl}/chat/rooms/$roomId/messages',
-          data: {'content': content.trim()},
+      if (_socket != null && _socket!.connected) {
+        _socket!.emitWithAck(
+          'chat:send',
+          {'gameId': roomId, 'content': trimmed},
+          ack: (ack) {
+            if (!mounted) return;
+            final ackMap = (ack as Map<String, dynamic>?) ?? {};
+            if (ackMap['success'] != true) _pendingTempIds.remove(tempId);
+          },
         );
+      } else {
+        // API fallback
+        try {
+          final confirmed = await _chatRepo.sendMessage(roomId, trimmed);
+          final msgs = List<ChatMessage>.from(state.messagesByRoom[roomId] ?? []);
+          final idx = msgs.indexWhere((m) => m.id == tempId);
+          if (idx != -1) msgs[idx] = confirmed;
+          final updated = Map<String, List<ChatMessage>>.from(state.messagesByRoom)
+            ..[roomId] = msgs;
+          state = state.copyWith(messagesByRoom: updated);
+          _pendingTempIds.remove(tempId);
+        } catch (_) {
+          _pendingTempIds.remove(tempId);
+        }
       }
-      state = state.copyWith(isSending: false);
-    } on DioException {
-      // Optimistic msg stays for demo
-      state = state.copyWith(isSending: false);
+    } catch (_) {
+      _pendingTempIds.remove(tempId);
+    } finally {
+      if (mounted) state = state.copyWith(isSending: false);
     }
   }
 
@@ -223,37 +415,62 @@ class ChatNotifier extends StateNotifier<ChatState> {
     state = state.copyWith(messagesByRoom: updated);
   }
 
-  // ── Mock data ─────────────────────────────────────────────────────────────
+  /// Parses backend ChatMessageDTO (same shape used by game chat).
+  /// Shape: { _id, user: { _id, username, fullName, profilePicture }, content, type, createdAt }
+  ChatMessage _parseDTO(Map<String, dynamic> json, String roomId) {
+    final rawUser = json['user'];
+    String senderId = '';
+    String senderName = 'User';
+    String? senderAvatar;
 
-  List<ChatRoom> _mockRooms() => [
-    const ChatRoom(id: 'r1', name: 'Weekend Football', lastMessage: 'Who is coming?', isGroupChat: true, unreadCount: 3),
-    const ChatRoom(id: 'r2', name: 'Chess Club', lastMessage: 'GG everyone!', isGroupChat: true, unreadCount: 0),
-    const ChatRoom(id: 'r3', name: 'Alex', lastMessage: 'See you tomorrow', isGroupChat: false, unreadCount: 1),
-    const ChatRoom(id: 'r4', name: 'Game Night Crew', lastMessage: 'Ready at 9pm?', isGroupChat: true, unreadCount: 5),
-  ];
+    if (rawUser is Map<String, dynamic>) {
+      senderId = (rawUser['_id'] as String? ?? rawUser['id'] as String? ?? '').trim();
+      senderName = rawUser['fullName'] as String? ?? rawUser['username'] as String? ?? 'User';
+      senderAvatar = rawUser['profilePicture'] as String?;
+    } else if (rawUser != null) {
+      senderId = rawUser.toString().trim();
+    }
 
-  List<ChatMessage> _mockMessages(String roomId) => [
-    ChatMessage(id: 'm1', roomId: roomId, senderId: 'u1', senderName: 'Alex', content: 'Hey everyone! Ready for the game?', sentAt: DateTime.now().subtract(const Duration(minutes: 30))),
-    ChatMessage(id: 'm2', roomId: roomId, senderId: 'u2', senderName: 'Jordan', content: "Absolutely! Can't wait 🔥", sentAt: DateTime.now().subtract(const Duration(minutes: 28))),
-    ChatMessage(id: 'm3', roomId: roomId, senderId: 'u3', senderName: 'Sam', content: 'I might be 10 mins late', sentAt: DateTime.now().subtract(const Duration(minutes: 20))),
-    ChatMessage(id: 'm4', roomId: roomId, senderId: 'me', senderName: 'Me', content: "No worries, we'll warm up!", sentAt: DateTime.now().subtract(const Duration(minutes: 15)), isFromMe: true),
-    ChatMessage(id: 'm5', roomId: roomId, senderId: 'u1', senderName: 'Alex', content: 'See you all there 👋', sentAt: DateTime.now().subtract(const Duration(minutes: 5))),
-  ];
+    final type = json['type'] as String? ?? 'text';
+    final isSystem = type == 'system';
+    final msgId = (json['_id'] as String? ?? json['id'] as String? ?? '').trim();
+
+    return ChatMessage(
+      id: msgId.isNotEmpty ? msgId : 'msg_${DateTime.now().microsecondsSinceEpoch}',
+      roomId: roomId,
+      senderId: isSystem ? 'system' : senderId,
+      senderName: isSystem ? 'System' : senderName,
+      senderAvatar: senderAvatar,
+      content: json['content'] as String? ?? '',
+      type: isSystem ? MessageType.system : MessageType.text,
+      sentAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
+      isRead: true,
+    );
+  }
+
+  // ── Mock data (shown if game list unavailable) ─────────────────────────────
 
   @override
   void dispose() {
-    _disconnect();
+    _disconnectSocket();
     super.dispose();
   }
 }
 
 // ─── Providers ───────────────────────────────────────────────────────────────
 
-final _chatDioProvider = Provider<Dio>((ref) => Dio());
+/// Repository provider for chat data operations (clean architecture).
+final chatRepositoryProvider = Provider<ChatRepository>((ref) {
+  final api = ref.watch(apiClientProvider);
+  return ChatRepository(api);
+});
 
-final chatProvider = StateNotifierProvider<ChatNotifier, ChatState>(
-  (ref) {
-    final myId = ref.watch(authViewModelProvider).user?.userId ?? '';
-    return ChatNotifier(ref.watch(_chatDioProvider), myId);
-  },
-);
+final chatProvider = StateNotifierProvider<ChatNotifier, ChatState>((ref) {
+  final api = ref.watch(apiClientProvider);
+  final chatRepo = ref.watch(chatRepositoryProvider);
+  final auth = ref.watch(authNotifierProvider);
+  final vm = ref.watch(authViewModelProvider);
+  final myId = (auth.user?.userId ?? vm.user?.userId ?? '').trim();
+  final storage = ref.watch(secureStorageProvider);
+  return ChatNotifier(api, chatRepo, myId, storage);
+});

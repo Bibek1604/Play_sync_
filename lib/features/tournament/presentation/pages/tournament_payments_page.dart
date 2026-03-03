@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../domain/entities/tournament_payment_entity.dart';
 import '../providers/tournament_payment_notifier.dart';
+import '../../../../core/widgets/back_button_widget.dart';
 
 /// Shows payment records for a specific tournament (for creators/admins).
 class TournamentPaymentsPage extends ConsumerStatefulWidget {
@@ -34,7 +35,14 @@ class _TournamentPaymentsPageState
     final df = DateFormat('MMM d, yyyy • h:mm a');
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Tournament Payments')),
+      appBar: AppBar(
+        leading: const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: BackButtonWidget(label: 'Back'),
+        ),
+        leadingWidth: 100,
+        title: const Text('Tournament Payments'),
+      ),
       body: state.tournamentPayments.isEmpty
           ? const Center(child: Text('No payments found'))
           : ListView.builder(

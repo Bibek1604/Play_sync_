@@ -14,6 +14,7 @@ abstract interface class IProfileRepository {
     String? phone,
     String? favoriteGame,
     String? place,
+    String? bio,
     String? currentPassword,
     String? changePassword,
     XFile? profilePicture,

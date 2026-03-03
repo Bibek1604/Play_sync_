@@ -18,14 +18,14 @@ enum ParticipantStatus { ACTIVE, LEFT, REMOVED, BANNED }
 
 /// A single participant in a game
 class GameParticipant extends Equatable {
-  final String oderId;
+  final String userId;
   final String displayName;
   final String? avatar;
   final ParticipantStatus status;
   final DateTime joinedAt;
 
   const GameParticipant({
-    required this.oderId,
+    required this.userId,
     required this.displayName,
     this.avatar,
     this.status = ParticipantStatus.ACTIVE,
@@ -34,19 +34,19 @@ class GameParticipant extends Equatable {
 
   factory GameParticipant.fromJson(Map<String, dynamic> json) {
     final user = json['userId'];
-    String oderId;
+    String userId;
     String displayName;
     String? avatar;
     if (user is Map<String, dynamic>) {
-      oderId = user['_id'] as String? ?? user['id'] as String? ?? '';
+      userId = GameEntity.normalize(user['_id'] ?? user['id']);
       displayName = user['fullName'] as String? ?? user['email'] as String? ?? '';
       avatar = _resolveImageUrl(user['profilePicture'] as String? ?? user['avatar'] as String?);
     } else {
-      oderId = user?.toString() ?? '';
+      userId = GameEntity.normalize(user);
       displayName = '';
     }
     return GameParticipant(
-      oderId: oderId,
+      userId: userId,
       displayName: displayName,
       avatar: avatar,
       status: ParticipantStatus.values.firstWhere(
@@ -58,7 +58,7 @@ class GameParticipant extends Equatable {
   }
 
   @override
-  List<Object?> get props => [oderId, status];
+  List<Object?> get props => [userId, status];
 }
 
 /// GeoJSON point
@@ -145,10 +145,29 @@ class GameEntity extends Equatable {
   /// Returns null if no image is set.
   String? get imageUrl => _resolveImageUrl(image);
 
-  bool isParticipant(String oderId) =>
-      participants.any((p) => p.oderId == oderId && p.status == ParticipantStatus.ACTIVE);
+  /// Normalizes an ID to a plain string. Handles Mongo ObjectId map format if present.
+  static String normalize(dynamic id) {
+    if (id == null) return '';
+    if (id is String) return id;
+    if (id is Map && id.containsKey(r'$oid')) return id[r'$oid'].toString();
+    return id.toString();
+  }
 
-  bool isCreator(String oderId) => creatorId == oderId;
+  bool isParticipant(String userId) {
+    final normalizedSearchId = normalize(userId);
+    if (normalizedSearchId.isEmpty) return false;
+    return participants.any((p) => 
+      normalize(p.userId) == normalizedSearchId && 
+      p.status == ParticipantStatus.ACTIVE
+    );
+  }
+
+  bool isCreator(String userId) {
+    final normalizedSearchId = normalize(userId);
+    final normalizedCreatorId = normalize(creatorId);
+    if (normalizedSearchId.isEmpty) return false;
+    return normalizedCreatorId == normalizedSearchId;
+  }
 
   factory GameEntity.fromJson(Map<String, dynamic> json) {
     // Parse creator (may be populated object or plain string id)
@@ -157,11 +176,11 @@ class GameEntity extends Equatable {
     String creatorName;
     String? creatorAvatar;
     if (creator is Map<String, dynamic>) {
-      creatorId = creator['_id'] as String? ?? creator['id'] as String? ?? '';
+      creatorId = normalize(creator['_id'] ?? creator['id']);
       creatorName = creator['fullName'] as String? ?? creator['email'] as String? ?? '';
       creatorAvatar = _resolveImageUrl(creator['profilePicture'] as String? ?? creator['avatar'] as String?);
     } else {
-      creatorId = creator?.toString() ?? '';
+      creatorId = normalize(creator);
       creatorName = json['creatorName'] as String? ?? '';
     }
 
@@ -171,7 +190,7 @@ class GameEntity extends Equatable {
         .toList();
 
     return GameEntity(
-      id: json['_id'] as String? ?? json['id'] as String? ?? '',
+      id: normalize(json['_id'] ?? json['id']),
       title: json['title'] as String? ?? '',
       description: json['description'] as String? ?? '',
       sport: json['sport'] as String? ?? '',
@@ -207,7 +226,7 @@ class GameEntity extends Equatable {
     'currentPlayers': currentPlayers,
     'participants': participants.map((p) => {
       'userId': {
-        '_id': p.oderId,
+        '_id': p.userId,
         'fullName': p.displayName,
         if (p.avatar != null) 'profilePicture': p.avatar,
       },

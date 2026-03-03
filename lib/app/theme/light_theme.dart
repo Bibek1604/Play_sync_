@@ -32,26 +32,31 @@ class LightTheme {
 
         // AppBar
         appBarTheme: const AppBarTheme(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
+          backgroundColor: AppColors.backgroundLight,
+          foregroundColor: AppColors.textPrimaryLight,
           elevation: 0,
           centerTitle: false,
+          scrolledUnderElevation: 0.5,
+          shadowColor: AppColors.border,
+          surfaceTintColor: Colors.transparent,
           titleTextStyle: TextStyle(
             fontFamily: AppTypography.fontFamily,
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: AppColors.textPrimaryLight,
+            letterSpacing: -0.3,
           ),
-          iconTheme: IconThemeData(color: Colors.white),
+          iconTheme: IconThemeData(color: AppColors.textPrimaryLight),
         ),
 
         // Card
         cardTheme: CardThemeData(
           color: Colors.white,
-          elevation: 2,
+          elevation: 0,
           shadowColor: AppColors.shadow,
           shape: RoundedRectangleBorder(
             borderRadius: AppRadius.medium,
+            side: const BorderSide(color: AppColors.border, width: 1),
           ),
         ),
 
@@ -60,7 +65,7 @@ class LightTheme {
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
-            elevation: 2,
+            elevation: 0,
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
             shape: RoundedRectangleBorder(
               borderRadius: AppRadius.medium,
@@ -137,7 +142,7 @@ class LightTheme {
         floatingActionButtonTheme: const FloatingActionButtonThemeData(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
-          elevation: 4,
+          elevation: 2,
         ),
 
         // Divider

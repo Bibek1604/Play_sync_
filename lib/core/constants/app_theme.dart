@@ -2,22 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'app_colors.dart';
 
-/// PlaySync App Theme — Premium 2026 Light/Dark configuration
+/// PlaySync App Theme — Clean Professional Gray-Blue Design System
+///
+/// Brand: Deep Blue #1E3A8A · Medium Blue #3B82F6 · Accent Gray #6B7280
+/// Typography: Inter (body 16px min) · WCAG AA contrast
+/// Border radius: 12–16px · Transitions: 250–300ms
 class AppTheme {
   // ── Light Theme ──────────────────────────────────────────────────────────
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
+      fontFamily: 'Inter',
 
-      colorScheme: ColorScheme.light(
+      colorScheme: const ColorScheme.light(
         primary:           AppColors.primary,
         onPrimary:         AppColors.textOnPrimary,
         primaryContainer:  AppColors.primaryLight,
         onPrimaryContainer: AppColors.primaryDark,
-        secondary:         AppColors.success,
+        secondary:         AppColors.secondary,
         onSecondary:       Colors.white,
-        secondaryContainer: AppColors.successLight,
+        secondaryContainer: AppColors.secondaryLight,
+        tertiary:          AppColors.accent,
         surface:           AppColors.surface,
         onSurface:         AppColors.textPrimary,
         surfaceContainerHighest: AppColors.surfaceLight,
@@ -29,6 +35,17 @@ class AppTheme {
 
       scaffoldBackgroundColor: AppColors.background,
 
+      // ── Page transitions (250-300ms) ──────────────────────────────────
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.windows: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.linux: CupertinoPageTransitionsBuilder(),
+        },
+      ),
+
       // ── AppBar ────────────────────────────────────────────────────────
       appBarTheme: const AppBarTheme(
         elevation: 0,
@@ -39,12 +56,13 @@ class AppTheme {
         surfaceTintColor:    Colors.transparent,
         shadowColor:         AppColors.border,
         titleTextStyle: TextStyle(
-          fontSize: 17,
+          fontFamily: 'Inter',
+          fontSize: 18,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
-          letterSpacing: -0.2,
+          letterSpacing: -0.3,
         ),
-        iconTheme: IconThemeData(color: AppColors.textPrimary, size: 22),
+        iconTheme: IconThemeData(color: AppColors.primary, size: 22),
         systemOverlayStyle: SystemUiOverlayStyle.dark,
       ),
 
@@ -56,9 +74,11 @@ class AppTheme {
           elevation:        0,
           shadowColor:      Colors.transparent,
           padding:   const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          shape:     RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
+          shape:     RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           textStyle: const TextStyle(
+            fontFamily: 'Inter',
             fontSize: 15, fontWeight: FontWeight.w600, letterSpacing: 0.2),
+          animationDuration: const Duration(milliseconds: 250),
         ),
       ),
 
@@ -69,8 +89,8 @@ class AppTheme {
           foregroundColor: Colors.white,
           elevation:       0,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          shape:   RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
-          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+          shape:   RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          textStyle: const TextStyle(fontFamily: 'Inter', fontSize: 15, fontWeight: FontWeight.w600),
         ),
       ),
 
@@ -80,9 +100,9 @@ class AppTheme {
           foregroundColor: AppColors.primary,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           side:    const BorderSide(color: AppColors.border, width: 1.5),
-          shape:   RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
+          shape:   RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           textStyle: const TextStyle(
-            fontSize: 15, fontWeight: FontWeight.w600, letterSpacing: 0.2),
+            fontFamily: 'Inter', fontSize: 15, fontWeight: FontWeight.w600, letterSpacing: 0.2),
         ),
       ),
 
@@ -91,9 +111,9 @@ class AppTheme {
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          shape:   RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+          shape:   RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           textStyle: const TextStyle(
-            fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0.1),
+            fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0.1),
         ),
       ),
 
@@ -103,31 +123,31 @@ class AppTheme {
         fillColor:       AppColors.surface,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.xl),
+          borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: AppColors.border, width: 1.5),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.xl),
+          borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: AppColors.border, width: 1.5),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.xl),
+          borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: AppColors.primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.xl),
+          borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: AppColors.error, width: 1.5),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.xl),
+          borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: AppColors.error, width: 2),
         ),
         hintStyle: const TextStyle(
-          color: AppColors.textTertiary, fontSize: 14, fontWeight: FontWeight.w400),
+          fontFamily: 'Inter', color: AppColors.textTertiary, fontSize: 14, fontWeight: FontWeight.w400),
         labelStyle: const TextStyle(
-          color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500),
+          fontFamily: 'Inter', color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500),
         errorStyle: const TextStyle(
-          color: AppColors.error, fontSize: 12, fontWeight: FontWeight.w500),
+          fontFamily: 'Inter', color: AppColors.error, fontSize: 12, fontWeight: FontWeight.w500),
         prefixIconColor: WidgetStateColor.resolveWith((states) {
           if (states.contains(WidgetState.focused)) return AppColors.primary;
           if (states.contains(WidgetState.error))   return AppColors.error;
@@ -140,23 +160,23 @@ class AppTheme {
         }),
       ),
 
-      // ── Text Theme ────────────────────────────────────────────────────
+      // ── Text Theme (Inter, 16px min body) ─────────────────────────────
       textTheme: const TextTheme(
-        displayLarge:   TextStyle(fontSize: 32, fontWeight: FontWeight.w800, color: AppColors.textPrimary, letterSpacing: -1.0),
-        displayMedium:  TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.textPrimary, letterSpacing: -0.5),
-        displaySmall:   TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.textPrimary, letterSpacing: -0.3),
-        headlineLarge:  TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.textPrimary, letterSpacing: -0.2),
-        headlineMedium: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.textPrimary, letterSpacing: -0.1),
-        headlineSmall:  TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-        titleLarge:     TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary, letterSpacing: 0.1),
-        titleMedium:    TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-        titleSmall:     TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-        bodyLarge:      TextStyle(fontSize: 16, fontWeight: FontWeight.w400, color: AppColors.textPrimary, height: 1.5),
-        bodyMedium:     TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: AppColors.textSecondary, height: 1.5),
-        bodySmall:      TextStyle(fontSize: 12, fontWeight: FontWeight.w400, color: AppColors.textSecondary, height: 1.4),
-        labelLarge:     TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-        labelMedium:    TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
-        labelSmall:     TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textTertiary, letterSpacing: 0.4),
+        displayLarge:   TextStyle(fontFamily: 'Inter', fontSize: 34, fontWeight: FontWeight.w800, color: AppColors.textPrimary, letterSpacing: -1.0),
+        displayMedium:  TextStyle(fontFamily: 'Inter', fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.textPrimary, letterSpacing: -0.5),
+        displaySmall:   TextStyle(fontFamily: 'Inter', fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.textPrimary, letterSpacing: -0.3),
+        headlineLarge:  TextStyle(fontFamily: 'Inter', fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.textPrimary, letterSpacing: -0.2),
+        headlineMedium: TextStyle(fontFamily: 'Inter', fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.textPrimary, letterSpacing: -0.1),
+        headlineSmall:  TextStyle(fontFamily: 'Inter', fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+        titleLarge:     TextStyle(fontFamily: 'Inter', fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.textPrimary, letterSpacing: 0.1),
+        titleMedium:    TextStyle(fontFamily: 'Inter', fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+        titleSmall:     TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+        bodyLarge:      TextStyle(fontFamily: 'Inter', fontSize: 16, fontWeight: FontWeight.w400, color: AppColors.textPrimary, height: 1.5),
+        bodyMedium:     TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w400, color: AppColors.textSecondary, height: 1.5),
+        bodySmall:      TextStyle(fontFamily: 'Inter', fontSize: 13, fontWeight: FontWeight.w400, color: AppColors.textSecondary, height: 1.4),
+        labelLarge:     TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+        labelMedium:    TextStyle(fontFamily: 'Inter', fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
+        labelSmall:     TextStyle(fontFamily: 'Inter', fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textTertiary, letterSpacing: 0.4),
       ),
 
       // ── Card Theme ────────────────────────────────────────────────────
@@ -165,7 +185,7 @@ class AppTheme {
         elevation:   0,
         shadowColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.xl),
+          borderRadius: BorderRadius.circular(16),
           side: const BorderSide(color: AppColors.border, width: 1),
         ),
         margin: EdgeInsets.zero,
@@ -187,10 +207,10 @@ class AppTheme {
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return const TextStyle(
-              color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.w600);
+              fontFamily: 'Inter', color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.w600);
           }
           return const TextStyle(
-            color: AppColors.textTertiary, fontSize: 11, fontWeight: FontWeight.w500);
+            fontFamily: 'Inter', color: AppColors.textTertiary, fontSize: 11, fontWeight: FontWeight.w500);
         }),
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         height:       64,
@@ -202,8 +222,8 @@ class AppTheme {
         unselectedLabelColor: AppColors.textSecondary,
         indicatorColor:     AppColors.primary,
         indicatorSize:      TabBarIndicatorSize.label,
-        labelStyle:   TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-        unselectedLabelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+        labelStyle:   TextStyle(fontFamily: 'Inter', fontSize: 13, fontWeight: FontWeight.w600),
+        unselectedLabelStyle: TextStyle(fontFamily: 'Inter', fontSize: 13, fontWeight: FontWeight.w500),
         dividerColor:       AppColors.border,
       ),
 
@@ -221,18 +241,18 @@ class AppTheme {
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.surface,
         elevation:       0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         titleTextStyle: const TextStyle(
-          fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+          fontFamily: 'Inter', fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
         contentTextStyle: const TextStyle(
-          fontSize: 14, color: AppColors.textSecondary, height: 1.5),
+          fontFamily: 'Inter', fontSize: 14, color: AppColors.textSecondary, height: 1.5),
       ),
 
       // ── Snack Bar ─────────────────────────────────────────────────────
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.textPrimary,
         contentTextStyle: const TextStyle(
-          fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white),
+          fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white),
         elevation:  0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         behavior: SnackBarBehavior.floating,
@@ -247,7 +267,7 @@ class AppTheme {
         backgroundColor: AppColors.surfaceLight,
         selectedColor:   AppColors.primaryLight,
         labelStyle: const TextStyle(
-          fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textPrimary),
+          fontFamily: 'Inter', fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textPrimary),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.circle),
           side: const BorderSide(color: AppColors.border),
@@ -265,11 +285,12 @@ class AppTheme {
     return ThemeData(
       useMaterial3:      true,
       brightness:        Brightness.dark,
+      fontFamily:        'Inter',
       scaffoldBackgroundColor: AppColors.backgroundDark,
       colorScheme: const ColorScheme.dark(
         primary:          AppColors.primaryAlt,
         onPrimary:        Colors.white,
-        secondary:        AppColors.success,
+        secondary:        AppColors.accent,
         surface:          AppColors.cardDark,
         onSurface:        Colors.white,
         error:            AppColors.error,
@@ -290,12 +311,12 @@ class AppSpacing {
   static const double xxxl = 48.0;
 }
 
-/// Border-radius scale
+/// Border-radius scale (12-16px default range)
 class AppRadius {
   static const double xs     = 4.0;
-  static const double sm     = 6.0;
-  static const double md     = 8.0;
-  static const double lg     = 12.0;
+  static const double sm     = 8.0;
+  static const double md     = 12.0;
+  static const double lg     = 14.0;
   static const double xl     = 16.0;
   static const double xxl    = 20.0;
   static const double xxxl   = 24.0;

@@ -58,16 +58,16 @@ class ProfileRemoteDataSource implements IProfileDataSource {
           }
         });
 
-        // Add profile picture
+        // Add profile picture (key must match backend multer field name: 'avatar')
         if (kIsWeb) {
           final bytes = await profilePicture.readAsBytes();
           formData.files.add(MapEntry(
-            'profilePicture',
+            'avatar',
             MultipartFile.fromBytes(bytes, filename: profilePicture.name),
           ));
         } else {
           formData.files.add(MapEntry(
-            'profilePicture',
+            'avatar',
             await MultipartFile.fromFile(
               profilePicture.path,
               filename: profilePicture.name,

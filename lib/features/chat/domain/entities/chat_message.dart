@@ -13,7 +13,6 @@ class ChatMessage extends Equatable {
   final MessageType type;
   final DateTime sentAt;
   final bool isRead;
-  final bool isFromMe;
 
   const ChatMessage({
     required this.id,
@@ -25,29 +24,44 @@ class ChatMessage extends Equatable {
     this.type = MessageType.text,
     required this.sentAt,
     this.isRead = false,
-    this.isFromMe = false,
   });
 
+  /// Returns true if [currentUserId] is the sender of this message.
+  /// Always computed dynamically — never stored — to avoid stale auth state.
+  bool isFromMe(String? currentUserId) {
+    if (type == MessageType.system || currentUserId == null || currentUserId.trim().isEmpty) {
+      return false;
+    }
+    // Simple but robust comparison (can use GameEntity.normalize if needed, but strings are enough as long as they are plain IDs)
+    final cleanMyId = currentUserId.trim();
+    final cleanSenderId = senderId.trim();
+    return cleanSenderId == cleanMyId;
+  }
+
+  bool get isSystemMessage => type == MessageType.system;
+
   factory ChatMessage.fromJson(Map<String, dynamic> json, {String? currentUserId}) {
+    final Map<String, dynamic> sender = (json['user'] is Map) ? json['user'] : (json['sender'] is Map ? json['sender'] : {});
+    final String senderId = (sender['_id'] ?? sender['id'] ?? json['userId'] ?? json['senderId'] ?? '').toString().trim();
+
     return ChatMessage(
-      id: json['_id'] as String? ?? json['id'] as String,
-      roomId: json['roomId'] as String,
-      senderId: json['senderId'] as String,
+      id: json['_id'] as String? ?? json['id'] as String? ?? '',
+      roomId: json['roomId'] as String? ?? '',
+      senderId: senderId,
       senderName: json['senderName'] as String? ?? 'Unknown',
       senderAvatar: json['senderAvatar'] as String?,
-      content: json['content'] as String,
+      content: json['content'] as String? ?? '',
       type: MessageType.values.firstWhere(
         (t) => t.name == (json['type'] as String? ?? 'text'),
         orElse: () => MessageType.text,
       ),
       sentAt: DateTime.tryParse(json['sentAt'] as String? ?? '') ?? DateTime.now(),
       isRead: json['isRead'] as bool? ?? false,
-      isFromMe: currentUserId != null && json['senderId'] == currentUserId,
     );
   }
 
   @override
-  List<Object?> get props => [id, content, sentAt, isFromMe];
+  List<Object?> get props => [id, content, sentAt, senderId];
 }
 
 /// A chat room / conversation.

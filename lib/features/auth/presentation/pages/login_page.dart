@@ -233,6 +233,33 @@ class _LoginPageState extends ConsumerState<LoginPage>
                           return null;
                         },
                       ),
+                      const SizedBox(height: 8),
+
+                      // ── Forgot password ───────────────────────────
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: isLoading
+                              ? null
+                              : () => Navigator.pushNamed(
+                                  context,
+                                  AppRoutes.forgotPassword,
+                                ),
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            minimumSize: const Size(0, 28),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: const Text(
+                            'Forgot Password?',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
                       const SizedBox(height: 28),
 
                       // ── Sign In button ────────────────────────────

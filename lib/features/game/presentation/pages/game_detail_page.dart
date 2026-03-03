@@ -6,6 +6,8 @@ import 'package:play_sync_new/features/game/domain/entities/game_entity.dart';
 import 'package:play_sync_new/features/game/presentation/providers/game_notifier.dart';
 import 'package:play_sync_new/features/auth/presentation/providers/auth_notifier.dart';
 import 'game_chat_page.dart';
+import '../../../chat/presentation/providers/chat_notifier.dart';
+import '../../../../core/widgets/back_button_widget.dart';
 
 /// Detailed view of a single game with join/leave/cancel actions.
 class GameDetailPage extends ConsumerStatefulWidget {
@@ -41,6 +43,14 @@ class _GameDetailPageState extends ConsumerState<GameDetailPage> {
   bool get _isParticipant => _currentUserId != null && 
       _game?.isParticipant(_currentUserId!) == true && 
       !_isCreator;
+
+  /// Whether the user is joined via participants list OR global state
+  bool _isJoinedAcrossState(GameState gameStatus) {
+    if (_isCreator || _isParticipant) return true;
+    final id = widget.gameId;
+    return gameStatus.myCreatedGames.any((g) => g.id == id) ||
+           gameStatus.myJoinedGames.any((g) => g.id == id);
+  }
 
   /// Navigate to chat and refresh game state when returning
   void _goToChat() async {
@@ -105,9 +115,13 @@ class _GameDetailPageState extends ConsumerState<GameDetailPage> {
           _actionLoading = false;
         });
         
+        // Refresh user's joined games list to keep state consistent
+        ref.read(gameProvider.notifier).fetchMyJoinedGames();
+        
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Joined game!'), backgroundColor: AppColors.success),
         );
+        _goToChat();
       } else if (mounted) {
         setState(() => _actionLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -131,11 +145,15 @@ class _GameDetailPageState extends ConsumerState<GameDetailPage> {
       final updatedGame = await ref.read(gameProvider.notifier).leaveGame(widget.gameId);
       
       if (updatedGame != null && mounted) {
+        ref.read(chatProvider.notifier).leaveRoom(widget.gameId);
         // Update local state with fresh game data
         setState(() {
           _game = updatedGame;
           _actionLoading = false;
         });
+        
+        // Refresh user's joined games list to keep state consistent
+        ref.read(gameProvider.notifier).fetchMyJoinedGames();
         
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Left game'), backgroundColor: AppColors.warning),
@@ -253,13 +271,24 @@ class _GameDetailPageState extends ConsumerState<GameDetailPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final gameState = ref.watch(gameProvider);
+    
+    // Sync local _game if the state has an updated version of THIS game
+    if (gameState.currentGame?.id == widget.gameId && gameState.currentGame != _game) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _game = gameState.currentGame);
+      });
+    }
+
+    final isAlreadyJoined = _isJoinedAcrossState(gameState);
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded),
-          onPressed: () => Navigator.of(context).pop(),
+        leading: const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: BackButtonWidget(label: 'Back'),
         ),
+        leadingWidth: 100,
         title: Text(_game?.title ?? 'Game Details'),
       ),
       body: _loading
@@ -287,6 +316,7 @@ class _GameDetailPageState extends ConsumerState<GameDetailPage> {
                         actionLoading: _actionLoading,
                         isCreator: _isCreator,
                         isParticipant: _isParticipant,
+                        isAlreadyJoined: isAlreadyJoined,
                         onJoin: _joinGame,
                         onLeave: _leaveGame,
                         onCancel: _cancelGame,
@@ -304,6 +334,7 @@ class _GameContent extends StatelessWidget {
   final bool actionLoading;
   final bool isCreator;
   final bool isParticipant;
+  final bool isAlreadyJoined;
   final VoidCallback onJoin;
   final VoidCallback onLeave;
   final VoidCallback onCancel;
@@ -316,6 +347,7 @@ class _GameContent extends StatelessWidget {
     required this.actionLoading,
     required this.isCreator,
     required this.isParticipant,
+    required this.isAlreadyJoined,
     required this.onJoin,
     required this.onLeave,
     required this.onCancel,
@@ -508,8 +540,9 @@ class _GameContent extends StatelessWidget {
         if (actionLoading)
           const Center(child: CircularProgressIndicator())
         else if (game.isOpen) ...[
-          // Go to Chat button for participants and creators
-          if (isCreator || isParticipant) ...[
+          // ── User is joined (creator, participant, or already joined) ──
+          if (isCreator || isParticipant || isAlreadyJoined) ...[
+            // Chat button for all joined users
             SizedBox(
               width: double.infinity,
               height: 48,
@@ -525,96 +558,97 @@ class _GameContent extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-          ],
-          // Creator: Cancel + Delete buttons
-          if (isCreator) ...[
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: OutlinedButton.icon(
-                onPressed: onCancel,
-                icon: const Icon(Icons.cancel_outlined),
-                label: const Text('Cancel Game', style: TextStyle(fontWeight: FontWeight.bold)),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.error,
-                  side: const BorderSide(color: AppColors.error, width: 1.5),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: OutlinedButton.icon(
-                onPressed: onDelete,
-                icon: const Icon(Icons.delete_forever_rounded),
-                label: const Text('Delete Game', style: TextStyle(fontWeight: FontWeight.bold)),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.error,
-                  side: BorderSide(color: AppColors.error.withValues(alpha: 0.5), width: 1.5),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ),
-          ]
-          // Participant (not creator): Leave Game button
-          else if (isParticipant) ...[
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: OutlinedButton.icon(
-                onPressed: onLeave,
-                icon: const Icon(Icons.exit_to_app_rounded),
-                label: const Text('Leave Game', style: TextStyle(fontWeight: FontWeight.bold)),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.warning,
-                  side: const BorderSide(color: AppColors.warning, width: 1.5),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ),
-          ]
-          // Others: Join button (if not full)
-          else if (!game.isFull) ...[
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton.icon(
-                onPressed: onJoin,
-                icon: const Icon(Icons.login_rounded),
-                label: Text(
-                  'Join Game · ${game.spotsLeft} ${game.spotsLeft == 1 ? 'spot' : 'spots'} left',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-            ),
-          ]
-          // Game is full, user is not participant
-          else ...[
-            Container(
-              width: double.infinity,
-              height: 48,
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.cardDark : AppColors.surfaceLight,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: const Center(
-                child: Text(
-                  'Game Full',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textTertiary,
+            // Creator-specific actions
+            if (isCreator) ...[
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: OutlinedButton.icon(
+                  onPressed: onCancel,
+                  icon: const Icon(Icons.cancel_outlined),
+                  label: const Text('Cancel Game', style: TextStyle(fontWeight: FontWeight.bold)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.error,
+                    side: const BorderSide(color: AppColors.error, width: 1.5),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
               ),
-            ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: OutlinedButton.icon(
+                  onPressed: onDelete,
+                  icon: const Icon(Icons.delete_forever_rounded),
+                  label: const Text('Delete Game', style: TextStyle(fontWeight: FontWeight.bold)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.error,
+                    side: BorderSide(color: AppColors.error.withValues(alpha: 0.5), width: 1.5),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+            ]
+            // Participant (not creator): Leave Game button only
+            else ...[
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: OutlinedButton.icon(
+                  onPressed: onLeave,
+                  icon: const Icon(Icons.exit_to_app_rounded),
+                  label: const Text('Leave Game', style: TextStyle(fontWeight: FontWeight.bold)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.warning,
+                    side: const BorderSide(color: AppColors.warning, width: 1.5),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+            ],
+          ]
+          // ── User is NOT joined ──
+          else ...[
+            // Can join if not full
+            if (!game.isFull)
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton.icon(
+                  onPressed: onJoin,
+                  icon: const Icon(Icons.login_rounded),
+                  label: Text(
+                    'Join Game · ${game.spotsLeft} ${game.spotsLeft == 1 ? 'spot' : 'spots'} left',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              )
+            // Game is full
+            else
+              Container(
+                width: double.infinity,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.cardDark : AppColors.surfaceLight,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: const Center(
+                  child: Text(
+                    'Game Full',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textTertiary,
+                    ),
+                  ),
+                ),
+              ),
           ],
         ]
         // Game not open (ended/cancelled)

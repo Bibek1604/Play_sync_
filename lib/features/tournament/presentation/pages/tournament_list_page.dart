@@ -51,6 +51,10 @@ class _TournamentListPageState extends ConsumerState<TournamentListPage>
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_rounded),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: const Text('Tournaments'),
         actions: [
           IconButton(

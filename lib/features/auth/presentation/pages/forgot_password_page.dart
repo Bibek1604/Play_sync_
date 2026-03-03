@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_theme.dart';
+import '../../../../core/database/hive_service.dart';
+import '../providers/password_reset_providers.dart';
 
 class ForgotPasswordPage extends ConsumerStatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -27,25 +30,55 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
 
     setState(() => _isLoading = true);
 
-    // Simulate API call - Replace with actual provider call
-    await Future.delayed(const Duration(seconds: 2));
+    await ref.read(passwordResetNotifierProvider.notifier)
+        .sendPasswordResetOtp(_emailController.text.trim());
 
-    setState(() {
-      _isLoading = false;
-      _isSuccess = true;
-    });
+    final state = ref.read(passwordResetNotifierProvider);
 
-    // TODO: Integrate with password reset provider
-    // final result = await ref.read(passwordResetNotifierProvider.notifier)
-    //     .sendPasswordResetOtp(_emailController.text.trim());
+    setState(() => _isLoading = false);
+
+    if (!mounted) return;
+
+    if (state.isSuccess && state.failure == null) {
+      setState(() => _isSuccess = true);
+    } else {
+      final errorMsg = state.failure?.message
+          ?? state.message
+          ?? 'Failed to send OTP. Please try again.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.error_outline, color: Colors.white),
+              SizedBox(width: AppSpacing.md),
+              Expanded(child: Text(errorMsg)),
+            ],
+          ),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          margin: EdgeInsets.all(AppSpacing.lg),
+        ),
+      );
+    }
   }
 
-  void _continueToResetPassword() {
-    // Navigate to reset password page with email parameter
+  Future<void> _continueToVerifyOtp() async {
+    final email = _emailController.text.trim();
+    
+    // Save email to Hive for later use
+    final box = await HiveService.openUserBox();
+    await box.put('password_reset_email', email);
+    
+    if (!mounted) return;
+    
+    // Navigate to verify OTP page with email parameter
     Navigator.pushNamed(
       context,
-      '/reset-password',
-      arguments: {'email': _emailController.text.trim()},
+      '/verify-otp',
+      arguments: {'email': email},
     );
   }
 
@@ -307,7 +340,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
             width: double.infinity,
             height: 48,
             child: ElevatedButton(
-              onPressed: _continueToResetPassword,
+              onPressed: _continueToVerifyOtp,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: AppColors.textOnPrimary,
@@ -321,7 +354,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text(
-                    'Continue to Reset Password',
+                    'Continue to Verify OTP',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,

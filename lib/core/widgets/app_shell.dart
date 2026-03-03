@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/dashboard/presentation/pages/dashboard_page.dart';
-import '../../features/game/presentation/pages/my_game_chats_page.dart';
+import '../../features/history/presentation/pages/game_history_page.dart';
 import '../../features/leaderboard/presentation/pages/leaderboard_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
-import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../app/routes/app_routes.dart';
 import '../../core/api/api_client.dart';
 import '../../features/auth/presentation/providers/auth_notifier.dart';
@@ -22,10 +21,9 @@ class AppShell extends ConsumerWidget {
 
   static const List<Widget> _tabs = [
     DashboardPage(),
-    MyGameChatsPage(),
+    GameHistoryPage(),
     LeaderboardPage(),
     ProfilePage(),
-    SettingsPage(),
   ];
 
   static const List<NavigationDestination> _destinations = [
@@ -35,9 +33,9 @@ class AppShell extends ConsumerWidget {
       label: 'Home',
     ),
     NavigationDestination(
-      icon: Icon(Icons.chat_bubble_outline_rounded),
-      selectedIcon: Icon(Icons.chat_bubble_rounded),
-      label: 'Chats',
+      icon: Icon(Icons.history_rounded),
+      selectedIcon: Icon(Icons.history),
+      label: 'History',
     ),
     NavigationDestination(
       icon: Icon(Icons.leaderboard_outlined),
@@ -48,11 +46,6 @@ class AppShell extends ConsumerWidget {
       icon: Icon(Icons.person_outline_rounded),
       selectedIcon: Icon(Icons.person_rounded),
       label: 'Profile',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.settings_outlined),
-      selectedIcon: Icon(Icons.settings_rounded),
-      label: 'Settings',
     ),
   ];
 
@@ -79,13 +72,22 @@ class AppShell extends ConsumerWidget {
         children: _tabs,
       ),
       bottomNavigationBar: DecoratedBox(
-        decoration: const BoxDecoration(
-          border: Border(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: const Border(
             top: BorderSide(color: Color(0xFFE2E8F0), width: 0.5),
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, -2),
+            ),
+          ],
         ),
         child: NavigationBar(
           elevation: 0,
+          backgroundColor: Colors.transparent,
           selectedIndex: currentIndex,
           onDestinationSelected: (i) =>
               ref.read(shellIndexProvider.notifier).state = i,

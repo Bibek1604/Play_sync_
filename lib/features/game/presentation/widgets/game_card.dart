@@ -22,10 +22,15 @@ class GameCard extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onJoin;
   final VoidCallback? onLeave;
+  final VoidCallback? onCancel;
   final VoidCallback? onDelete;
   /// External override: set to true when the parent knows the user has already
   /// joined (e.g., by checking myJoinedGames/myCreatedGames lists).
   final bool isAlreadyJoined;
+  /// External override: set to true when the parent knows the user CREATED this
+  /// game (i.e., the game appears in myCreatedGames). This is the most reliable
+  /// check because game list endpoints don't always populate creatorId.
+  final bool isAlreadyCreator;
 
   const GameCard({
     super.key,
@@ -34,12 +39,16 @@ class GameCard extends StatelessWidget {
     this.onTap,
     this.onJoin,
     this.onLeave,
+    this.onCancel,
     this.onDelete,
     this.isAlreadyJoined = false,
+    this.isAlreadyCreator = false,
   });
 
+  /// Creator check: prefer the reliable server-backed flag, fall back to local field.
   bool get _isCreator =>
-      currentUserId != null && game.isCreator(currentUserId!);
+      isAlreadyCreator ||
+      (currentUserId != null && game.isCreator(currentUserId!));
 
   bool get _isParticipant =>
       currentUserId != null && game.isParticipant(currentUserId!);
@@ -50,6 +59,10 @@ class GameCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (currentUserId != null && (game.isCreator(currentUserId!) || isAlreadyCreator)) {
+      debugPrint('[GameCard] Detected CREATOR for ${game.title}: currentUserId=$currentUserId, game.creatorId=${game.creatorId}, isAlreadyCreator=$isAlreadyCreator');
+    }
+    
     return Card(
       margin: EdgeInsets.zero,
       elevation: 0,
@@ -58,92 +71,162 @@ class GameCard extends StatelessWidget {
         side: const BorderSide(color: AppColors.border, width: 1),
       ),
       color: AppColors.surface,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: Padding(
-          padding: EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Header ──────────────────────────────────────────
-              Row(
+      child: Stack(
+        children: [
+          InkWell(
+            onTap: () {
+              if (_isJoined) {
+                onTap?.call();
+                return;
+              }
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Join game first to view game details.'),
+                  backgroundColor: AppColors.warning,
+                ),
+              );
+            },
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            child: Padding(
+              padding: EdgeInsets.all(AppSpacing.lg),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _SportIcon(sport: game.sport),
-                  SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          game.title,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
+                  // ── Header ──────────────────────────────────────────
+                  Row(
+                    children: [
+                      _SportIcon(sport: game.sport),
+                      SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              game.title,
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textPrimary,
+                                  ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                            if (game.creatorName.isNotEmpty)
+                              Row(
+                                children: [
+                                  Text(
+                                    'by ${game.creatorName}',
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                          color: AppColors.textTertiary),
+                                  ),
+                                  if (_isCreator) ...[
+                                    const SizedBox(width: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primary.withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: const Text('YOU', style: TextStyle(
+                                        fontSize: 9, 
+                                        fontWeight: FontWeight.bold, 
+                                        color: AppColors.primary
+                                      )),
+                                    ),
+                                  ],
+                                ],
                               ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
+                          ],
                         ),
-                        if (game.creatorName.isNotEmpty)
-                          Text(
-                            'by ${game.creatorName}',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: AppColors.textTertiary),
-                          ),
-                      ],
+                      ),
+                      // Leave space for the delete icon when creator
+                      if (_isCreator) SizedBox(width: 38),
+                      const SizedBox(width: 8),
+                      _CategoryChip(category: game.category),
+                      const SizedBox(width: 6),
+                      _StatusChip(status: game.status),
+                    ],
+                  ),
+
+                  // ── Description ──────────────────────────────────────
+                  if (game.description.isNotEmpty) ...[  
+                    SizedBox(height: AppSpacing.sm),
+                    Text(
+                      game.description,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.textSecondary, height: 1.4),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+
+                  SizedBox(height: AppSpacing.md),
+
+                  // ── Info row ─────────────────────────────────────────
+                  Wrap(
+                    spacing: AppSpacing.lg,
+                    runSpacing: AppSpacing.sm,
+                    children: [
+                      _InfoItem(
+                        icon: game.isOnline ? Icons.wifi_rounded : Icons.location_on_outlined,
+                        text: game.isOnline ? 'Online' : (game.location?.address ?? 'Local'),
+                        color: AppColors.primary,
+                      ),
+                      _InfoItem(
+                        icon: Icons.group_outlined,
+                        text: '${game.currentPlayers}/${game.maxPlayers} players',
+                        color: game.isFull ? AppColors.error : AppColors.textSecondary,
+                      ),
+                    ],
+                  ),
+
+                  // ── Action buttons (state-driven) ──────────────────────
+                  SizedBox(height: AppSpacing.md),
+                  _ActionButtons(
+                    context: context,
+                    game: game,
+                    isCreator: _isCreator,
+                    isJoined: _isJoined,
+                    onViewDetails: onTap,
+                    onJoin: onJoin,
+                    onLeave: onLeave,
+                    onCancel: onCancel,
+                    onDelete: onDelete,
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Top-right delete icon (creator only) ────────────────
+          if (_isCreator && onDelete != null)
+            Positioned(
+              top: 10,
+              right: 10,
+              child: Material(
+                color: Colors.transparent,
+                child: Tooltip(
+                  message: 'Delete Game',
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(24),
+                    onTap: onDelete,
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppColors.error.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.error.withValues(alpha: 0.3), width: 1),
+                      ),
+                      child: const Icon(
+                        Icons.delete_rounded,
+                        size: 22,
+                        color: AppColors.error,
+                      ),
                     ),
                   ),
-                  SizedBox(width: AppSpacing.sm),
-                  _StatusChip(status: game.status),
-                ],
-              ),
-
-              // ── Description ──────────────────────────────────────
-              if (game.description.isNotEmpty) ...[
-                SizedBox(height: AppSpacing.sm),
-                Text(
-                  game.description,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary, height: 1.4),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                 ),
-              ],
-
-              SizedBox(height: AppSpacing.md),
-
-              // ── Info row ─────────────────────────────────────────
-              Wrap(
-                spacing: AppSpacing.lg,
-                runSpacing: AppSpacing.sm,
-                children: [
-                  _InfoItem(
-                    icon: game.isOnline ? Icons.wifi_rounded : Icons.location_on_outlined,
-                    text: game.isOnline ? 'Online' : (game.location?.address ?? 'Local'),
-                    color: AppColors.primary,
-                  ),
-                  _InfoItem(
-                    icon: Icons.group_outlined,
-                    text: '${game.currentPlayers}/${game.maxPlayers} players',
-                    color: game.isFull ? AppColors.error : AppColors.textSecondary,
-                  ),
-                ],
               ),
-
-              // ── Action buttons (state-driven) ──────────────────────
-              SizedBox(height: AppSpacing.md),
-              _ActionButtons(
-                context: context,
-                game: game,
-                isCreator: _isCreator,
-                isJoined: _isJoined,
-                onJoin: onJoin,
-                onLeave: onLeave,
-                onDelete: onDelete,
-              ),
-            ],
-          ),
-        ),
+            ),
+        ],
       ),
     );
   }
@@ -156,8 +239,10 @@ class _ActionButtons extends StatelessWidget {
   final GameEntity game;
   final bool isCreator;
   final bool isJoined;
+  final VoidCallback? onViewDetails;
   final VoidCallback? onJoin;
   final VoidCallback? onLeave;
+  final VoidCallback? onCancel;
   final VoidCallback? onDelete;
 
   const _ActionButtons({
@@ -165,8 +250,10 @@ class _ActionButtons extends StatelessWidget {
     required this.game,
     required this.isCreator,
     required this.isJoined,
+    this.onViewDetails,
     this.onJoin,
     this.onLeave,
+    this.onCancel,
     this.onDelete,
   });
 
@@ -195,15 +282,22 @@ class _ActionButtons extends StatelessWidget {
     if (isJoined) {
       return Column(
         children: [
-          // Primary: Go to Chat
+          // Primary: creator -> Go to Chat, participant -> View Details
           SizedBox(
             width: double.infinity,
             height: 40,
             child: ElevatedButton.icon(
-              onPressed: _goToChat,
-              icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
-              label: const Text('Go to Chat',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+              onPressed: isCreator ? _goToChat : onViewDetails,
+              icon: Icon(
+                isCreator
+                    ? Icons.chat_bubble_outline_rounded
+                    : Icons.visibility_outlined,
+                size: 18,
+              ),
+              label: Text(
+                isCreator ? 'Go to Chat' : 'View Details',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
@@ -214,36 +308,42 @@ class _ActionButtons extends StatelessWidget {
             ),
           ),
           SizedBox(height: AppSpacing.sm),
-          // Secondary: Cancel (creator) or Leave (participant)
-          SizedBox(
-            width: double.infinity,
-            height: 36,
-            child: isCreator
-                ? OutlinedButton.icon(
-                    onPressed: onDelete,
-                    icon: const Icon(Icons.cancel_outlined, size: 16),
-                    label: const Text('Cancel Game',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.error,
-                      side: const BorderSide(color: AppColors.error, width: 1.2),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.md)),
-                    ),
-                  )
-                : OutlinedButton.icon(
-                    onPressed: onLeave,
-                    icon: const Icon(Icons.exit_to_app_rounded, size: 16),
-                    label: const Text('Leave Game',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.warning,
-                      side: const BorderSide(color: AppColors.warning, width: 1.2),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.md)),
-                    ),
-                  ),
-          ),
+          // Secondary actions
+          if (isCreator)
+            // Creator: Cancel Game only (delete is the top-right icon)
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: onCancel,
+                icon: const Icon(Icons.cancel_outlined, size: 16),
+                label: const Text('Cancel Game',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.warning,
+                  side: const BorderSide(color: AppColors.warning, width: 1.2),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md)),
+                ),
+              ),
+            )
+          else
+            // Participant: Leave button
+            SizedBox(
+              width: double.infinity,
+              height: 36,
+              child: OutlinedButton.icon(
+                onPressed: onLeave,
+                icon: const Icon(Icons.exit_to_app_rounded, size: 16),
+                label: const Text('Leave Game',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.warning,
+                  side: const BorderSide(color: AppColors.warning, width: 1.2),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md)),
+                ),
+              ),
+            ),
         ],
       );
     }
@@ -276,7 +376,7 @@ class _ActionButtons extends StatelessWidget {
         onPressed: onJoin,
         icon: const Icon(Icons.login_rounded, size: 18),
         label: Text(
-          'Join · ${game.spotsLeft} ${game.spotsLeft == 1 ? 'spot' : 'spots'} left',
+          'Join Game · ${game.spotsLeft} ${game.spotsLeft == 1 ? 'spot' : 'spots'} left',
           style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
         ),
         style: ElevatedButton.styleFrom(
@@ -339,6 +439,46 @@ class _SportIcon extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Icon(_icon, size: 22, color: AppColors.primary),
+    );
+  }
+}
+
+class _CategoryChip extends StatelessWidget {
+  final String category;
+  const _CategoryChip({required this.category});
+
+  @override
+  Widget build(BuildContext context) {
+    final isOnline = category == 'ONLINE';
+    final bgColor = isOnline 
+        ? AppColors.info.withValues(alpha: 0.1) 
+        : AppColors.success.withValues(alpha: 0.1);
+    final textColor = isOnline ? AppColors.info : AppColors.success;
+    final icon = isOnline ? Icons.wifi_rounded : Icons.location_on_rounded;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: textColor.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 10, color: textColor),
+          const SizedBox(width: 4),
+          Text(
+            isOnline ? 'ONLINE' : 'OFFLINE',
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
+              color: textColor,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

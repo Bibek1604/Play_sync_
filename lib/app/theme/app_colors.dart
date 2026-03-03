@@ -1,65 +1,68 @@
 import 'package:flutter/material.dart';
 
-/// Application Color Palette
-/// 
-/// Centralized color definitions for consistent theming across the app.
+/// PlaySync Application Color Palette
+///
+/// Brand: Deep Blue → Medium Blue — Clean, Professional Gray-Blue.
 class AppColors {
-  // Prevent instantiation
   AppColors._();
 
-  // Primary Brand Colors (Green Theme)
-  static const Color primary = Color(0xFF2E7D32);
-  static const Color primaryLight = Color(0xFF388E3C);
-  static const Color primaryDark = Color(0xFF1B5E20);
-  static const Color primaryVariant = Color(0xFF43A047);
+  // ── Primary Brand — Deep Blue ────────────────────────────────────────────
+  static const Color primary = Color(0xFF1E3A8A);
+  static const Color primaryLight = Color(0xFFDBEAFE);
+  static const Color primaryDark = Color(0xFF1E3070);
+  static const Color primaryVariant = Color(0xFF2563EB);
 
-  // Secondary Colors
-  static const Color secondary = Color(0xFF66BB6A);
-  static const Color secondaryLight = Color(0xFF81C784);
-  static const Color secondaryDark = Color(0xFF4CAF50);
+  // ── Secondary — Medium Blue ──────────────────────────────────────────────
+  static const Color secondary = Color(0xFF3B82F6);
+  static const Color secondaryLight = Color(0xFFEFF6FF);
+  static const Color secondaryDark = Color(0xFF2563EB);
+
+  // ── Accent — Gray ────────────────────────────────────────────────────────
+  static const Color accent = Color(0xFF6B7280);
+  static const Color accentLight = Color(0xFFF3F4F6);
 
   // Background Colors
-  static const Color backgroundLight = Color(0xFFFFFFFF);
-  static const Color backgroundDark = Color(0xFF121212);
-  static const Color surfaceLight = Color(0xFFF5F5F5);
-  static const Color surfaceDark = Color(0xFF1E1E1E);
+  static const Color backgroundLight = Color(0xFFF9FAFB);
+  static const Color backgroundDark = Color(0xFF0F172A);
+  static const Color surfaceLight = Color(0xFFFFFFFF);
+  static const Color surfaceDark = Color(0xFF1E293B);
 
   // Card Colors
-  static const Color cardLight = Color(0xFFF1F8E9);
-  static const Color cardDark = Color(0xFF2C2C2C);
+  static const Color cardLight = Color(0xFFFFFFFF);
+  static const Color cardDark = Color(0xFF1E293B);
 
   // Text Colors
-  static const Color textPrimaryLight = Color(0xFF212121);
-  static const Color textSecondaryLight = Color(0xFF757575);
-  static const Color textPrimaryDark = Color(0xFFFFFFFF);
-  static const Color textSecondaryDark = Color(0xFFB0B0B0);
+  static const Color textPrimaryLight = Color(0xFF111827);
+  static const Color textSecondaryLight = Color(0xFF374151);
+  static const Color textPrimaryDark = Color(0xFFF1F5F9);
+  static const Color textSecondaryDark = Color(0xFF94A3B8);
 
   // Status Colors
-  static const Color success = Color(0xFF4CAF50);
-  static const Color error = Color(0xFFE53935);
-  static const Color warning = Color(0xFFFF9800);
-  static const Color info = Color(0xFF2196F3);
+  static const Color success = Color(0xFF059669);
+  static const Color error = Color(0xFFDC2626);
+  static const Color warning = Color(0xFFD97706);
+  static const Color info = Color(0xFF3B82F6);
 
   // Other Colors
-  static const Color divider = Color(0xFFE0E0E0);
-  static const Color disabled = Color(0xFFBDBDBD);
-  static const Color shadow = Color(0x1A000000);
+  static const Color divider = Color(0xFFD1D5DB);
+  static const Color disabled = Color(0xFF9CA3AF);
+  static const Color shadow = Color(0x1A1E3A8A);   // Blue-tinted shadow
 
   // Borders & Dividers
-  static const Color border = Color(0xFFE5E7EB);
-  static const Color borderSubtle = Color(0xFFF1F5F9);
-  static const Color borderDark = Color(0xFF374151);
+  static const Color border = Color(0xFFD1D5DB);
+  static const Color borderSubtle = Color(0xFFE5E7EB);
+  static const Color borderDark = Color(0xFF4B5563);
 
   // Text Tertiary
-  static const Color textTertiary = Color(0xFF9CA3AF);
+  static const Color textTertiary = Color(0xFF6B7280);
 
   // Extended Palette
-  static const Color emerald500 = Color(0xFF10B981);
+  static const Color emerald500 = Color(0xFF059669);
   static const Color gold = Color(0xFFFFD700);
   static const Color silver = Color(0xFFC0C0C0);
   static const Color bronze = Color(0xFFCD7F32);
-  static const Color chatBubbleOwn = Color(0xFF2E7D32);
-  static const Color chatBubbleOther = Color(0xFF2C2C2C);
+  static const Color chatBubbleOwn = Color(0xFF1E3A8A);
+  static const Color chatBubbleOther = Color(0xFF374151);
 }
 
 /// Application Typography

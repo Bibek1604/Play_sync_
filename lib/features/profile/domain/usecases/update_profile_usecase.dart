@@ -17,6 +17,7 @@ class UpdateProfileParams {
   final String? phone;
   final String? favoriteGame;
   final String? place;
+  final String? bio;
   final String? currentPassword;
   final String? changePassword;
   final XFile? profilePicture;
@@ -26,6 +27,7 @@ class UpdateProfileParams {
     this.phone,
     this.favoriteGame,
     this.place,
+    this.bio,
     this.currentPassword,
     this.changePassword,
     this.profilePicture,
@@ -45,6 +47,7 @@ class UpdateProfileUsecase {
       phone: params.phone,
       favoriteGame: params.favoriteGame,
       place: params.place,
+      bio: params.bio,
       currentPassword: params.currentPassword,
       changePassword: params.changePassword,
       profilePicture: params.profilePicture,

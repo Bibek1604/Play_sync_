@@ -7,6 +7,7 @@ import 'game_chat_page.dart';
 import '../../../../app/routes/app_routes.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../features/auth/presentation/providers/auth_notifier.dart';
+import '../../../chat/presentation/providers/chat_notifier.dart';
 
 const _sportIcons = <String, IconData>{
   'Football': Icons.sports_soccer,
@@ -115,6 +116,42 @@ class _MyGameChatsPageState extends ConsumerState<MyGameChatsPage> {
                             builder: (_) => GameChatPage(game: game),
                           ),
                         ),
+                        onLeave: isCreator
+                            ? null
+                            : () async {
+                                final confirm = await showDialog<bool>(
+                                  context: context,
+                                  builder: (_) => AlertDialog(
+                                    title: const Text('Leave Game'),
+                                    content: const Text(
+                                        'Are you sure you want to leave this game?'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(context, false),
+                                        child: const Text('Cancel'),
+                                      ),
+                                      FilledButton(
+                                        style: FilledButton.styleFrom(
+                                            backgroundColor: AppColors.warning),
+                                        onPressed: () =>
+                                            Navigator.pop(context, true),
+                                        child: const Text('Leave'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                if (confirm == true && context.mounted) {
+                                  final result = await ref
+                                      .read(gameProvider.notifier)
+                                      .leaveGame(game.id);
+                                  if (result != null) {
+                                    ref
+                                        .read(chatProvider.notifier)
+                                        .leaveRoom(game.id);
+                                  }
+                                }
+                              },
                         onDelete: isCreator
                             ? () async {
                                 final confirm = await showDialog<bool>(
@@ -159,12 +196,14 @@ class _GameChatTile extends StatelessWidget {
     required this.game,
     required this.isCreator,
     required this.onTap,
+    this.onLeave,
     this.onDelete,
   });
 
   final GameEntity game;
   final bool isCreator;
   final VoidCallback onTap;
+  final VoidCallback? onLeave;
   final VoidCallback? onDelete;
 
   @override
@@ -282,6 +321,15 @@ class _GameChatTile extends StatelessWidget {
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                 )
+              else if (!isCreator && onLeave != null)
+                IconButton(
+                  icon: const Icon(Icons.exit_to_app_rounded,
+                      color: AppColors.warning, size: 22),
+                  tooltip: 'Leave Game',
+                  onPressed: onLeave,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                )
               else
                 Icon(
                   Icons.chat_bubble_rounded,
@@ -296,10 +344,10 @@ class _GameChatTile extends StatelessWidget {
   }
 
   Color _statusColor(GameStatus status) => switch (status) {
-        GameStatus.OPEN => const Color(0xFF2E7D32),
-        GameStatus.FULL => const Color(0xFFE65100),
-        GameStatus.ENDED => const Color(0xFF546E7A),
-        GameStatus.CANCELLED => const Color(0xFFC62828),
+        GameStatus.OPEN => const Color(0xFF059669),
+        GameStatus.FULL => const Color(0xFFD97706),
+        GameStatus.ENDED => const Color(0xFF6B7280),
+        GameStatus.CANCELLED => const Color(0xFFDC2626),
       };
 
   String _statusLabel(GameStatus status) => switch (status) {

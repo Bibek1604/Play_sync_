@@ -7,6 +7,7 @@ import '../providers/game_notifier.dart';
 import '../widgets/game_card.dart';
 import '../widgets/create_game_sheet.dart';
 import 'game_detail_page.dart';
+import '../../../chat/presentation/providers/chat_notifier.dart';
 
 class OnlineGamesPage extends ConsumerStatefulWidget {
   const OnlineGamesPage({super.key});
@@ -21,6 +22,7 @@ class _OnlineGamesPageState extends ConsumerState<OnlineGamesPage> {
     super.initState();
     // Load joined/created game lists so we can detect already-joined games
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(gameProvider.notifier).setCategoryFilter('ONLINE');
       ref.read(gameProvider.notifier).fetchMyJoinedGames();
       ref.read(gameProvider.notifier).fetchMyCreatedGames();
     });
@@ -40,13 +42,14 @@ class _OnlineGamesPageState extends ConsumerState<OnlineGamesPage> {
     final state = ref.watch(gameProvider);
     final authState = ref.watch(authNotifierProvider);
     final currentUserId = authState.user?.userId;
-    final onlineGames = state.games.where((g) => g.isOnline).toList();
+    final onlineGames = state.filteredGames;
 
     // Build a set of joined + created game IDs for quick lookup
     final joinedGameIds = <String>{
       ...state.myJoinedGames.map((g) => g.id),
       ...state.myCreatedGames.map((g) => g.id),
     };
+    final createdGameIds = <String>{...state.myCreatedGames.map((g) => g.id)};
 
     Future<void> doAction(Future<bool> Function() action, String successMsg,
         String failKey) async {
@@ -72,7 +75,7 @@ class _OnlineGamesPageState extends ConsumerState<OnlineGamesPage> {
         builder: (ctx) => AlertDialog(
           title: const Text('Delete Game'),
           content: const Text(
-              'Are you sure you want to delete this game? This cannot be undone.'),
+              'Are you sure you want to permanently delete this game? This cannot be undone.'),
           actions: [
             TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
@@ -149,10 +152,19 @@ class _OnlineGamesPageState extends ConsumerState<OnlineGamesPage> {
                         game.isCreator(currentUserId) ||
                         game.isParticipant(currentUserId)
                       );
+                        final isAlreadyCreator = createdGameIds.contains(game.id) ||
+                          (currentUserId != null && game.isCreator(currentUserId));
+                      
+                      // Debug logging
+                      if (currentUserId != null && game.isCreator(currentUserId)) {
+                        debugPrint('[OnlineGames] Game ${game.title} (${game.id}): creatorId=${game.creatorId}, currentUserId=$currentUserId, isAlreadyCreator=$isAlreadyCreator, inCreatedList=${createdGameIds.contains(game.id)}');
+                      }
+                      
                       return GameCard(
                         game: game,
                         currentUserId: currentUserId,
                         isAlreadyJoined: isAlreadyJoined,
+                        isAlreadyCreator: isAlreadyCreator,
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -173,12 +185,21 @@ class _OnlineGamesPageState extends ConsumerState<OnlineGamesPage> {
                         onLeave: () => doAction(
                           () async {
                             final result = await ref.read(gameProvider.notifier).leaveGame(game.id);
+                            if (result != null) ref.read(chatProvider.notifier).leaveRoom(game.id);
                             return result != null;
                           },
                           'Left game',
                           'Failed to leave',
                         ),
-                        onDelete: () => confirmDelete(game.id),
+                        onCancel: () => doAction(
+                          () async {
+                            final result = await ref.read(gameProvider.notifier).cancelGame(game.id);
+                            return result != null;
+                          },
+                          'Game cancelled',
+                          'Failed to cancel',
+                        ),
+                        onDelete: isAlreadyCreator ? () => confirmDelete(game.id) : null,
                       );
                     },
                   ),

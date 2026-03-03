@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:play_sync_new/core/constants/app_colors.dart';
 import 'package:play_sync_new/features/profile/presentation/state/profile_state.dart';
 import 'package:play_sync_new/features/profile/presentation/viewmodel/profile_notifier.dart';
+import '../../../../core/widgets/back_button_widget.dart';
 
 /// Edit Profile Page
 class EditProfilePage extends ConsumerStatefulWidget {
@@ -20,9 +21,8 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   final _fullNameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _locationController = TextEditingController();
+  final _bioController = TextEditingController();
   final _favoriteGameController = TextEditingController();
-  final _oldPasswordController = TextEditingController();
-  final _newPasswordController = TextEditingController();
   
   XFile? _selectedImage;
   final ImagePicker _imagePicker = ImagePicker();
@@ -37,6 +37,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         _fullNameController.text = profile.fullName ?? '';
         _phoneController.text = profile.phone ?? '';
         _locationController.text = profile.place ?? '';
+        _bioController.text = profile.bio ?? '';
         
         if (profile.favoriteGame != null && profile.favoriteGame!.isNotEmpty) {
           _favoriteGameController.text = profile.favoriteGame!;
@@ -50,9 +51,8 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
     _fullNameController.dispose();
     _phoneController.dispose();
     _locationController.dispose();
+    _bioController.dispose();
     _favoriteGameController.dispose();
-    _oldPasswordController.dispose();
-    _newPasswordController.dispose();
     super.dispose();
   }
 
@@ -135,10 +135,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
       await ref.read(profileNotifierProvider.notifier).updateProfile(
             fullName: _fullNameController.text.trim(),
             phone: _phoneController.text.trim(),
+            bio: _bioController.text.trim(),
             favoriteGame: _favoriteGameController.text.trim(),
             place: _locationController.text.trim(),
-            currentPassword: _oldPasswordController.text.isNotEmpty ? _oldPasswordController.text : null,
-            changePassword: _newPasswordController.text.isNotEmpty ? _newPasswordController.text : null,
             profilePicture: _selectedImage,
           );
     }
@@ -180,6 +179,11 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: BackButtonWidget(label: 'Back'),
+        ),
+        leadingWidth: 100,
         title: const Text('Edit Profile'),
         actions: [
           if (profileState.isUpdating)
@@ -336,37 +340,15 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                   hint: 'e.g., New York, USA',
                 ),
 
-                const SizedBox(height: 30),
-
-                // Password Section
-                Text(
-                  'Security',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    color: isDark ? AppColors.secondary : AppColors.primaryDark,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
                 const SizedBox(height: 16),
 
                 _buildTextField(
-                  controller: _oldPasswordController,
-                  label: 'Current Password',
-                  icon: Icons.lock_outline,
+                  controller: _bioController,
+                  label: 'Bio',
+                  icon: Icons.info_outline,
                   isDark: isDark,
-                  obscureText: true,
-                  hint: 'Enter current password to update',
-                ),
-
-                const SizedBox(height: 16),
-
-                _buildTextField(
-                  controller: _newPasswordController,
-                  label: 'New Password',
-                  icon: Icons.lock_reset,
-                  isDark: isDark,
-                  obscureText: true,
-                  hint: 'Enter new password',
+                  hint: 'Tell us about yourself',
+                  maxLines: 3,
                 ),
 
                 const SizedBox(height: 30),

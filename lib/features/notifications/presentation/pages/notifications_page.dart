@@ -7,6 +7,7 @@ import '../../domain/entities/notification_entity.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../app/routes/app_routes.dart';
 import '../../../../core/widgets/app_drawer.dart';
+import '../../../../core/widgets/back_button_widget.dart';
 
 /// Shows all in-app notifications with read/unread states.
 class NotificationsPage extends ConsumerWidget {
@@ -21,10 +22,11 @@ class NotificationsPage extends ConsumerWidget {
       backgroundColor:
           isDark ? AppColors.backgroundDark : AppColors.background,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded),
-          onPressed: () => Navigator.of(context).pop(),
+        leading: const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: BackButtonWidget(label: 'Back'),
         ),
+        leadingWidth: 100,
         backgroundColor:
             isDark ? AppColors.backgroundDark : AppColors.background,
         title: Row(

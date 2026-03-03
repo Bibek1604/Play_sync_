@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../auth/presentation/providers/auth_notifier.dart';
 import '../../domain/entities/tournament_chat_message.dart';
 import '../providers/tournament_chat_notifier.dart';
+import '../../../../core/widgets/back_button_widget.dart';
 
 /// Real-time chat page for a tournament room (payment-gated).
 class TournamentChatPage extends ConsumerStatefulWidget {
@@ -68,6 +69,11 @@ class _TournamentChatPageState extends ConsumerState<TournamentChatPage> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: BackButtonWidget(label: 'Back'),
+        ),
+        leadingWidth: 100,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

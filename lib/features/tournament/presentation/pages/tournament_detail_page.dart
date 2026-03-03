@@ -9,6 +9,7 @@ import '../../domain/entities/tournament_entity.dart';
 import '../../domain/entities/tournament_payment_entity.dart';
 import '../providers/tournament_notifier.dart';
 import '../providers/tournament_payment_notifier.dart';
+import '../../../../core/widgets/back_button_widget.dart';
 
 /// Detailed view of a single tournament with join / pay / chat actions.
 class TournamentDetailPage extends ConsumerStatefulWidget {
@@ -44,6 +45,11 @@ class _TournamentDetailPageState extends ConsumerState<TournamentDetailPage> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: BackButtonWidget(label: 'Back'),
+        ),
+        leadingWidth: 100,
         title: Text(tournament?.name ?? 'Tournament'),
         actions: [
           if (tournament != null &&

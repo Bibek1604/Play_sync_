@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import '../../../../core/api/api_client.dart';
 import '../../domain/entities/game_entity.dart';
+import '../../domain/entities/invite_link_entity.dart';
+import '../../domain/entities/game_invitation_entity.dart';
 import '../../data/repositories/game_repository.dart';
 
 // ─── State ───────────────────────────────────────────────────────────────────
@@ -14,6 +16,7 @@ class GameState extends Equatable {
   final List<GameEntity> games;
   final List<GameEntity> myCreatedGames;
   final List<GameEntity> myJoinedGames;
+  final List<GameEntity> availableGames; // Games for discovery (not created/joined)
   final bool isLoading;
   final String? error;
   final GameFilter filter;
@@ -29,10 +32,17 @@ class GameState extends Equatable {
   final double? nearLongitude;
   final double nearRadius; // km — backend default is 10km
 
+  // Popular tags
+  final List<String> popularTags;
+
+  // Game invitations received by current user
+  final List<GameInvitation> myInvitations;
+
   const GameState({
     this.games = const [],
     this.myCreatedGames = const [],
     this.myJoinedGames = const [],
+    this.availableGames = const [],
     this.isLoading = false,
     this.error,
     this.filter = GameFilter.all,
@@ -43,6 +53,8 @@ class GameState extends Equatable {
     this.nearLatitude,
     this.nearLongitude,
     this.nearRadius = 10,
+    this.popularTags = const [],
+    this.myInvitations = const [],
   });
 
   List<GameEntity> get filteredGames {
@@ -67,6 +79,7 @@ class GameState extends Equatable {
     List<GameEntity>? games,
     List<GameEntity>? myCreatedGames,
     List<GameEntity>? myJoinedGames,
+    List<GameEntity>? availableGames,
     bool? isLoading,
     String? error,
     GameFilter? filter,
@@ -81,11 +94,14 @@ class GameState extends Equatable {
     double? nearLongitude,
     double? nearRadius,
     bool clearLocation = false,
+    List<String>? popularTags,
+    List<GameInvitation>? myInvitations,
   }) {
     return GameState(
       games: games ?? this.games,
       myCreatedGames: myCreatedGames ?? this.myCreatedGames,
       myJoinedGames: myJoinedGames ?? this.myJoinedGames,
+      availableGames: availableGames ?? this.availableGames,
       isLoading: isLoading ?? this.isLoading,
       error: clearError ? null : (error ?? this.error),
       filter: filter ?? this.filter,
@@ -96,6 +112,8 @@ class GameState extends Equatable {
       nearLatitude: clearLocation ? null : (nearLatitude ?? this.nearLatitude),
       nearLongitude: clearLocation ? null : (nearLongitude ?? this.nearLongitude),
       nearRadius: nearRadius ?? this.nearRadius,
+      popularTags: popularTags ?? this.popularTags,
+      myInvitations: myInvitations ?? this.myInvitations,
     );
   }
 
@@ -103,9 +121,10 @@ class GameState extends Equatable {
 
   @override
   List<Object?> get props => [
-        games, myCreatedGames, myJoinedGames, isLoading, error,
+        games, myCreatedGames, myJoinedGames, availableGames, isLoading, error,
         filter, categoryFilter, hasMore, page, currentGame,
         nearLatitude, nearLongitude, nearRadius,
+        popularTags, myInvitations,
       ];
 }
 
@@ -130,7 +149,7 @@ class GameNotifier extends StateNotifier<GameState> {
     }
   }
 
-  Future<void> fetchGames({bool refresh = false}) async {
+  Future<void> fetchGames({bool refresh = false, bool excludeMe = false}) async {
     if (state.isLoading) return;
     final page = refresh ? 1 : state.page;
     state = state.copyWith(isLoading: true, clearError: true, page: page);
@@ -143,14 +162,24 @@ class GameNotifier extends StateNotifier<GameState> {
         latitude: state.nearLatitude,
         longitude: state.nearLongitude,
         radius: state.hasLocationFilter ? state.nearRadius : null,
+        excludeMe: excludeMe,
       );
       
-      state = state.copyWith(
-        games: refresh ? result.games : [...state.games, ...result.games],
-        isLoading: false,
-        hasMore: result.hasMore,
-        page: page + 1,
-      );
+      if (excludeMe) {
+        state = state.copyWith(
+          availableGames: refresh ? result.games : [...state.availableGames, ...result.games],
+          isLoading: false,
+          hasMore: result.hasMore,
+          page: page + 1,
+        );
+      } else {
+        state = state.copyWith(
+          games: refresh ? result.games : [...state.games, ...result.games],
+          isLoading: false,
+          hasMore: result.hasMore,
+          page: page + 1,
+        );
+      }
     } catch (e) {
       state = state.copyWith(isLoading: false, error: _errorMsg(e));
     }
@@ -179,6 +208,7 @@ class GameNotifier extends StateNotifier<GameState> {
   Future<void> fetchMyCreatedGames() async {
     try {
       final games = await _repository.fetchMyCreatedGames();
+      debugPrint('[GameNotifier] Fetched ${games.length} created games');
       state = state.copyWith(myCreatedGames: games);
     } catch (e) {
       debugPrint('[GameNotifier] fetchMyCreatedGames error: ${e.toString()}');
@@ -188,6 +218,7 @@ class GameNotifier extends StateNotifier<GameState> {
   Future<void> fetchMyJoinedGames() async {
     try {
       final games = await _repository.fetchMyJoinedGames();
+      debugPrint('[GameNotifier] Fetched ${games.length} joined games');
       state = state.copyWith(myJoinedGames: games);
     } catch (e) {
       debugPrint('[GameNotifier] fetchMyJoinedGames error: ${e.toString()}');
@@ -216,14 +247,28 @@ class GameNotifier extends StateNotifier<GameState> {
   }
 
   /// [gameData] may be a plain [Map] or a Dio [FormData] (for image uploads).
-  Future<bool> createGame(dynamic gameData) async {
+  /// Returns the created [GameEntity] on success, or null on failure.
+  Future<GameEntity?> createGame(dynamic gameData) async {
     try {
-      await _repository.createGame(gameData);
-      await fetchGames(refresh: true);
-      return true;
+      final game = await _repository.createGame(gameData);
+
+      // Immediately add to lists for instant UI update
+      state = state.copyWith(
+        myCreatedGames: [game, ...state.myCreatedGames],
+        myJoinedGames: [game, ...state.myJoinedGames], // Added this
+        games: [game, ...state.games],
+      );
+
+      // Refresh to get server-authoritative data
+      // Await myCreatedGames to ensure creator status is properly recognized
+      await fetchMyCreatedGames();
+      // Background refresh of all games
+      fetchGames(refresh: true);
+
+      return game;
     } catch (e) {
       state = state.copyWith(error: _errorMsg(e));
-      return false;
+      return null;
     }
   }
 
@@ -246,7 +291,14 @@ class GameNotifier extends StateNotifier<GameState> {
       
       return updatedGame;
     } catch (e) {
-      state = state.copyWith(error: _errorMsg(e));
+      final msg = _errorMsg(e);
+      // If the backend says we've already joined, we should treat it as a success 
+      // and just fetch the details to sync our state.
+      if (msg.contains('already joined') || msg.contains('Already joined')) {
+        debugPrint('[GameNotifier] Already joined detected, fetching game details instead.');
+        return await fetchGameById(gameId, forceRefresh: true);
+      }
+      state = state.copyWith(error: msg);
       return null;
     }
   }
@@ -277,8 +329,24 @@ class GameNotifier extends StateNotifier<GameState> {
 
   Future<bool> deleteGame(String gameId) async {
     try {
+      // 1. Backend deletion
       await _repository.deleteGame(gameId);
-      await fetchGames(refresh: true);
+      
+      // 2. Immediate local state cleanup for "WOW" real-time feel
+      state = state.copyWith(
+        games: state.games.where((g) => g.id != gameId).toList(),
+        myCreatedGames: state.myCreatedGames.where((g) => g.id != gameId).toList(),
+        myJoinedGames: state.myJoinedGames.where((g) => g.id != gameId).toList(),
+        clearCurrentGame: state.currentGame?.id == gameId,
+      );
+
+      debugPrint('[GameNotifier] ✓ Game $gameId deleted, state updated locally');
+
+      // 3. Refresh lists in background to ensure consistency
+      fetchGames(refresh: true);
+      fetchMyCreatedGames();
+      fetchMyJoinedGames();
+
       return true;
     } catch (e) {
       state = state.copyWith(error: _errorMsg(e));
@@ -327,6 +395,143 @@ class GameNotifier extends StateNotifier<GameState> {
     } catch (e) {
       state = state.copyWith(error: _errorMsg(e));
       return null;
+    }
+  }
+
+  // ─── Update Game ─────────────────────────────────────────────────────────
+
+  /// Updates an existing game (creator only).
+  /// [gameData] may be a plain Map or Dio FormData (for image uploads).
+  Future<GameEntity?> updateGame(String gameId, dynamic gameData) async {
+    try {
+      final updatedGame = await _repository.updateGame(gameId, gameData);
+
+      state = state.copyWith(currentGame: updatedGame);
+
+      final updatedGames = state.games.map((g) => g.id == gameId ? updatedGame : g).toList();
+      final updatedCreated = state.myCreatedGames.map((g) => g.id == gameId ? updatedGame : g).toList();
+      state = state.copyWith(games: updatedGames, myCreatedGames: updatedCreated);
+
+      return updatedGame;
+    } catch (e) {
+      state = state.copyWith(error: _errorMsg(e));
+      return null;
+    }
+  }
+
+  // ─── Can Join Check ───────────────────────────────────────────────────────
+
+  /// Checks if the current user can join a game.
+  /// Returns `(canJoin, reason?)` without mutating state.
+  Future<({bool canJoin, String? reason})> canJoinGame(String gameId) async {
+    try {
+      return await _repository.canJoinGame(gameId);
+    } catch (e) {
+      return (canJoin: false, reason: _errorMsg(e));
+    }
+  }
+
+  // ─── Tags ─────────────────────────────────────────────────────────────────
+
+  /// Fetches popular tags and updates state.
+  Future<void> fetchPopularTags({int limit = 20}) async {
+    try {
+      final tags = await _repository.fetchPopularTags(limit: limit);
+      state = state.copyWith(popularTags: tags);
+    } catch (_) {
+      // Non-critical — silently ignore
+    }
+  }
+
+  // ─── Invite Link ──────────────────────────────────────────────────────────
+
+  /// Generates a shareable invite link for a game (creator only).
+  Future<InviteLink?> generateInviteLink(String gameId) async {
+    try {
+      return await _repository.generateInviteLink(gameId);
+    } catch (e) {
+      state = state.copyWith(error: _errorMsg(e));
+      return null;
+    }
+  }
+
+  /// Fetches game details for an invite code (to show preview before joining).
+  Future<InviteDetails?> getInviteDetails(String code) async {
+    try {
+      return await _repository.getInviteDetails(code);
+    } catch (e) {
+      state = state.copyWith(error: _errorMsg(e));
+      return null;
+    }
+  }
+
+  /// Joins a game using an invite code.
+  Future<GameEntity?> joinViaInvite(String code) async {
+    try {
+      final game = await _repository.joinViaInvite(code);
+
+      state = state.copyWith(
+        currentGame: game,
+        games: [game, ...state.games],
+      );
+      fetchMyJoinedGames();
+      return game;
+    } catch (e) {
+      state = state.copyWith(error: _errorMsg(e));
+      return null;
+    }
+  }
+
+  // ─── Game Invitations ─────────────────────────────────────────────────────
+
+  /// Sends an invitation to a user for a specific game.
+  Future<GameInvitation?> sendInvitation({
+    required String gameId,
+    required String invitedUserId,
+    String? message,
+  }) async {
+    try {
+      return await _repository.sendInvitation(
+        gameId: gameId,
+        invitedUserId: invitedUserId,
+        message: message,
+      );
+    } catch (e) {
+      state = state.copyWith(error: _errorMsg(e));
+      return null;
+    }
+  }
+
+  /// Fetches all invitations received by the current user.
+  Future<void> fetchMyInvitations() async {
+    try {
+      final invitations = await _repository.getMyInvitations();
+      state = state.copyWith(myInvitations: invitations);
+    } catch (_) {
+      // Non-critical — silently ignore
+    }
+  }
+
+  /// Responds to an invitation (accept / decline) and refreshes list.
+  Future<bool> respondToInvitation({
+    required String invitationId,
+    required InvitationAction action,
+  }) async {
+    try {
+      await _repository.respondToInvitation(
+        invitationId: invitationId,
+        action: action,
+      );
+      // Refresh invitations and joined games
+      fetchMyInvitations();
+      if (action == InvitationAction.accept) {
+        fetchMyJoinedGames();
+        fetchGames(refresh: true);
+      }
+      return true;
+    } catch (e) {
+      state = state.copyWith(error: _errorMsg(e));
+      return false;
     }
   }
 

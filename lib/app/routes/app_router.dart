@@ -5,6 +5,9 @@ import 'app_routes.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/signup_page.dart';
+import '../../features/auth/presentation/pages/forgot_password_page.dart';
+import '../../features/auth/presentation/pages/verify_otp_page.dart';
+import '../../features/auth/presentation/pages/reset_password_page.dart';
 import '../../features/auth/presentation/widgets/auth_guard.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/settings/presentation/pages/theme_page.dart';
@@ -53,6 +56,26 @@ class AppRouter {
 
       case AppRoutes.signup:
         return _buildRoute(const SignupPage(), settings);
+
+      case AppRoutes.forgotPassword:
+        return _buildRoute(const ForgotPasswordPage(), settings);
+
+      case AppRoutes.verifyOtp:
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          VerifyOtpPage(email: args?['email'] as String?),
+          settings,
+        );
+
+      case AppRoutes.resetPassword:
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          ResetPasswordPage(
+            email: args?['email'] as String?,
+            otp: args?['otp'] as String?,
+          ),
+          settings,
+        );
 
       // ── App Shell (bottom-nav host) ───────────────────────────────────────
       case AppRoutes.dashboard:

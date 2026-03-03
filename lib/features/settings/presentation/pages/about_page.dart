@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import '../../../../core/widgets/back_button_widget.dart';
 
 /// Static about/info page with app version details.
 class AboutPage extends StatefulWidget {
@@ -24,7 +25,14 @@ class _AboutPageState extends State<AboutPage> {
     final tt = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('About')),
+      appBar: AppBar(
+        leading: const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: BackButtonWidget(label: 'Back'),
+        ),
+        leadingWidth: 100,
+        title: const Text('About'),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [

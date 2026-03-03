@@ -90,6 +90,17 @@ class ApiEndpoints {
   static String cancelGame(String id) => '/games/$id/cancel';
   static String completeGame(String id) => '/games/$id/complete';
 
+  // ========== INVITE LINK ENDPOINTS ==========
+  static String generateInviteLink(String id) => '/games/$id/invite';
+  static String getInviteDetails(String code) => '/games/invite/$code';
+  static String joinViaInvite(String code) => '/games/invite/$code/join';
+
+  // ========== GAME INVITATION ENDPOINTS ==========
+  static String sendGameInvitation(String gameId) => '/games/$gameId/invite';
+  static const String getMyInvitations = '/games/me/invitations';
+  static String respondToInvitation(String invitationId) =>
+      '/games/invitations/$invitationId/respond';
+
   // ========== GAME CHAT ENDPOINTS ==========
   static String sendChatMessage(String gameId) => '/games/$gameId/chat';
   static String getChatMessages(String gameId) => '/games/$gameId/chat';
@@ -140,6 +151,7 @@ class ApiEndpoints {
 
   // ========== PASSWORD ENDPOINTS ==========
   static const String forgotPassword = '/auth/forgot-password';
+  static const String verifyOtp = '/auth/verify-otp';
   static const String resetPassword = '/auth/reset-password';
   static const String changePassword = '/profile/change-password';
   static const String getAllUsers = '/auth/users';

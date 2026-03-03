@@ -8,6 +8,8 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/widgets/app_drawer.dart';
 import '../../../../features/auth/presentation/providers/auth_notifier.dart';
+import '../../../chat/presentation/providers/chat_notifier.dart';
+import '../../../profile/presentation/viewmodel/profile_notifier.dart';
 
 const _sports = [
   'All', 'Football', 'Basketball', 'Cricket', 'Chess', 'Tennis', 'Badminton', 'Other'
@@ -33,6 +35,7 @@ class _GamePageState extends ConsumerState<GamePage>
     with SingleTickerProviderStateMixin {
   late final TabController _statusTab;
   String _selectedSport = 'All';
+  bool _showJoinedOnly = true;
 
   static const _filters = [
     GameFilter.all,
@@ -59,6 +62,7 @@ class _GamePageState extends ConsumerState<GamePage>
       }
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(gameProvider.notifier).setCategoryFilter(null);
       ref.read(gameProvider.notifier).fetchGames(refresh: true);
       ref.read(gameProvider.notifier).fetchMyJoinedGames();
       ref.read(gameProvider.notifier).fetchMyCreatedGames();
@@ -95,16 +99,52 @@ class _GamePageState extends ConsumerState<GamePage>
   Widget build(BuildContext context) {
     final state = ref.watch(gameProvider);
     final currentUserId = ref.watch(authNotifierProvider).user?.userId;
+    final profileState = ref.watch(profileNotifierProvider);
+    final profile = profileState.profile;
 
     // Build a set of joined + created game IDs for quick lookup
     final joinedGameIds = <String>{
       ...state.myJoinedGames.map((g) => g.id),
       ...state.myCreatedGames.map((g) => g.id),
     };
+    final joinedCount = joinedGameIds.length;
+    final createdGameIds = <String>{...state.myCreatedGames.map((g) => g.id)};
 
-    final displayed = _selectedSport == 'All'
+    final sportFiltered = _selectedSport == 'All'
         ? state.filteredGames
         : state.filteredGames.where((g) => g.sport == _selectedSport).toList();
+    final displayed = _showJoinedOnly
+        ? sportFiltered.where((g) {
+            if (joinedGameIds.contains(g.id)) return true;
+            if (currentUserId == null) return false;
+        return g.isCreator(currentUserId) ||
+          g.isParticipant(currentUserId);
+          }).toList()
+        : sportFiltered;
+
+    Future<void> confirmDelete(String gameId) async {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Delete Game'),
+          content: const Text(
+              'Are you sure you want to permanently delete this game? This cannot be undone.'),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Delete',
+                  style: TextStyle(color: AppColors.error)),
+            ),
+          ],
+        ),
+      );
+      if (confirmed == true && context.mounted) {
+        await ref.read(gameProvider.notifier).deleteGame(gameId);
+      }
+    }
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -166,6 +206,26 @@ class _GamePageState extends ConsumerState<GamePage>
             ),
             title: Row(
               children: [
+                CircleAvatar(
+                  radius: 14,
+                  backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                  backgroundImage: profile?.avatar != null && profile!.avatar!.isNotEmpty
+                      ? NetworkImage(profile.avatar!)
+                      : null,
+                  child: profile?.avatar == null || profile!.avatar!.isEmpty
+                      ? Text(
+                          profile?.fullName?.isNotEmpty == true
+                              ? profile!.fullName![0].toUpperCase()
+                              : 'P',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
+                        )
+                      : null,
+                ),
+                const SizedBox(width: 10),
                 const Text(
                   'Games',
                   style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
@@ -191,33 +251,24 @@ class _GamePageState extends ConsumerState<GamePage>
                     label: 'All Games',
                     icon: Icons.sports_esports,
                     count: state.games.length,
-                    selected: state.categoryFilter == null,
+                    selected: !_showJoinedOnly,
                     color: AppColors.primary,
-                    onTap: () => ref
-                        .read(gameProvider.notifier)
-                        .setCategoryFilter(null),
+                    onTap: () {
+                      ref.read(gameProvider.notifier).setCategoryFilter(null);
+                      setState(() => _showJoinedOnly = false);
+                    },
                   ),
                   SizedBox(width: AppSpacing.sm),
                   _CategoryCard(
-                    label: 'Online',
-                    icon: Icons.wifi_rounded,
-                    count: state.onlineGames.length,
-                    selected: state.categoryFilter == 'ONLINE',
+                    label: 'Joined Games',
+                    icon: Icons.group_rounded,
+                    count: joinedCount,
+                    selected: _showJoinedOnly,
                     color: AppColors.info,
-                    onTap: () => ref
-                        .read(gameProvider.notifier)
-                        .setCategoryFilter('ONLINE'),
-                  ),
-                  SizedBox(width: AppSpacing.sm),
-                  _CategoryCard(
-                    label: 'Offline',
-                    icon: Icons.location_on_rounded,
-                    count: state.offlineGames.length,
-                    selected: state.categoryFilter == 'OFFLINE',
-                    color: AppColors.success,
-                    onTap: () => ref
-                        .read(gameProvider.notifier)
-                        .setCategoryFilter('OFFLINE'),
+                    onTap: () {
+                      ref.read(gameProvider.notifier).setCategoryFilter(null);
+                      setState(() => _showJoinedOnly = true);
+                    },
                   ),
                 ],
               ),
@@ -332,17 +383,21 @@ class _GamePageState extends ConsumerState<GamePage>
             : displayed.isEmpty
                 ? _EmptyGamesView(
                     sport: _selectedSport,
-                    category: state.categoryFilter,
-                    onRefresh: () => ref
-                        .read(gameProvider.notifier)
-                        .fetchGames(refresh: true),
+                  category: _showJoinedOnly ? 'joined' : state.categoryFilter,
+                    onRefresh: () async {
+                      await ref.read(gameProvider.notifier).fetchGames(refresh: true);
+                      await ref.read(gameProvider.notifier).fetchMyJoinedGames();
+                      await ref.read(gameProvider.notifier).fetchMyCreatedGames();
+                    },
                     onCreate: () => _showCreate(context),
                   )
                 : RefreshIndicator(
                     color: AppColors.primary,
-                    onRefresh: () => ref
-                        .read(gameProvider.notifier)
-                        .fetchGames(refresh: true),
+                    onRefresh: () async {
+                      await ref.read(gameProvider.notifier).fetchGames(refresh: true);
+                      await ref.read(gameProvider.notifier).fetchMyJoinedGames();
+                      await ref.read(gameProvider.notifier).fetchMyCreatedGames();
+                    },
                     child: ListView.builder(
                       padding: EdgeInsets.fromLTRB(AppSpacing.md,
                           AppSpacing.sm, AppSpacing.md, 80),
@@ -369,21 +424,30 @@ class _GamePageState extends ConsumerState<GamePage>
                           game.isCreator(currentUserId) ||
                           game.isParticipant(currentUserId)
                         );
+                        final isAlreadyCreator = currentUserId != null &&
+                            createdGameIds.contains(game.id);
                         return GameCard(
                           game: game,
                           currentUserId: currentUserId,
                           isAlreadyJoined: isAlreadyJoined,
+                          isAlreadyCreator: isAlreadyCreator,
                           onTap: () =>
                               _openDetail(context, game),
-                          onJoin: () => ref
+                            onJoin: () => ref
                               .read(gameProvider.notifier)
                               .joinGame(game.id),
-                          onLeave: () => ref
-                              .read(gameProvider.notifier)
-                              .leaveGame(game.id),
-                          onDelete: () => ref
+                          onLeave: () async {
+                              final result = await ref
+                                  .read(gameProvider.notifier)
+                                  .leaveGame(game.id);
+                              if (result != null) {
+                                ref.read(chatProvider.notifier).leaveRoom(game.id);
+                              }
+                            },
+                          onCancel: () => ref
                               .read(gameProvider.notifier)
                               .cancelGame(game.id),
+                          onDelete: () => confirmDelete(game.id),
                         );
                       },
                     ),

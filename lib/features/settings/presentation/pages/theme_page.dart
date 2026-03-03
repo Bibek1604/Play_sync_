@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/theme_provider.dart';
+import '../../../../core/widgets/back_button_widget.dart';
 
 /// Theme Page
 /// 
@@ -19,6 +20,11 @@ class ThemePage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: BackButtonWidget(label: 'Back'),
+        ),
+        leadingWidth: 100,
         title: const Text('Theme Settings'),
       ),
       body: Padding(

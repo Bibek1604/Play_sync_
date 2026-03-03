@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../models/forgot_password_model.dart';
+import '../../../../core/api/api_endpoints.dart';
 
 /// Abstract data source for password reset remote operations
 abstract class PasswordResetRemoteDataSource {
@@ -16,7 +17,6 @@ abstract class PasswordResetRemoteDataSource {
 /// Implementation of PasswordResetRemoteDataSource using Dio
 class PasswordResetRemoteDataSourceImpl implements PasswordResetRemoteDataSource {
   final Dio dio;
-  static const String baseUrl = 'api/v1/auth';
 
   PasswordResetRemoteDataSourceImpl({required this.dio});
 
@@ -24,7 +24,7 @@ class PasswordResetRemoteDataSourceImpl implements PasswordResetRemoteDataSource
   Future<ForgotPasswordResponseDto> forgotPassword(String email) async {
     try {
       final response = await dio.post(
-        '$baseUrl/forgot-password',
+        ApiEndpoints.forgotPassword,
         data: {'email': email},
       );
 
@@ -45,7 +45,7 @@ class PasswordResetRemoteDataSourceImpl implements PasswordResetRemoteDataSource
   Future<ResetPasswordResponseDto> resetPassword(ResetPasswordDto dto) async {
     try {
       final response = await dio.post(
-        '$baseUrl/reset-password',
+        ApiEndpoints.resetPassword,
         data: dto.toJson(),
       );
 
@@ -66,7 +66,7 @@ class PasswordResetRemoteDataSourceImpl implements PasswordResetRemoteDataSource
   Future<bool> verifyOtp(String email, String otp) async {
     try {
       final response = await dio.post(
-        '$baseUrl/verify-otp',
+        ApiEndpoints.verifyOtp,
         data: {'email': email, 'otp': otp},
       );
 
@@ -93,15 +93,18 @@ class PasswordResetRemoteDataSourceImpl implements PasswordResetRemoteDataSource
         message = 'Server response timeout. Please try again.';
         break;
       case DioExceptionType.badResponse:
+        // Always prefer the backend\'s own message over hardcoded strings
+        final backendMsg =
+            e.response?.data is Map ? e.response?.data['message'] as String? : null;
         final statusCode = e.response?.statusCode;
-        if (statusCode == 404) {
-          message = 'Email not found in our system.';
+        if (backendMsg != null && backendMsg.isNotEmpty) {
+          message = backendMsg;
         } else if (statusCode == 429) {
           message = 'Too many attempts. Please try again later.';
         } else if (statusCode == 500) {
           message = 'Server error. Please try again later.';
         } else {
-          message = e.response?.data['message'] ?? 'An error occurred';
+          message = 'An error occurred. Please try again.';
         }
         break;
       case DioExceptionType.cancel:

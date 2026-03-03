@@ -9,7 +9,11 @@ import '../../../../core/api/secure_storage_provider.dart';
 import '../../../../core/services/socket_service.dart';
 import '../../../auth/presentation/providers/auth_notifier.dart';
 import '../../../auth/presentation/view_model/auth_viewmodel.dart';
+import 'package:play_sync_new/features/game/presentation/providers/game_notifier.dart';
 import '../../domain/entities/game_entity.dart';
+import 'game_detail_page.dart';
+import '../../../chat/presentation/providers/chat_notifier.dart';
+import '../../../../core/widgets/back_button_widget.dart';
 
 /// Real-time chat page for a specific game room.
 ///
@@ -41,31 +45,63 @@ class _GameChatPageState extends ConsumerState<GameChatPage> {
   final Set<String> _seenMsgIds = <String>{};
   /// Tracks temporary IDs for optimistic messages awaiting server confirmation.
   final Set<String> _pendingTempIds = <String>{};
-  bool _isConnected = false;
   bool _isLoadingHistory = true;
-  bool _isSendingViaRest = false;
-  String _myId = '';
-  static const int _maxMessages = 50; // Limit stored messages
+  bool _isSending = false;
+  static const int _maxMessages = 200; // Increased to support pagination
+  int _currentPlayerCount = 0;
+
+  // ── Pagination state ────────────────────────────────────────────────────
+  bool _hasMore = false;
+  String? _nextCursor;
+  bool _isLoadingMore = false;
+  static const int _pageSize = 50;
+  static const double _loadMoreThreshold = 200.0;
+
+  /// Resolved user ID — single source of truth for sender alignment.
+  /// Read from secure storage in initState (guaranteed after login),
+  /// updated from auth providers as a fallback.
+  String _myUserId = '';
 
   @override
   void initState() {
     super.initState();
-    // Use authNotifierProvider (primary) then fall back to authViewModelProvider.
-    // Both are checked because different parts of the app initialise them at
-    // different times; we need _myId before the first socket message arrives.
-    _myId = ref.read(authNotifierProvider).user?.userId ??
-        ref.read(authViewModelProvider).user?.userId ??
-        '';
-    
-    // Debug: Log user ID to verify it's set correctly
-    if (_myId.isEmpty) {
-      debugPrint('[CHAT] WARNING: _myId is empty - message alignment may fail');
-    } else {
-      debugPrint('[CHAT] Current user ID: $_myId');
-    }
-    
+    _currentPlayerCount = widget.game.currentPlayers;
+    _scrollController.addListener(_onScroll);
+    _resolveUserId();
     _loadHistory();
     _initSocket();
+  }
+
+  /// Resolve the current user's ID from multiple sources.
+  /// Priority: auth providers (sync) → secure storage (async fallback).
+  Future<void> _resolveUserId() async {
+    // 1. Try auth providers first (may already be loaded)
+    final auth = ref.read(authNotifierProvider);
+    final vm = ref.read(authViewModelProvider);
+    var id = (auth.user?.userId ?? vm.user?.userId ?? '').trim();
+
+    // 2. Fallback: read from secure storage (always has it after login)
+    if (id.isEmpty) {
+      final storage = ref.read(secureStorageProvider);
+      id = (await storage.read(key: 'user_id') ?? '').trim();
+    }
+    
+    id = GameEntity.normalize(id);
+
+    if (mounted && id.isNotEmpty && id != _myUserId) {
+      setState(() => _myUserId = id);
+    }
+    debugPrint('[CHAT] Resolved myUserId (normalized): $id');
+  }
+
+  /// Triggers loading older messages when user scrolls near top.
+  void _onScroll() {
+    if (_scrollController.position.pixels <=
+            _scrollController.position.minScrollExtent + _loadMoreThreshold &&
+        _hasMore &&
+        !_isLoadingMore) {
+      _loadMore();
+    }
   }
 
   // ── History ──────────────────────────────────────────────────────────────
@@ -73,7 +109,10 @@ class _GameChatPageState extends ConsumerState<GameChatPage> {
   Future<void> _loadHistory() async {
     try {
       final api = ref.read(apiClientProvider);
-      final resp = await api.get('/games/${widget.game.id}/chat');
+      final resp = await api.get(
+        '/games/${widget.game.id}/chat',
+        queryParameters: {'limit': _pageSize},
+      );
       final body = resp.data as Map<String, dynamic>;
       // API response: { success, message, data: { messages: [...], hasMore, nextCursor } }
       final inner = body['data'] as Map<String, dynamic>?;
@@ -90,16 +129,69 @@ class _GameChatPageState extends ConsumerState<GameChatPage> {
           if (id.isNotEmpty) _seenMsgIds.add(id);
           _messages.add(_parseDTO(map));
         }
-        // Enforce message limit (keep last 50 messages)
-        if (_messages.length > _maxMessages) {
-          final toRemove = _messages.length - _maxMessages;
-          _messages.removeRange(0, toRemove);
-        }
+        _hasMore = inner?['hasMore'] as bool? ?? false;
+        _nextCursor = inner?['nextCursor'] as String?;
         _isLoadingHistory = false;
       });
       WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
     } catch (_) {
       if (mounted) setState(() => _isLoadingHistory = false);
+    }
+  }
+
+  /// Loads older messages when user scrolls to top.
+  Future<void> _loadMore() async {
+    if (_isLoadingMore || !_hasMore) return;
+    setState(() => _isLoadingMore = true);
+
+    // Preserve scroll position so new items don't push the viewport down
+    final scrollBefore = _scrollController.position.pixels;
+    final maxBefore = _scrollController.position.maxScrollExtent;
+
+    try {
+      final api = ref.read(apiClientProvider);
+      final queryParams = <String, dynamic>{'limit': _pageSize};
+      if (_nextCursor != null) {
+        queryParams['before'] = _nextCursor;
+      }
+      final resp = await api.get(
+        '/games/${widget.game.id}/chat',
+        queryParameters: queryParams,
+      );
+      final body = resp.data as Map<String, dynamic>;
+      final inner = body['data'] as Map<String, dynamic>?;
+      final rawList = (inner?['messages'] as List?) ?? [];
+      if (!mounted) return;
+
+      final older = <_ChatMsg>[];
+      for (final raw in rawList.reversed) {
+        final map = raw as Map<String, dynamic>;
+        final id = map['_id'] as String? ?? '';
+        if (id.isNotEmpty && !_seenMsgIds.add(id)) continue; // skip dups
+        older.add(_parseDTO(map));
+      }
+
+      setState(() {
+        _messages.insertAll(0, older);
+        // Enforce limit (trim from top, keeping newest)
+        if (_messages.length > _maxMessages) {
+          _messages.removeRange(0, _messages.length - _maxMessages);
+        }
+        _hasMore = inner?['hasMore'] as bool? ?? false;
+        _nextCursor = inner?['nextCursor'] as String?;
+        _isLoadingMore = false;
+      });
+
+      // Restore relative scroll position so the user stays at the same message
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients) {
+          final maxAfter = _scrollController.position.maxScrollExtent;
+          _scrollController
+              .jumpTo(scrollBefore + (maxAfter - maxBefore));
+        }
+      });
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingMore = false);
     }
   }
 
@@ -114,73 +206,77 @@ class _GameChatPageState extends ConsumerState<GameChatPage> {
 
     // If already connected, join immediately
     if (_socket!.connected) {
-      if (mounted) setState(() => _isConnected = true);
       _socket!.emit('join:game', widget.game.id);
     }
 
     _socket!
       ..on('connect', (_) {
         if (!mounted) return;
-        setState(() => _isConnected = true);
         _socket!.emit('join:game', widget.game.id);
       })
       ..on('disconnect', (_) {
         if (!mounted) return;
-        setState(() => _isConnected = false);
+      })
+      ..on('game:player:joined', (data) {
+        if (!mounted) return;
+        final raw = data as Map<String, dynamic>;
+        final count = raw['currentPlayers'] as int?;
+        if (count != null) setState(() => _currentPlayerCount = count);
+      })
+      ..on('game:player:left', (data) {
+        if (!mounted) return;
+        final raw = data as Map<String, dynamic>;
+        final count = raw['currentPlayers'] as int?;
+        if (count != null) setState(() => _currentPlayerCount = count);
       })
       ..on('chat:message', (data) {
         if (!mounted) return;
         final raw = data as Map<String, dynamic>;
 
-        // ── Deduplication: ID-based ──────────────────────────────────────
-        // Prevents adding a message that was already loaded from REST history
-        // or that the socket echoed back after we sent it optimistically.
-        final msgId = raw['_id'] as String? ?? '';
+        final msg = _parseDTO(raw);
+        final myIdNorm = GameEntity.normalize(_myUserId);
+        final senderIdNorm = GameEntity.normalize(msg.senderId);
+        final bool isMe = !msg.isSystem && myIdNorm.isNotEmpty && senderIdNorm == myIdNorm;
+
+        debugPrint('[CHAT] Socket Msg: ID=$msgId | From=$senderIdNorm | isMe=$isMe');
+
+        if (isMe) {
+          final tempIdx = _messages.indexWhere((m) =>
+              m.tempId != null && _pendingTempIds.contains(m.tempId));
+
+          if (tempIdx != -1) {
+            final tempMsg = _messages[tempIdx];
+            setState(() {
+              _messages[tempIdx] = _ChatMsg(
+                id: msgId,
+                content: msg.content,
+                senderName: 'You',
+                senderId: _myUserId,
+                timestamp: msg.timestamp,
+                avatarUrl: msg.avatarUrl,
+              );
+              _pendingTempIds.remove(tempMsg.tempId);
+              if (msgId.isNotEmpty) _seenMsgIds.add(msgId);
+            });
+            debugPrint('[CHAT] Replaced temp ${tempMsg.tempId} with $msgId');
+            _scrollToBottom();
+            return;
+          }
+        }
+
         if (msgId.isNotEmpty && !_seenMsgIds.add(msgId)) {
           debugPrint('[CHAT] Skipped duplicate message ID: $msgId');
           return;
         }
 
-        final msg = _parseDTO(raw);
+        // Final safety check: if we already have a message with this server ID, don't add it
+        final alreadyPresent = _messages.any((m) => m.id == msgId && msgId.isNotEmpty);
+        if (alreadyPresent) return;
 
-        // ── Own-message handling ─────────────────────────────────────────
-        // If this is our own message, check if we have an optimistic version.
-        if (msg.isOwn) {
-          // Find and replace any pending temp message for this content
-          final tempIndex = _messages.indexWhere(
-            (m) => m.isOwn && m.tempId != null && _pendingTempIds.contains(m.tempId)
-          );
-          
-          if (tempIndex != -1) {
-            // Replace temp message with server-confirmed message
-            final tempMsg = _messages[tempIndex];
-            setState(() {
-              _messages[tempIndex] = _ChatMsg(
-                id: msgId,
-                content: msg.content,
-                senderName: msg.senderName,
-                senderId: msg.senderId,
-                timestamp: msg.timestamp,
-                isOwn: true,
-              );
-              _pendingTempIds.remove(tempMsg.tempId);
-            });
-            debugPrint('[CHAT] Replaced temp message with server-confirmed: $msgId');
-            return;
-          } else {
-            // We already have the optimistic message, skip server echo
-            debugPrint('[CHAT] Skipped own message echo: $msgId');
-            return;
-          }
-        }
-
-        // Other user's message - add normally
         setState(() {
           _messages.add(msg);
-          // Enforce message limit
           if (_messages.length > _maxMessages) {
-            final toRemove = _messages.length - _maxMessages;
-            _messages.removeRange(0, toRemove);
+            _messages.removeRange(0, _messages.length - _maxMessages);
           }
         });
         _scrollToBottom();
@@ -202,188 +298,147 @@ class _GameChatPageState extends ConsumerState<GameChatPage> {
   /// }
   /// ```
   _ChatMsg _parseDTO(Map<String, dynamic> map) {
-    final user = map['user'] as Map<String, dynamic>?;
+    final rawUser = map['user'];
     final type = map['type'] as String? ?? 'text';
     final isSystem = type == 'system';
-    final senderId = user?['_id'] as String? ?? '';
-    final isOwn = !isSystem && _myId.isNotEmpty && senderId == _myId;
-    final msgId = map['_id'] as String? ?? '';
 
-    // Debug: Log sender vs current user comparison
-    if (!isSystem && _myId.isNotEmpty) {
-      debugPrint('[CHAT] Message from: $senderId | MyId: $_myId | IsOwn: $isOwn');
+    String senderId = '';
+    String senderName = 'User';
+
+    String? avatarUrl;
+    if (rawUser is Map<String, dynamic>) {
+      senderId = GameEntity.normalize(rawUser['_id'] ?? rawUser['id']);
+      senderName = (rawUser['fullName'] as String? ??
+          rawUser['username'] as String? ??
+          'User');
+      avatarUrl = rawUser['profileImage'] as String? ?? rawUser['avatar'] as String?;
+    } else if (rawUser != null) {
+      senderId = GameEntity.normalize(rawUser);
     }
+
+    final msgId = GameEntity.normalize(map['_id'] ?? map['id']);
 
     return _ChatMsg(
       id: msgId,
       content: map['content'] as String? ?? '',
-      senderName: isSystem
-          ? 'System'
-          : (user?['fullName'] as String? ??
-              user?['username'] as String? ??
-              'User'),
+      senderName: isSystem ? 'System' : senderName,
       senderId: senderId,
       timestamp:
           DateTime.tryParse(map['createdAt'] as String? ?? '') ?? DateTime.now(),
-      isOwn: isOwn,
       isSystem: isSystem,
+      avatarUrl: avatarUrl,
     );
   }
 
   // ── Send ──────────────────────────────────────────────────────────────────
 
   /// Returns true if we can send (either connected or REST fallback available)
-  bool get _canSend => _isConnected || !_isLoadingHistory;
+  bool get _canSend => (_socket?.connected ?? false) || !_isLoadingHistory;
 
-  void _sendMessage() {
+  void _sendMessage() async {
     final content = _messageController.text.trim();
-    if (content.isEmpty) return;
+    if (content.isEmpty || _isSending) return;
 
-    if (_isConnected && _socket != null) {
-      _sendViaSocket(content);
-    } else {
-      _sendViaRest(content);
-    }
-  }
-
-  void _sendViaSocket(String content) {
-    // Generate temp ID for optimistic message
-    final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}_${_myId.isNotEmpty ? _myId.substring(0, _myId.length.clamp(0, 8)) : "u"}';
-    
-    // Optimistic bubble shown immediately with temp ID
-    final optimistic = _ChatMsg(
-      id: null, // No server ID yet
-      tempId: tempId,
-      content: content,
-      senderName: 'You',
-      senderId: _myId,
-      timestamp: DateTime.now(),
-      isOwn: true,
-    );
-    
-    setState(() {
-      _messages.add(optimistic);
-      _pendingTempIds.add(tempId);
-      // Enforce message limit
-      if (_messages.length > _maxMessages) {
-        final toRemove = _messages.length - _maxMessages;
-        _messages.removeRange(0, toRemove);
-      }
-    });
-    
-    _messageController.clear();
-    _scrollToBottom();
-
-    debugPrint('[CHAT] Sending message via socket with tempId: $tempId');
-
-    // Emit with server acknowledgment
-    _socket!.emitWithAck(
-      'chat:send',
-      {'gameId': widget.game.id, 'content': content},
-      ack: (data) {
-        if (!mounted) return;
-        // data can be null (no ack) or Map
-        final ack = (data is Map) ? data as Map<String, dynamic> : null;
-        
-        if (ack != null && ack['success'] == false) {
-          // Remove optimistic message on failure
-          setState(() {
-            _messages.removeWhere((m) => m.tempId == tempId);
-            _pendingTempIds.remove(tempId);
-          });
-          debugPrint('[CHAT] Message send failed: ${ack['error']}');
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(ack['error'] as String? ?? 'Failed to send'),
-              backgroundColor: AppColors.error,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        } else if (ack != null && ack['success'] == true) {
-          final messageId = ack['messageId'] as String?;
-          if (messageId != null) {
-            // Register the server-assigned ID
-            _seenMsgIds.add(messageId);
-            debugPrint('[CHAT] Message confirmed by server: $messageId');
-          }
-        }
-      },
-    );
-  }
-
-  Future<void> _sendViaRest(String content) async {
-    if (_isSendingViaRest) return;
-
-    // Show optimistic message
-    final tempId = 'rest_temp_${DateTime.now().millisecondsSinceEpoch}';
+    // 1. Setup optimistic message
+    final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
     final optimistic = _ChatMsg(
       id: null,
       tempId: tempId,
       content: content,
       senderName: 'You',
-      senderId: _myId,
+      senderId: _myUserId,
       timestamp: DateTime.now(),
-      isOwn: true,
     );
 
     setState(() {
       _messages.add(optimistic);
-      _isSendingViaRest = true;
+      _pendingTempIds.add(tempId);
+      _isSending = true;
       if (_messages.length > _maxMessages) {
         _messages.removeRange(0, _messages.length - _maxMessages);
       }
     });
+    
     _messageController.clear();
     _scrollToBottom();
 
-    debugPrint('[CHAT] Sending message via REST API (socket offline)');
-
     try {
-      final api = ref.read(apiClientProvider);
-      final resp = await api.post(
-        '/games/${widget.game.id}/chat',
-        data: {'content': content},
-      );
-      final body = resp.data as Map<String, dynamic>;
-      final inner = body['data'] as Map<String, dynamic>?;
-      final msgData = inner?['message'] as Map<String, dynamic>? ?? inner ?? {};
+      if (_socket != null && _socket!.connected) {
+        // Path A: Socket
+        _socket!.emitWithAck(
+          'chat:send',
+          {'gameId': widget.game.id, 'content': content},
+          ack: (data) {
+            if (!mounted) return;
+            final ack = (data is Map) ? data as Map<String, dynamic> : null;
+            if (ack != null && ack['success'] == false) {
+              _handleSendFailure(tempId, ack['error'] as String?);
+            } else if (ack != null && ack['success'] == true) {
+              final messageId = ack['messageId'] as String?;
+              if (messageId != null) _seenMsgIds.add(messageId);
+              setState(() => _isSending = false);
+            }
+          },
+        );
+      } else {
+        // Path B: API fallback (silent)
+        final api = ref.read(apiClientProvider);
+        final resp = await api.post(
+          '/games/${widget.game.id}/chat',
+          data: {'content': content},
+        );
+        final body = resp.data as Map<String, dynamic>;
+        final inner = body['data'] as Map<String, dynamic>?;
+        final msgData = inner?['message'] as Map<String, dynamic>? ?? inner ?? {};
+        
+        final msgId = msgData['_id'] as String? ?? msgData['id'] as String? ?? '';
+        final createdAtStr = msgData['createdAt'] as String? ?? '';
+        final serverTime = DateTime.tryParse(createdAtStr) ?? DateTime.now();
 
-      if (!mounted) return;
-
-      final msgId = msgData['_id'] as String? ?? '';
-      setState(() {
-        // Replace temp message with server-confirmed version
-        final idx = _messages.indexWhere((m) => m.tempId == tempId);
-        if (idx != -1 && msgId.isNotEmpty) {
-          _seenMsgIds.add(msgId);
-          _messages[idx] = _ChatMsg(
-            id: msgId,
-            content: content,
-            senderName: 'You',
-            senderId: _myId,
-            timestamp: DateTime.now(),
-            isOwn: true,
-          );
+        if (mounted) {
+          setState(() {
+            // Safety: check if socket already added this message ID
+            final exists = _messages.any((m) => m.id == msgId && msgId.isNotEmpty);
+            
+            final idx = _messages.indexWhere((m) => m.tempId == tempId);
+            if (idx != -1) {
+              if (exists && msgId.isNotEmpty) {
+                // Socket already added it, just remove our temp one
+                _messages.removeAt(idx);
+              } else if (msgId.isNotEmpty) {
+                _seenMsgIds.add(msgId);
+                _messages[idx] = _ChatMsg(
+                  id: msgId,
+                  content: content,
+                  senderName: 'You',
+                  senderId: _myUserId,
+                  timestamp: serverTime,
+                );
+              }
+            }
+            _isSending = false;
+          });
         }
-        _isSendingViaRest = false;
-      });
-
-      debugPrint('[CHAT] REST message sent successfully: $msgId');
+      }
     } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _messages.removeWhere((m) => m.tempId == tempId);
-        _isSendingViaRest = false;
-      });
-      debugPrint('[CHAT] REST message failed: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Failed to send message. Please try again.'),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      _handleSendFailure(tempId, null);
     }
+  }
+
+  void _handleSendFailure(String tempId, String? error) {
+    if (!mounted) return;
+    setState(() {
+      _messages.removeWhere((m) => m.tempId == tempId);
+      _pendingTempIds.remove(tempId);
+      _isSending = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(error ?? 'Failed to send message. Please try again.'),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   void _scrollToBottom() {
@@ -398,14 +453,89 @@ class _GameChatPageState extends ConsumerState<GameChatPage> {
     });
   }
 
+  Future<void> _confirmDelete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Game'),
+        content: const Text(
+            'Are you sure you want to delete this game? This cannot be undone.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete',
+                style: TextStyle(color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      _deleteGameFromChat();
+    }
+  }
+
+  Future<void> _deleteGameFromChat() async {
+    try {
+      final ok = await ref.read(gameProvider.notifier).deleteGame(widget.game.id);
+      if (!mounted) return;
+      if (ok) {
+        Navigator.pop(context); // Go back after deletion
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Game deleted successfully'),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(ref.read(gameProvider).error ?? 'Failed to delete game'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  void _goToDetails() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => GameDetailPage(
+          gameId: widget.game.id,
+          preloadedGame: widget.game,
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
     if (_socket != null) {
       _socket!.emit('leave:game', widget.game.id);
       _socket!.off('chat:message');
       _socket!.off('connect');
       _socket!.off('disconnect');
+      _socket!.off('game:player:joined');
+      _socket!.off('game:player:left');
     }
+    // Remove the room from the community chat section too
+    ref.read(chatProvider.notifier).leaveRoom(widget.game.id);
     _scrollController.dispose();
     _messageController.dispose();
     super.dispose();
@@ -415,129 +545,139 @@ class _GameChatPageState extends ConsumerState<GameChatPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Watch auth providers so we update _myUserId if it wasn't available on init
+    final auth = ref.watch(authNotifierProvider);
+    final viewModel = ref.watch(authViewModelProvider);
+    final freshId = GameEntity.normalize(auth.user?.userId ?? viewModel.user?.userId ?? '');
+    
+    // Update _myUserId if auth providers now have the ID but we didn't on init
+    if (freshId.isNotEmpty && _myUserId.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _myUserId = freshId);
+      });
+    }
+    // Use _myUserId (from secure storage) as primary source; fallback to providers
+    final myCurrentId = _myUserId.isNotEmpty ? _myUserId : freshId;
+    
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded),
-          onPressed: () => Navigator.of(context).pop(),
+        leading: const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: BackButtonWidget(), // Removed 'Back' label to fix overflow
         ),
+        leadingWidth: 70, // Reduced from 100 since label is gone
         title: Row(
           children: [
             // Game Image
             if (widget.game.imageUrl != null)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: CachedNetworkImage(
-                  imageUrl: widget.game.imageUrl!,
-                  width: 40,
-                  height: 40,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
+              GestureDetector(
+                onTap: _goToDetails,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: CachedNetworkImage(
+                    imageUrl: widget.game.imageUrl!,
                     width: 40,
                     height: 40,
-                    color: AppColors.surface,
-                    child: const Center(
-                      child: SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.primary,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      width: 40,
+                      height: 40,
+                      color: AppColors.surface,
+                      child: const Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.primary,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    width: 40,
-                    height: 40,
-                    color: AppColors.surface,
-                    child: const Icon(
-                      Icons.sports_esports_rounded,
-                      color: AppColors.textSecondary,
-                      size: 20,
+                    errorWidget: (context, url, error) => Container(
+                      width: 40,
+                      height: 40,
+                      color: AppColors.surface,
+                      child: const Icon(
+                        Icons.sports_esports_rounded,
+                        color: AppColors.textSecondary,
+                        size: 20,
+                      ),
                     ),
                   ),
                 ),
               )
             else
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryLight,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.sports_esports_rounded,
-                  color: AppColors.primary,
-                  size: 20,
+              GestureDetector(
+                onTap: _goToDetails,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLight,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.sports_esports_rounded,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
                 ),
               ),
             const SizedBox(width: 12),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.game.title,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Row(
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        margin: const EdgeInsets.only(right: 4),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: _isConnected ? AppColors.success : AppColors.warning,
-                        ),
-                      ),
-                      Text(
-                        _isConnected ? 'Connected' : 'Offline mode',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: _isConnected ? AppColors.success : AppColors.warning,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-      body: Column(
-        children: [
-          // ── Offline banner ───────────────────────────────────────────────
-          if (!_isConnected && !_isLoadingHistory)
-            Material(
-              color: AppColors.warning.withValues(alpha: 0.12),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
+              child: InkWell(
+                onTap: _goToDetails,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.wifi_off_rounded, size: 16, color: AppColors.warning),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'You\'re offline. Messages will be sent via API.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.warning.withValues(alpha: 0.9),
+                    Text(
+                      widget.game.title,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Row(
+                      children: [
+                        Text(
+                          '$_currentPlayerCount ${_currentPlayerCount == 1 ? 'player' : 'players'}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textSecondary,
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
               ),
             ),
+          ],
+        ),
+        actions: [
+          // Info button
+          IconButton(
+            icon: const Icon(Icons.info_outline_rounded, color: AppColors.textSecondary),
+            onPressed: _goToDetails,
+            tooltip: 'Game Details',
+          ),
+          // Delete button (creator only)
+          if (widget.game.isCreator(myCurrentId))
+            IconButton(
+              icon: const Icon(Icons.delete_outline_rounded, color: AppColors.error),
+              onPressed: _confirmDelete,
+              tooltip: 'Delete Game',
+            ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      body: Column(
+        children: [
+          // Message list begins immediately without offline banners
 
           // ── Message list ─────────────────────────────────────────────────
           Expanded(
@@ -555,9 +695,35 @@ class _GameChatPageState extends ConsumerState<GameChatPage> {
                     : ListView.builder(
                         controller: _scrollController,
                         padding: const EdgeInsets.all(12),
-                        itemCount: _messages.length,
-                        itemBuilder: (_, i) =>
-                            _MessageBubble(msg: _messages[i]),
+                        // +1 item at top for the "loading more" indicator
+                        itemCount: _messages.length + (_isLoadingMore || _hasMore ? 1 : 0),
+                        itemBuilder: (_, i) {
+                          // First item: pagination indicator
+                          if ((_isLoadingMore || _hasMore) && i == 0) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: Center(
+                                child: _isLoadingMore
+                                    ? const SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                      )
+                                    : TextButton.icon(
+                                        onPressed: _loadMore,
+                                        icon: const Icon(Icons.expand_less_rounded, size: 18),
+                                        label: const Text('Load older messages'),
+                                        style: TextButton.styleFrom(
+                                          foregroundColor: cs.onSurfaceVariant,
+                                          textStyle: const TextStyle(fontSize: 12),
+                                        ),
+                                      ),
+                              ),
+                            );
+                          }
+                          final msgIdx = i - (_isLoadingMore || _hasMore ? 1 : 0);
+                          return _MessageBubble(msg: _messages[msgIdx], myId: myCurrentId);
+                        },
                       ),
           ),
 
@@ -574,9 +740,7 @@ class _GameChatPageState extends ConsumerState<GameChatPage> {
                       controller: _messageController,
                       textCapitalization: TextCapitalization.sentences,
                       decoration: InputDecoration(
-                        hintText: _isConnected
-                            ? 'Type a message…'
-                            : 'Type a message (offline)…',
+                        hintText: 'Type a message…',
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 10),
                         border: OutlineInputBorder(
@@ -590,7 +754,7 @@ class _GameChatPageState extends ConsumerState<GameChatPage> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  _isSendingViaRest
+                  _isSending
                       ? const SizedBox(
                           width: 48,
                           height: 48,
@@ -601,7 +765,7 @@ class _GameChatPageState extends ConsumerState<GameChatPage> {
                         )
                       : FilledButton(
                           // Always enabled (uses REST when socket is offline)
-                          onPressed: _canSend ? _sendMessage : null,
+                          onPressed: _canSend ? () => _sendMessage() : null,
                           style: FilledButton.styleFrom(
                             shape: const CircleBorder(),
                             padding: const EdgeInsets.all(14),
@@ -628,109 +792,181 @@ class _ChatMsg {
     required this.senderName,
     required this.senderId,
     required this.timestamp,
-    required this.isOwn,
     this.isSystem = false,
+    this.avatarUrl,
   });
-  final String? id; // Server-assigned ID (null for optimistic messages)
-  final String? tempId; // Temporary ID for optimistic updates
+  final String? id;
+  final String? tempId;
   final String content;
   final String senderName;
   final String senderId;
   final DateTime timestamp;
-  final bool isOwn;
   final bool isSystem;
+  final String? avatarUrl;
 }
 
 class _MessageBubble extends StatelessWidget {
-  const _MessageBubble({required this.msg});
+  const _MessageBubble({required this.msg, required this.myId});
   final _ChatMsg msg;
+  final String myId;
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    // Calculate if this is our own message dynamically.
+    final String cleanSenderId = GameEntity.normalize(msg.senderId);
+    final String cleanMyId = GameEntity.normalize(myId);
+    
+    final bool isOwnId = !msg.isSystem && (
+      (cleanMyId.isNotEmpty && cleanSenderId == cleanMyId) ||
+      msg.senderName.trim().toLowerCase() == 'you' ||
+      (myId.trim().isNotEmpty && msg.senderId.trim() == myId.trim())
+    );
 
     if (msg.isSystem) {
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
+        padding: const EdgeInsets.symmetric(vertical: 12),
         child: Center(
           child: Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
             decoration: BoxDecoration(
-              color: cs.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(12),
+              color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(20),
             ),
-            child: Text(msg.content,
-                style: TextStyle(
-                    fontSize: 12,
-                    color: cs.onSurface.withValues(alpha: 0.6))),
+            child: Text(
+              msg.content,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: isDark ? Colors.white60 : Colors.black45,
+              ),
+            ),
           ),
         ),
       );
     }
 
-    // Show pending indicator for optimistic messages
     final isPending = msg.id == null;
+    final borderRadius = isOwnId
+        ? const BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+            bottomLeft: Radius.circular(20),
+            bottomRight: Radius.circular(4),
+          )
+        : const BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+            bottomRight: Radius.circular(20),
+            bottomLeft: Radius.circular(4),
+          );
+
+    // Avatar widget for non-own messages
+    Widget avatarWidget = CircleAvatar(
+      radius: 16,
+      backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+      backgroundImage: msg.avatarUrl != null && msg.avatarUrl!.isNotEmpty
+          ? NetworkImage(msg.avatarUrl!)
+          : null,
+      child: msg.avatarUrl == null || msg.avatarUrl!.isEmpty
+          ? Text(
+              msg.senderName.isNotEmpty ? msg.senderName[0].toUpperCase() : '?',
+              style: const TextStyle(
+                color: AppColors.primary,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            )
+          : null,
+    );
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Align(
-        alignment: msg.isOwn ? Alignment.centerRight : Alignment.centerLeft,
-        child: Column(
-          crossAxisAlignment:
-              msg.isOwn ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-          children: [
-            if (!msg.isOwn)
-              Padding(
-                padding: const EdgeInsets.only(left: 4, bottom: 2),
-                child: Text(msg.senderName,
-                    style: TextStyle(
-                        fontSize: 11,
-                        color: cs.onSurface.withValues(alpha: 0.6))),
-              ),
-            Container(
-              constraints: BoxConstraints(
-                  maxWidth: MediaQuery.of(context).size.width * 0.72),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: msg.isOwn
-                    ? (isPending
-                        ? cs.primary.withValues(alpha: 0.7)
-                        : cs.primary)
-                    : cs.surface,
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: Text(
-                msg.content,
-                style: TextStyle(
-                  color: msg.isOwn ? cs.onPrimary : cs.onSurface,
-                  fontSize: 14,
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 2, left: 4, right: 4),
-              child: Row(
+      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        mainAxisAlignment:
+            isOwnId ? MainAxisAlignment.end : MainAxisAlignment.start,
+        children: [
+          // Avatar on left for others
+          if (!isOwnId) ...[avatarWidget, const SizedBox(width: 8)],
+
+          Expanded(
+            child: Align(
+              alignment: isOwnId ? Alignment.centerRight : Alignment.centerLeft,
+              child: Column(
+                crossAxisAlignment:
+                    isOwnId ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    '${msg.timestamp.hour.toString().padLeft(2, '0')}:${msg.timestamp.minute.toString().padLeft(2, '0')}',
-                    style: TextStyle(
-                        fontSize: 10,
-                        color: cs.onSurface.withValues(alpha: 0.4)),
+                  // Sender name (only for others)
+                  if (!isOwnId)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 6, bottom: 4),
+                      child: Text(
+                        msg.senderName,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? AppColors.textTertiary : AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+
+                  // Message Text Bubble
+                  Container(
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width * 0.72,
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: isOwnId
+                          ? (isPending ? AppColors.primaryWithOpacity(0.7) : AppColors.primary)
+                          : (isDark ? AppColors.cardDark : AppColors.surfaceLight),
+                      borderRadius: borderRadius,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 3,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      msg.content,
+                      style: TextStyle(
+                        color: isOwnId ? Colors.white : (isDark ? Colors.white : AppColors.textPrimary),
+                        fontSize: 15,
+                        height: 1.3,
+                      ),
+                    ),
                   ),
-                  if (msg.isOwn && isPending) ...[
-                    const SizedBox(width: 4),
-                    Icon(Icons.schedule_rounded,
-                        size: 10,
-                        color: cs.onSurface.withValues(alpha: 0.4)),
-                  ],
+
+                  // Timestamp & Status
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4, left: 6, right: 6),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '${msg.timestamp.toLocal().hour.toString().padLeft(2, '0')}:${msg.timestamp.toLocal().minute.toString().padLeft(2, '0')}',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: isDark ? Colors.white38 : Colors.black38,
+                          ),
+                        ),
+                        if (isOwnId && isPending) ...[
+                          const SizedBox(width: 4),
+                          const Icon(Icons.schedule_rounded, size: 10, color: Colors.blueGrey),
+                        ],
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

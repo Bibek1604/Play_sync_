@@ -4,6 +4,7 @@ class UpdateProfileRequestModel {
   final String? phone;
   final String? favoriteGame;
   final String? place;
+  final String? bio;
   final String? currentPassword;
   final String? changePassword;
 
@@ -12,6 +13,7 @@ class UpdateProfileRequestModel {
     this.phone,
     this.favoriteGame,
     this.place,
+    this.bio,
     this.currentPassword,
     this.changePassword,
   });
@@ -23,6 +25,7 @@ class UpdateProfileRequestModel {
       if (phone != null && phone!.isNotEmpty) 'phone': phone,
       if (favoriteGame != null && favoriteGame!.isNotEmpty) 'favoriteGame': favoriteGame,
       if (place != null && place!.isNotEmpty) 'place': place,
+      if (bio != null && bio!.isNotEmpty) 'bio': bio,
       if (currentPassword != null && currentPassword!.isNotEmpty) 'currentPassword': currentPassword,
       if (changePassword != null && changePassword!.isNotEmpty) 'changePassword': changePassword,
     };
@@ -43,6 +46,9 @@ class UpdateProfileRequestModel {
     }
     if (place != null && place!.isNotEmpty) {
       map['place'] = place;
+    }
+    if (bio != null && bio!.isNotEmpty) {
+      map['bio'] = bio;
     }
     if (currentPassword != null && currentPassword!.isNotEmpty) {
       map['currentPassword'] = currentPassword;

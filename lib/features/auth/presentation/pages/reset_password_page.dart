@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_theme.dart';
+import '../../../../core/database/hive_service.dart';
+import '../providers/password_reset_providers.dart';
+import '../../domain/entities/forgot_password_entity.dart';
 
 class ResetPasswordPage extends ConsumerStatefulWidget {
   final String? email;
+  final String? otp;
 
-  const ResetPasswordPage({super.key, this.email});
+  const ResetPasswordPage({super.key, this.email, this.otp});
 
   @override
   ConsumerState<ResetPasswordPage> createState() => _ResetPasswordPageState();
@@ -16,10 +21,10 @@ class ResetPasswordPage extends ConsumerStatefulWidget {
 class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
-  final _otpController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
+  String _otp = '';
   bool _isLoading = false;
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
@@ -27,15 +32,33 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
   @override
   void initState() {
     super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    // Try to get data from passed arguments first
     if (widget.email != null) {
       _emailController.text = widget.email!;
     }
+    if (widget.otp != null) {
+      _otp = widget.otp!;
+    }
+
+    // If not available, load from Hive
+    final box = await HiveService.openUserBox();
+    if (_emailController.text.isEmpty) {
+      _emailController.text = box.get('password_reset_email', defaultValue: '');
+    }
+    if (_otp.isEmpty) {
+      _otp = box.get('password_reset_otp', defaultValue: '');
+    }
+
+    setState(() {});
   }
 
   @override
   void dispose() {
     _emailController.dispose();
-    _otpController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -44,15 +67,70 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
   Future<void> _handleResetPassword() async {
     if (!_formKey.currentState!.validate()) return;
 
+    if (_otp.isEmpty || _otp.length != 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.error_outline, color: Colors.white),
+              SizedBox(width: AppSpacing.md),
+              const Expanded(
+                child: Text('Invalid OTP. Please verify OTP first.'),
+              ),
+            ],
+          ),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          margin: EdgeInsets.all(AppSpacing.lg),
+        ),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
 
-    // TODO: Integrate with password reset provider
-    await Future.delayed(const Duration(seconds: 2));
+    final request = ResetPasswordRequest(
+      email: _emailController.text.trim(),
+      otp: _otp,
+      newPassword: _newPasswordController.text.trim(),
+      confirmPassword: _confirmPasswordController.text.trim(),
+    );
+
+    await ref.read(passwordResetNotifierProvider.notifier).resetPassword(request);
+
+    final state = ref.read(passwordResetNotifierProvider);
 
     setState(() => _isLoading = false);
 
-    if (mounted) {
+    if (!mounted) return;
+
+    if (state.isSuccess && state.failure == null) {
       _showSuccessDialog();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.error_outline, color: Colors.white),
+              SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Text(
+                  state.failure?.message ?? 'Failed to reset password. Please check your OTP and try again.',
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          margin: EdgeInsets.all(AppSpacing.lg),
+        ),
+      );
     }
   }
 
@@ -182,7 +260,7 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
 
                 // Subtitle
                 Text(
-                  'Enter the OTP sent to your email and create a new password.',
+                  'Enter your new password to complete the reset process.',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: AppColors.textSecondary,
                         height: 1.5,
@@ -209,48 +287,6 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
                       borderSide: const BorderSide(color: AppColors.border),
                     ),
                   ),
-                ),
-
-                SizedBox(height: AppSpacing.xl),
-
-                // OTP Field
-                _buildFieldLabel('OTP (6-digit code)'),
-                SizedBox(height: AppSpacing.sm),
-                TextFormField(
-                  controller: _otpController,
-                  keyboardType: TextInputType.number,
-                  maxLength: 6,
-                  enabled: !_isLoading,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(6),
-                  ],
-                  decoration: InputDecoration(
-                    hintText: '000000',
-                    prefixIcon: const Icon(Icons.pin_outlined, size: 20),
-                    filled: true,
-                    fillColor: AppColors.surfaceLight,
-                    counterText: '',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      borderSide: const BorderSide(color: AppColors.border, width: 1.5),
-                    ),
-                  ),
-                  style: const TextStyle(
-                    letterSpacing: 8,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 18,
-                  ),
-                  textAlign: TextAlign.center,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter the OTP';
-                    }
-                    if (value.length != 6) {
-                      return 'OTP must be 6 digits';
-                    }
-                    return null;
-                  },
                 ),
 
                 SizedBox(height: AppSpacing.xl),

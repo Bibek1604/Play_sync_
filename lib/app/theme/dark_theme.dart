@@ -21,7 +21,7 @@ class DarkTheme {
           secondaryContainer: AppColors.secondary,
           surface: AppColors.surfaceDark,
           error: AppColors.error,
-          onPrimary: Colors.black,
+          onPrimary: Colors.white,
           onSecondary: Colors.black,
           onSurface: AppColors.textPrimaryDark,
           onError: Colors.white,
@@ -59,8 +59,8 @@ class DarkTheme {
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.secondary,
-            foregroundColor: Colors.black,
-            elevation: 2,
+            foregroundColor: Colors.white,
+            elevation: 0,
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
             shape: RoundedRectangleBorder(
               borderRadius: AppRadius.medium,
@@ -136,8 +136,8 @@ class DarkTheme {
         // Floating Action Button
         floatingActionButtonTheme: const FloatingActionButtonThemeData(
           backgroundColor: AppColors.secondary,
-          foregroundColor: Colors.black,
-          elevation: 4,
+          foregroundColor: Colors.white,
+          elevation: 2,
         ),
 
         // Divider

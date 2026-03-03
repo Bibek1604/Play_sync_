@@ -6,6 +6,7 @@ import '../providers/scorecard_notifier.dart';
 import '../widgets/xp_bar.dart';
 import '../widgets/stats_ring_chart.dart';
 import '../../../../core/widgets/app_drawer.dart';
+import '../../../../core/widgets/back_button_widget.dart';
 
 class ScorecardPage extends ConsumerWidget {
   const ScorecardPage({super.key});
@@ -17,10 +18,11 @@ class ScorecardPage extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded),
-          onPressed: () => Navigator.of(context).pop(),
+        leading: const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: BackButtonWidget(label: 'Back'),
         ),
+        leadingWidth: 100,
         backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
         scrolledUnderElevation: 0.5,

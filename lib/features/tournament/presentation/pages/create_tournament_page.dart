@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../domain/entities/tournament_entity.dart';
 import '../providers/tournament_notifier.dart';
+import '../../../../core/widgets/back_button_widget.dart';
 
 /// Create or edit a tournament.
 class CreateTournamentPage extends ConsumerStatefulWidget {
@@ -70,6 +71,11 @@ class _CreateTournamentPageState extends ConsumerState<CreateTournamentPage> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: BackButtonWidget(label: 'Back'),
+        ),
+        leadingWidth: 100,
         title: Text(_isEditing ? 'Edit Tournament' : 'Create Tournament'),
       ),
       body: SingleChildScrollView(

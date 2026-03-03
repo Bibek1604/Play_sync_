@@ -1,14 +1,17 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../providers/game_notifier.dart';
+import '../pages/game_chat_page.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_theme.dart';
-import '../../../../core/constants/nepal_districts.dart';
+import '../../../../core/constants/app_theme.dart';
 
 /// Multi-step game creation wizard.
 /// Steps:
@@ -44,11 +47,21 @@ class _CreateGameSheetState extends ConsumerState<CreateGameSheet> {
   String?    _imageName;
   DateTime   _startTime = DateTime.now();
   DateTime   _endTime   = DateTime.now().add(const Duration(hours: 1));
-  String?    _district;
   double?    _latitude;
   double?    _longitude;
   bool       _fetchingGps = false;
   bool       _submitting  = false;
+  String?    _address;
+  String?    _locationError;
+  int        _gpsRetryCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!widget.isOnlineMode) {
+      _fetchGps();
+    }
+  }
 
   @override
   void dispose() {
@@ -67,6 +80,13 @@ class _CreateGameSheetState extends ConsumerState<CreateGameSheet> {
       case 1:
         return _step2Key.currentState?.validate() ?? false;
       case 2:
+        if (_latitude == null || _longitude == null) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Location data is required for offline games'),
+            backgroundColor: AppColors.error,
+          ));
+          return false;
+        }
         return _step3Key.currentState?.validate() ?? false;
       default:
         return true;
@@ -119,25 +139,96 @@ class _CreateGameSheetState extends ConsumerState<CreateGameSheet> {
 
   // ── GPS ───────────────────────────────────────────────────────────────────
   Future<void> _fetchGps() async {
-    setState(() => _fetchingGps = true);
+    if (!mounted) return;
+    setState(() {
+      _fetchingGps = true;
+      _locationError = null;
+    });
+
     try {
-      bool svcEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!svcEnabled) throw 'Location services are disabled';
+      if (!kIsWeb) {
+        bool svcEnabled = await Geolocator.isLocationServiceEnabled();
+        if (!svcEnabled) throw 'Location services are disabled. Please enable GPS.';
+      }
+
       LocationPermission perm = await Geolocator.checkPermission();
       if (perm == LocationPermission.denied) {
         perm = await Geolocator.requestPermission();
       }
-      if (perm == LocationPermission.deniedForever) throw 'Location permission denied';
+      if (perm == LocationPermission.denied) throw 'Location access is required to create an offline game.';
+      if (perm == LocationPermission.deniedForever) {
+        if (kIsWeb) {
+          throw 'Location permission permanently denied by your browser. Please allow location in site settings.';
+        } else {
+          throw 'Location permission permanently denied. Please enable it in system settings.';
+        }
+      }
+
       final pos = await Geolocator.getCurrentPosition(
           locationSettings: const LocationSettings(accuracy: LocationAccuracy.high));
-      if (mounted) setState(() { _latitude = pos.latitude; _longitude = pos.longitude; });
+
+      // Accuracy check (< 100 meters)
+      // Note: On web, accuracy can be lower (if IP-based), but we still aim for better precision.
+      if (pos.accuracy > 100) {
+        if (_gpsRetryCount < 2) {
+          _gpsRetryCount++;
+          debugPrint('Accuracy too low (${pos.accuracy}m), retrying... ($_gpsRetryCount)');
+          await Future.delayed(const Duration(seconds: 2));
+          return _fetchGps();
+        }
+        // Be more lenient on web if multiple retries fail
+        if (!kIsWeb) {
+          throw 'GPS accuracy too low (${pos.accuracy.toStringAsFixed(1)}m). Please move to an open area.';
+        }
+      }
+
+      _gpsRetryCount = 0;
+
+      // Reverse geocode
+      String? addr;
+      try {
+        if (kIsWeb) {
+          // Use OpenStreetMap Nominatim for Web (geocoding package is mobile-only)
+          final dio = Dio();
+          final resp = await dio.get(
+            'https://nominatim.openstreetmap.org/reverse',
+            queryParameters: {
+              'lat': pos.latitude,
+              'lon': pos.longitude,
+              'format': 'jsonv2',
+            },
+          );
+          if (resp.data != null && resp.data is Map) {
+             final address = resp.data['address'] as Map?;
+             if (address != null) {
+               addr = address['suburb'] ?? address['city'] ?? address['village'] ?? address['town'] ?? address['state'];
+             }
+          }
+        } else {
+          final placemarks = await placemarkFromCoordinates(pos.latitude, pos.longitude);
+          if (placemarks.isNotEmpty) {
+            final p = placemarks.first;
+            final parts = [p.name, p.subLocality, p.locality, p.administrativeArea]
+                .where((s) => s != null && s!.isNotEmpty)
+                .take(2);
+            addr = parts.join(', ');
+          }
+        }
+      } catch (e) {
+        debugPrint('Reverse geocoding fail: $e');
+        addr = 'Detected Location';
+      }
+
+      if (mounted) {
+        setState(() {
+          _latitude = pos.latitude;
+          _longitude = pos.longitude;
+          _address = addr;
+        });
+      }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(e.toString()),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-        ));
+        setState(() => _locationError = e.toString());
       }
     } finally {
       if (mounted) setState(() => _fetchingGps = false);
@@ -179,8 +270,8 @@ class _CreateGameSheetState extends ConsumerState<CreateGameSheet> {
     }
 
     if (!widget.isOnlineMode) {
-      if (_district != null && _district!.isNotEmpty) {
-        formData.fields.add(MapEntry('locationName', _district!));
+      if (_address != null && _address!.isNotEmpty) {
+        formData.fields.add(MapEntry('locationName', _address!));
       }
       if (_latitude != null && _longitude != null) {
         formData.fields
@@ -196,23 +287,23 @@ class _CreateGameSheetState extends ConsumerState<CreateGameSheet> {
       ));
     }
 
-    final ok = await ref.read(gameProvider.notifier).createGame(formData);
+    final createdGame = await ref.read(gameProvider.notifier).createGame(formData);
     if (!mounted) return;
     setState(() => _submitting = false);
 
-    if (ok) {
+    if (createdGame != null) {
+      // Close the sheet first
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Row(children: [
-          Icon(Icons.check_circle_outline, color: Colors.white, size: 18),
-          SizedBox(width: 10),
-          Text('Game created successfully!'),
-        ]),
-        backgroundColor: AppColors.success,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
-        margin: EdgeInsets.all(AppSpacing.lg),
-      ));
+
+      // Then immediately navigate to the game chat
+      if (context.mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => GameChatPage(game: createdGame),
+          ),
+        );
+      }
     } else {
       final err = ref.read(gameProvider).error ?? 'Failed to create game';
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -398,13 +489,13 @@ class _CreateGameSheetState extends ConsumerState<CreateGameSheet> {
         return _Step3Location(
           key: const ValueKey('step3'),
           formKey: _step3Key,
-          district: _district,
+          address: _address,
           latitude: _latitude,
           longitude: _longitude,
           fetchingGps: _fetchingGps,
-          onDistrictChanged: (d) => setState(() => _district = d),
+          error: _locationError,
           onFetchGps: _fetchGps,
-          onResetGps: () => setState(() { _latitude = null; _longitude = null; }),
+          onResetGps: () => setState(() { _latitude = null; _longitude = null; _address = null; _locationError = null; }),
         );
       default:
         return const SizedBox.shrink();
@@ -671,22 +762,22 @@ class _Step2GameSettings extends StatelessWidget {
 
 class _Step3Location extends StatelessWidget {
   final GlobalKey<FormState> formKey;
-  final String? district;
+  final String? address;
   final double? latitude;
   final double? longitude;
   final bool fetchingGps;
-  final ValueChanged<String?> onDistrictChanged;
+  final String? error;
   final VoidCallback onFetchGps;
   final VoidCallback onResetGps;
 
   const _Step3Location({
     super.key,
     required this.formKey,
-    required this.district,
+    required this.address,
     required this.latitude,
     required this.longitude,
     required this.fetchingGps,
-    required this.onDistrictChanged,
+    this.error,
     required this.onFetchGps,
     required this.onResetGps,
   });
@@ -700,29 +791,28 @@ class _Step3Location extends StatelessWidget {
         children: [
           _StepHeader(
             icon: Icons.location_on_rounded,
-            title: 'Location',
-            subtitle: 'Set where your offline session will take place',
+            title: 'Auto-Location',
+            subtitle: 'Offline games use your device GPS for precise match finding',
           ),
           SizedBox(height: AppSpacing.lg),
 
-          _SectionLabel('Region / District *'),
+          _SectionLabel('Current Location'),
           SizedBox(height: AppSpacing.sm),
-          DropdownButtonFormField<String>(
-            initialValue: district,
-            hint: const Text('Select a district'),
-            isExpanded: true,
-            decoration: _inputDec(icon: Icons.location_on_outlined),
-            items: nepalDistricts.map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
-            onChanged: onDistrictChanged,
-            validator: (v) => (v == null || v.isEmpty) ? 'Select a district' : null,
-          ),
-          SizedBox(height: AppSpacing.lg),
+          
+          if (fetchingGps)
+            const _LoadingLocationCard()
+          else if (error != null)
+            _LocationErrorCard(error: error!, onRetry: onFetchGps)
+          else if (latitude != null)
+            _GpsActiveCard(lat: latitude!, lng: longitude!, address: address, onReset: onResetGps)
+          else
+             _GpsSyncButton(loading: false, onTap: onFetchGps),
 
-          _SectionLabel('Precise Location (Optional)'),
-          SizedBox(height: AppSpacing.sm),
-          latitude != null
-              ? _GpsActiveCard(lat: latitude!, lng: longitude!, onReset: onResetGps)
-              : _GpsSyncButton(loading: fetchingGps, onTap: onFetchGps),
+          const SizedBox(height: 12),
+          const Text(
+            'Note: Your location is only fetched once and stored with this game to help nearby players find you.',
+            style: TextStyle(fontSize: 11, color: AppColors.textTertiary, fontStyle: FontStyle.italic),
+          ),
 
           SizedBox(height: AppSpacing.xxl),
         ],
@@ -940,9 +1030,10 @@ class _DateButton extends StatelessWidget {
 
 class _GpsActiveCard extends StatelessWidget {
   final double lat, lng;
+  final String? address;
   final VoidCallback onReset;
 
-  const _GpsActiveCard({required this.lat, required this.lng, required this.onReset});
+  const _GpsActiveCard({required this.lat, required this.lng, this.address, required this.onReset});
 
   @override
   Widget build(BuildContext context) => Container(
@@ -961,8 +1052,10 @@ class _GpsActiveCard extends StatelessWidget {
           SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text('Precise Location Active',
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.successDark, letterSpacing: 0.5)),
+              Text(address ?? 'Precise Location Active',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.successDark, letterSpacing: 0.5)),
               Text('${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}',
                   style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
             ]),
@@ -973,6 +1066,70 @@ class _GpsActiveCard extends StatelessWidget {
             child: const Text('Reset', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
           ),
         ]),
+      );
+}
+
+class _LoadingLocationCard extends StatelessWidget {
+  const _LoadingLocationCard();
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(children: [
+          const SizedBox(
+            width: 18, height: 18,
+            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary)),
+          SizedBox(width: AppSpacing.md),
+          const Text('Fetching your GPS coordinates…',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
+        ]),
+      );
+}
+
+class _LocationErrorCard extends StatelessWidget {
+  final String error;
+  final VoidCallback onRetry;
+  const _LocationErrorCard({required this.error, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: AppColors.error.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(color: AppColors.error.withValues(alpha: 0.2)),
+        ),
+        child: Column(
+          children: [
+            Row(children: [
+              const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 20),
+              SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Text(error,
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.error)),
+              ),
+            ]),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh_rounded, size: 16),
+                label: const Text('Retry Location Detection'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.error,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+            ),
+          ],
+        ),
       );
 }
 

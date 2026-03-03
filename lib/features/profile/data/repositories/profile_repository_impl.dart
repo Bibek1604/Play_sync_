@@ -38,6 +38,7 @@ class ProfileRepositoryImpl implements IProfileRepository {
     String? phone,
     String? favoriteGame,
     String? place,
+    String? bio,
     String? currentPassword,
     String? changePassword,
     XFile? profilePicture,
@@ -48,6 +49,7 @@ class ProfileRepositoryImpl implements IProfileRepository {
         phone: phone,
         favoriteGame: favoriteGame,
         place: place,
+        bio: bio,
         currentPassword: currentPassword,
         changePassword: changePassword,
       );
