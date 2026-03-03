@@ -146,11 +146,18 @@ class GameEntity extends Equatable {
   String? get imageUrl => _resolveImageUrl(image);
 
   /// Normalizes an ID to a plain string. Handles Mongo ObjectId map format if present.
+  /// Standardized to trimmed lowercase for reliable comparison.
   static String normalize(dynamic id) {
     if (id == null) return '';
-    if (id is String) return id;
-    if (id is Map && id.containsKey(r'$oid')) return id[r'$oid'].toString();
-    return id.toString();
+    String result = '';
+    if (id is String) {
+      result = id;
+    } else if (id is Map && id.containsKey(r'$oid')) {
+      result = id[r'$oid'].toString();
+    } else {
+      result = id.toString();
+    }
+    return result.trim().toLowerCase();
   }
 
   bool isParticipant(String userId) {

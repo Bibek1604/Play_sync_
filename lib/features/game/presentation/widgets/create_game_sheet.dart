@@ -8,7 +8,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../providers/game_notifier.dart';
-import '../pages/game_chat_page.dart';
+import 'package:play_sync_new/features/game_chat/game_chat.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_theme.dart';
@@ -300,7 +300,11 @@ class _CreateGameSheetState extends ConsumerState<CreateGameSheet> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => GameChatPage(game: createdGame),
+            builder: (_) => GameChatRoomPage(
+              gameId: createdGame.id,
+              gameTitle: createdGame.title,
+              gameImageUrl: createdGame.imageUrl,
+            ),
           ),
         );
       }

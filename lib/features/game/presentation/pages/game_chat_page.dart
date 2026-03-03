@@ -232,7 +232,7 @@ class _GameChatPageState extends ConsumerState<GameChatPage> {
       ..on('chat:message', (data) {
         if (!mounted) return;
         final raw = data as Map<String, dynamic>;
-
+        final msgId = GameEntity.normalize(raw['_id'] ?? raw['id']);
         final msg = _parseDTO(raw);
         final myIdNorm = GameEntity.normalize(_myUserId);
         final senderIdNorm = GameEntity.normalize(msg.senderId);
@@ -287,46 +287,84 @@ class _GameChatPageState extends ConsumerState<GameChatPage> {
 
   /// Parses a backend ChatMessageDTO into a local [_ChatMsg].
   ///
-  /// Backend shape:
+  /// Supports both API formats:
+  ///
+  /// New format (current backend):
   /// ```json
   /// {
   ///   "_id": "...",
-  ///   "user": { "_id": "...", "username": "...", "fullName": "..." } | null,
+  ///   "senderId": "userId",
+  ///   "senderName": "Full Name",
+  ///   "senderAvatar": "url | null",
+  ///   "text": "message content",
+  ///   "type": "text" | "system",
+  ///   "createdAt": "<ISO string>"
+  /// }
+  /// ```
+  ///
+  /// Old format (legacy fallback):
+  /// ```json
+  /// {
+  ///   "_id": "...",
+  ///   "user": { "_id": "...", "username": "...", "fullName": "...", "profilePicture": "..." } | null,
   ///   "content": "...",
   ///   "type": "text" | "system",
   ///   "createdAt": "<ISO string>"
   /// }
   /// ```
   _ChatMsg _parseDTO(Map<String, dynamic> map) {
-    final rawUser = map['user'];
     final type = map['type'] as String? ?? 'text';
     final isSystem = type == 'system';
+    final msgId = GameEntity.normalize(map['_id'] ?? map['id']);
 
+    // ── NEW format: flat senderId / senderName / text ──────────────────────
+    final newSenderId = map['senderId'] as String?;
+    if (newSenderId != null && newSenderId.isNotEmpty) {
+      final senderId = GameEntity.normalize(newSenderId);
+      final senderName = (map['senderName'] as String?)?.trim();
+      final avatarUrl = map['senderAvatar'] as String?;
+      // New format uses 'text', old uses 'content'
+      final content = (map['text'] as String?)?.isNotEmpty == true
+          ? map['text'] as String
+          : (map['content'] as String? ?? '');
+
+      return _ChatMsg(
+        id: msgId,
+        content: content,
+        senderName: isSystem ? 'System' : (senderName?.isNotEmpty == true ? senderName! : 'User'),
+        senderId: isSystem ? '' : senderId,
+        timestamp: DateTime.tryParse(map['createdAt'] as String? ?? '') ?? DateTime.now(),
+        isSystem: isSystem,
+        avatarUrl: avatarUrl?.isNotEmpty == true ? avatarUrl : null,
+      );
+    }
+
+    // ── OLD format: nested user object / content ───────────────────────────
+    final rawUser = map['user'];
     String senderId = '';
     String senderName = 'User';
-
     String? avatarUrl;
+
     if (rawUser is Map<String, dynamic>) {
       senderId = GameEntity.normalize(rawUser['_id'] ?? rawUser['id']);
       senderName = (rawUser['fullName'] as String? ??
           rawUser['username'] as String? ??
           'User');
-      avatarUrl = rawUser['profileImage'] as String? ?? rawUser['avatar'] as String?;
+      avatarUrl = rawUser['profilePicture'] as String?
+          ?? rawUser['profileImage'] as String?
+          ?? rawUser['avatar'] as String?;
     } else if (rawUser != null) {
       senderId = GameEntity.normalize(rawUser);
     }
-
-    final msgId = GameEntity.normalize(map['_id'] ?? map['id']);
 
     return _ChatMsg(
       id: msgId,
       content: map['content'] as String? ?? '',
       senderName: isSystem ? 'System' : senderName,
-      senderId: senderId,
-      timestamp:
-          DateTime.tryParse(map['createdAt'] as String? ?? '') ?? DateTime.now(),
+      senderId: isSystem ? '' : senderId,
+      timestamp: DateTime.tryParse(map['createdAt'] as String? ?? '') ?? DateTime.now(),
       isSystem: isSystem,
-      avatarUrl: avatarUrl,
+      avatarUrl: avatarUrl?.isNotEmpty == true ? avatarUrl : null,
     );
   }
 
@@ -381,34 +419,36 @@ class _GameChatPageState extends ConsumerState<GameChatPage> {
           },
         );
       } else {
-        // Path B: API fallback (silent)
+        // Path B: REST API fallback (used when socket is offline)
+        // POST /games/:gameId/chat  → { success, message, data: ChatMessageDTO }
+        // Where ChatMessageDTO = { _id, senderId, senderName, senderAvatar, text, type, createdAt }
         final api = ref.read(apiClientProvider);
         final resp = await api.post(
           '/games/${widget.game.id}/chat',
           data: {'content': content},
         );
         final body = resp.data as Map<String, dynamic>;
-        final inner = body['data'] as Map<String, dynamic>?;
-        final msgData = inner?['message'] as Map<String, dynamic>? ?? inner ?? {};
+        // The returned message DTO is directly in body['data']
+        final msgData = (body['data'] as Map<String, dynamic>?) ?? {};
         
-        final msgId = msgData['_id'] as String? ?? msgData['id'] as String? ?? '';
-        final createdAtStr = msgData['createdAt'] as String? ?? '';
-        final serverTime = DateTime.tryParse(createdAtStr) ?? DateTime.now();
+        final msgId = GameEntity.normalize(msgData['_id'] ?? msgData['id']);
+        final serverTime = DateTime.tryParse(msgData['createdAt'] as String? ?? '') ?? DateTime.now();
 
         if (mounted) {
           setState(() {
-            // Safety: check if socket already added this message ID
-            final exists = _messages.any((m) => m.id == msgId && msgId.isNotEmpty);
+            // Safety: if socket already echoed and added this message, just remove temp
+            final exists = msgId.isNotEmpty && _messages.any((m) => m.id == msgId);
             
             final idx = _messages.indexWhere((m) => m.tempId == tempId);
             if (idx != -1) {
-              if (exists && msgId.isNotEmpty) {
-                // Socket already added it, just remove our temp one
+              if (exists) {
+                // Socket already added it — remove our optimistic copy
                 _messages.removeAt(idx);
-              } else if (msgId.isNotEmpty) {
-                _seenMsgIds.add(msgId);
+              } else {
+                // Replace optimistic bubble with confirmed server message
+                if (msgId.isNotEmpty) _seenMsgIds.add(msgId);
                 _messages[idx] = _ChatMsg(
-                  id: msgId,
+                  id: msgId.isNotEmpty ? msgId : null,
                   content: content,
                   senderName: 'You',
                   senderId: _myUserId,
@@ -818,11 +858,13 @@ class _MessageBubble extends StatelessWidget {
     final String cleanSenderId = GameEntity.normalize(msg.senderId);
     final String cleanMyId = GameEntity.normalize(myId);
     
-    final bool isOwnId = !msg.isSystem && (
-      (cleanMyId.isNotEmpty && cleanSenderId == cleanMyId) ||
-      msg.senderName.trim().toLowerCase() == 'you' ||
-      (myId.trim().isNotEmpty && msg.senderId.trim() == myId.trim())
-    );
+    // CORE RULE: isMe = senderId == currentUserId
+    // Never use senderName == 'you' as a fallback — it can misalign messages
+    // from users whose display name happens to be 'You'.
+    final bool isOwnId = !msg.isSystem &&
+        cleanMyId.isNotEmpty &&
+        cleanSenderId.isNotEmpty &&
+        cleanSenderId == cleanMyId;
 
     if (msg.isSystem) {
       return Padding(

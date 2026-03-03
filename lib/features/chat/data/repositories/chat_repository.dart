@@ -101,17 +101,43 @@ class ChatRepository {
   /// }
   /// ```
   ChatMessage _parseMessage(Map<String, dynamic> json, String roomId) {
+    // Try new format first (senderId field)
+    final newFormatSenderId = json['senderId'] as String?;
+    
+    if (newFormatSenderId != null && newFormatSenderId.isNotEmpty) {
+      // New REST API format
+      final senderId = (newFormatSenderId).trim();
+      final senderName = (json['senderName'] as String?)?.trim() ?? 'Unknown';
+      final senderAvatar = (json['senderAvatar'] as String?)?.trim();
+      final type = json['type'] as String? ?? 'text';
+      final isSystem = type == 'system';
+      final msgId = (json['_id'] as String? ?? json['id'] as String? ?? '').trim();
+
+      return ChatMessage(
+        id: msgId.isNotEmpty ? msgId : 'msg_${DateTime.now().microsecondsSinceEpoch}',
+        roomId: roomId,
+        senderId: isSystem ? 'system' : senderId,
+        senderName: isSystem ? 'System' : (senderName.isNotEmpty ? senderName : 'Unknown'),
+        senderAvatar: senderAvatar?.isNotEmpty == true ? senderAvatar : null,
+        content: json['text'] as String? ?? '',
+        type: isSystem ? MessageType.system : MessageType.text,
+        sentAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
+        isRead: json['isRead'] as bool? ?? false,
+      );
+    }
+    
+    // Fallback: Old backend format with nested user object
     final rawUser = json['user'];
     String senderId = '';
-    String senderName = 'User';
+    String senderName = 'Unknown';
     String? senderAvatar;
 
     if (rawUser is Map<String, dynamic>) {
       senderId =
           (rawUser['_id'] as String? ?? rawUser['id'] as String? ?? '').trim();
-      senderName = rawUser['fullName'] as String? ??
-          rawUser['username'] as String? ??
-          'User';
+      final fullName = (rawUser['fullName'] as String?)?.trim() ?? '';
+      final username = (rawUser['username'] as String?)?.trim() ?? '';
+      senderName = fullName.isNotEmpty ? fullName : (username.isNotEmpty ? username : 'Unknown');
       senderAvatar = rawUser['profilePicture'] as String?;
     }
 

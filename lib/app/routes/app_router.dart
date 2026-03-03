@@ -19,7 +19,7 @@ import '../../features/game/presentation/pages/online_games_page.dart';
 import '../../features/game/presentation/pages/offline_games_page.dart';
 import '../../features/game/domain/entities/game_entity.dart';
 import '../../features/chat/presentation/pages/chat_page.dart';
-import '../../features/game/presentation/pages/game_chat_page.dart';
+import '../../features/game/presentation/pages/game_chat_rest_page.dart';
 import '../../features/leaderboard/presentation/pages/leaderboard_page.dart';
 import '../../features/scorecard/scorecard.dart';
 import '../../features/history/presentation/pages/game_history_page.dart';
@@ -137,7 +137,7 @@ class AppRouter {
           settings,
         );
 
-      // ── Game Chat (per-game room) ─────────────────────────────────────
+      // ── Game Chat (per-game room, REST-only) ─────────────────────────────
       case AppRoutes.gameChat:
         final args = settings.arguments as Map<String, dynamic>? ?? {};
         final game = args['game'] as GameEntity?;
@@ -153,7 +153,7 @@ class AppRouter {
           );
         }
         return _buildRoute(
-          AuthGuard(child: GameChatPage(game: game)),
+          AuthGuard(child: GameChatRestPage(game: game)),
           settings,
         );
 

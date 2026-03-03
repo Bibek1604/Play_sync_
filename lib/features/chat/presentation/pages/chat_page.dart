@@ -5,7 +5,7 @@ import '../../domain/entities/chat_message.dart';
 import 'chat_room_page.dart';
 import '../../../game/presentation/providers/game_notifier.dart';
 import '../../../game/domain/entities/game_entity.dart';
-import '../../../game/presentation/pages/game_chat_page.dart';
+import 'package:play_sync_new/features/game_chat/game_chat.dart';
 import '../../../../core/widgets/app_drawer.dart';
 
 /// Chat rooms list page — shows joined game chats + regular DMs/group rooms.
@@ -101,7 +101,11 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                               onTap: () => Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => GameChatPage(game: game),
+                                  builder: (_) => GameChatRoomPage(
+                                    gameId: game.id,
+                                    gameTitle: game.title,
+                                    gameImageUrl: game.imageUrl,
+                                  ),
                                 ),
                               ),
                             );

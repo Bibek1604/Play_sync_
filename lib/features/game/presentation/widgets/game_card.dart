@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../domain/entities/game_entity.dart';
-import '../pages/game_chat_page.dart';
+import 'package:play_sync_new/features/game_chat/game_chat.dart';
 
 /// GameCard — shows game info with state-driven action buttons.
 ///
@@ -92,6 +93,32 @@ class GameCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // ── Game Image ──────────────────────────────────────
+                  if (game.imageUrl != null && game.imageUrl!.isNotEmpty) ...[
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      child: CachedNetworkImage(
+                        imageUrl: game.imageUrl!,
+                        height: 180,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(
+                          height: 180,
+                          color: AppColors.border,
+                          child: const Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => Container(
+                          height: 180,
+                          color: AppColors.border,
+                          child: const Icon(Icons.image_not_supported_outlined),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: AppSpacing.md),
+                  ],
+
                   // ── Header ──────────────────────────────────────────
                   Row(
                     children: [
@@ -261,7 +288,11 @@ class _ActionButtons extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => GameChatPage(game: game),
+        builder: (_) => GameChatRoomPage(
+          gameId: game.id,
+          gameTitle: game.title,
+          gameImageUrl: game.imageUrl,
+        ),
       ),
     );
   }

@@ -5,7 +5,7 @@ import 'package:play_sync_new/core/constants/app_colors.dart';
 import 'package:play_sync_new/features/game/domain/entities/game_entity.dart';
 import 'package:play_sync_new/features/game/presentation/providers/game_notifier.dart';
 import 'package:play_sync_new/features/auth/presentation/providers/auth_notifier.dart';
-import 'game_chat_page.dart';
+import 'package:play_sync_new/features/game_chat/game_chat.dart';
 import '../../../chat/presentation/providers/chat_notifier.dart';
 import '../../../../core/widgets/back_button_widget.dart';
 
@@ -58,7 +58,11 @@ class _GameDetailPageState extends ConsumerState<GameDetailPage> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => GameChatPage(game: _game!),
+        builder: (_) => GameChatRoomPage(
+          gameId: _game!.id,
+          gameTitle: _game!.title,
+          gameImageUrl: _game!.imageUrl,
+        ),
       ),
     );
     // Refresh game state when returning from chat to prevent stale data

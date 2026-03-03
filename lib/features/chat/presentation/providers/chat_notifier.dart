@@ -1,14 +1,13 @@
 import 'dart:async';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:socket_io_client/socket_io_client.dart' as io;
 import '../../domain/entities/chat_message.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../../../../../core/api/api_client.dart';
 import '../../../../../core/api/api_endpoints.dart';
 import '../../../../../core/api/secure_storage_provider.dart';
-import '../../../../../core/services/socket_service.dart';
 import '../../../auth/presentation/providers/auth_notifier.dart';
 import '../../../auth/presentation/view_model/auth_viewmodel.dart';
 
@@ -94,30 +93,22 @@ class ChatState extends Equatable {
 
 // ─── Notifier ────────────────────────────────────────────────────────────────
 
-/// Chat notifier for the Messages tab.
+/// Chat notifier for the Messages tab (REST-only implementation).
 ///
-/// Rooms are built from the user's joined/created games via existing endpoints.
-/// Messages use the existing game-chat routes — no new backend routes needed:
-///   GET  /games/:gameId/chat  (history)
-///   POST /games/:gameId/chat  (REST fallback send)
+/// Messages use the existing game-chat REST endpoints — **no Socket.IO**:
+///   GET  /api/v1/games/:gameId/chat  (fetch history)
+///   POST /api/v1/games/:gameId/chat  (send message)
 ///
-/// Real-time uses the **same** Socket.IO events as GameChatPage:
-///   Emit:   join:game  gameId
-///           leave:game gameId
-///           chat:send  { gameId, content }  (with ack)
-///   Listen: chat:message  <ChatMessageDTO>
+/// Architecture:
+/// - Messages are sent via REST and only added to state after server response
+/// - No optimistic updates, no temporary message IDs
+/// - No Socket.IO real-time — chat is request-response only
+/// - Clean REST-based state management with no deduplication complexity
 class ChatNotifier extends StateNotifier<ChatState> {
   final ApiClient _api;
   final ChatRepository _chatRepo;
   String _myId;
   final FlutterSecureStorage _storage;
-
-  io.Socket? _socket;
-  String? _socketRoomId;
-
-  // Dedup & optimistic-send tracking (mirrors GameChatPage)
-  final Set<String> _seenMsgIds = {};
-  final Set<String> _pendingTempIds = {};
 
   ChatNotifier(this._api, this._chatRepo, this._myId, this._storage) : super(const ChatState()) {
     _resolveMyId();
@@ -179,25 +170,21 @@ class ChatNotifier extends StateNotifier<ChatState> {
     }
   }
 
-  // ── Open / close room ─────────────────────────────────────────────────────
+  // ── Room management (REST-only, no real-time Socket.IO) ────────────────────
 
   Future<void> openRoom(String roomId) async {
     state = state.copyWith(activeRoomId: roomId, isLoadingMessages: true);
     await _loadMessages(roomId);
-    await _connectSocket(roomId);
+    // No socket connection — we use REST only
   }
 
   void closeRoom() {
-    _disconnectSocket();
     state = state.copyWith(clearRoom: true);
   }
 
   /// Called when the user leaves a game from GameChatPage.
   /// Removes the room and its messages from the chat section.
   void leaveRoom(String gameId) {
-    if (state.activeRoomId == gameId) {
-      _disconnectSocket();
-    }
     final updatedRooms = state.rooms.where((r) => r.id != gameId).toList();
     final updatedMessages =
         Map<String, List<ChatMessage>>.from(state.messagesByRoom)
@@ -213,11 +200,9 @@ class ChatNotifier extends StateNotifier<ChatState> {
     try {
       final result = await _chatRepo.getChatHistory(roomId);
 
-      _seenMsgIds.clear();
       final msgs = <ChatMessage>[];
       // API returns newest-first; reverse so oldest appears at top
       for (final msg in result.messages.reversed) {
-        if (msg.id.isNotEmpty) _seenMsgIds.add(msg.id);
         msgs.add(msg);
       }
 
@@ -248,13 +233,17 @@ class ChatNotifier extends StateNotifier<ChatState> {
         before: state.nextCursor,
       );
 
+      final current = List<ChatMessage>.from(state.messagesByRoom[roomId] ?? []);
+      final currentIds = current.map((m) => m.id).toSet();
+      
       final older = <ChatMessage>[];
       for (final msg in result.messages.reversed) {
-        if (msg.id.isNotEmpty && !_seenMsgIds.add(msg.id)) continue; // skip dups
-        older.add(msg);
+        // Skip if message already in current list (prevent duplicates on pagination boundary)
+        if (!currentIds.contains(msg.id)) {
+          older.add(msg);
+        }
       }
 
-      final current = List<ChatMessage>.from(state.messagesByRoom[roomId] ?? []);
       current.insertAll(0, older);
 
       final updated = Map<String, List<ChatMessage>>.from(state.messagesByRoom)
@@ -270,139 +259,33 @@ class ChatNotifier extends StateNotifier<ChatState> {
     }
   }
 
-  // ── Socket (same events as GameChatPage) ─────────────────────────────────
+  // ── Send (REST-only, no optimistic updates) ────────────────────────────────
 
-  Future<void> _connectSocket(String roomId) async {
-    _disconnectSocket();
-    final token = await _storage.read(key: 'access_token') ?? '';
-    if (token.isEmpty) return;
-
-    _socketRoomId = roomId;
-    _socket = SocketService.instance.getSocket(token: token);
-
-    if (_socket!.connected) {
-      _socket!.emit('join:game', roomId);
-    }
-
-    _socket!
-      ..on('connect', (_) {
-        if (!mounted) return;
-        _socket!.emit('join:game', roomId);
-      })
-      ..on('disconnect', (_) {
-        if (!mounted) return;
-      })
-      ..on('chat:message', (data) {
-        if (!mounted) return;
-        final raw = data as Map<String, dynamic>;
-
-        // Only handle messages for the active room
-        final gameId = (raw['gameId'] as String? ?? '').trim();
-        if (gameId.isNotEmpty && gameId != roomId) return;
-
-        // Dedup
-        final msgId = (raw['_id'] as String? ?? '').trim();
-        if (msgId.isNotEmpty && !_seenMsgIds.add(msgId)) return;
-
-        final msg = _parseDTO(raw, roomId);
-
-        // Robust isMe check
-        final isMe = _myId.isNotEmpty && (
-          msg.senderId.trim() == _myId.trim() || 
-          msg.senderName.trim().toLowerCase() == 'me' ||
-          msg.senderName.trim().toLowerCase() == 'you'
-        );
-
-        if (isMe) {
-          final msgs = List<ChatMessage>.from(state.messagesByRoom[roomId] ?? []);
-          // Replace matching temp message
-          final idx = msgs.indexWhere(
-              (m) => m.id.startsWith('tmp_') && _pendingTempIds.contains(m.id));
-          
-          if (idx != -1) {
-            final oldId = msgs[idx].id;
-            _pendingTempIds.remove(oldId);
-            msgs[idx] = msg;
-            final updated = Map<String, List<ChatMessage>>.from(state.messagesByRoom)
-              ..[roomId] = msgs;
-            state = state.copyWith(messagesByRoom: updated);
-            _seenMsgIds.add(msg.id);
-            debugPrint('[Chat] Deduplicated: Replaced temp $oldId with $msgId');
-            return;
-          }
-        }
-
-        // Dupe guard: skip if already loaded correctly
-        final exists = (state.messagesByRoom[roomId] ?? []).any((m) => m.id == msg.id);
-        if (exists && msg.id.isNotEmpty) return;
-
-        _appendMessage(roomId, msg);
-      });
-  }
-
-  void _disconnectSocket() {
-    if (_socket != null && _socketRoomId != null) {
-      _socket!.emit('leave:game', _socketRoomId);
-      _socket!.off('chat:message');
-      _socket!.off('connect');
-      _socket!.off('disconnect');
-    }
-    _socket = null;
-    _socketRoomId = null;
-  }
-
-  // ── Send ──────────────────────────────────────────────────────────────────
-
+  /// Sends a message via REST API.
+  /// **Only** adds the message to local state after receiving server response.
+  /// No optimistic updates, no temporary IDs, no deduplication complexity.
   Future<void> sendMessage(String content) async {
     final roomId = state.activeRoomId;
     if (roomId == null || content.trim().isEmpty) return;
 
     final trimmed = content.trim();
-    final tempId = 'tmp_${DateTime.now().millisecondsSinceEpoch}';
-
-    final optimistic = ChatMessage(
-      id: tempId,
-      roomId: roomId,
-      senderId: _myId.isNotEmpty ? _myId : 'me',
-      senderName: 'Me',
-      content: trimmed,
-      sentAt: DateTime.now(),
-    );
-
-    _pendingTempIds.add(tempId);
-    _appendMessage(roomId, optimistic);
-    state = state.copyWith(isSending: true);
+    state = state.copyWith(isSending: true, clearError: true);
 
     try {
-      if (_socket != null && _socket!.connected) {
-        _socket!.emitWithAck(
-          'chat:send',
-          {'gameId': roomId, 'content': trimmed},
-          ack: (ack) {
-            if (!mounted) return;
-            final ackMap = (ack as Map<String, dynamic>?) ?? {};
-            if (ackMap['success'] != true) _pendingTempIds.remove(tempId);
-          },
-        );
-      } else {
-        // API fallback
-        try {
-          final confirmed = await _chatRepo.sendMessage(roomId, trimmed);
-          final msgs = List<ChatMessage>.from(state.messagesByRoom[roomId] ?? []);
-          final idx = msgs.indexWhere((m) => m.id == tempId);
-          if (idx != -1) msgs[idx] = confirmed;
-          final updated = Map<String, List<ChatMessage>>.from(state.messagesByRoom)
-            ..[roomId] = msgs;
-          state = state.copyWith(messagesByRoom: updated);
-          _pendingTempIds.remove(tempId);
-        } catch (_) {
-          _pendingTempIds.remove(tempId);
-        }
-      }
-    } catch (_) {
-      _pendingTempIds.remove(tempId);
-    } finally {
-      if (mounted) state = state.copyWith(isSending: false);
+      // Send message and wait for server response
+      final confirmedMessage = await _chatRepo.sendMessage(roomId, trimmed);
+      
+      if (!mounted) return;
+      
+      // Add the server-returned message (this is the single source of truth)
+      _appendMessage(roomId, confirmedMessage);
+      state = state.copyWith(isSending: false);
+    } catch (e) {
+      if (!mounted) return;
+      state = state.copyWith(
+        isSending: false, 
+        error: 'Failed to send message: ${e.toString()}',
+      );
     }
   }
 
@@ -415,17 +298,45 @@ class ChatNotifier extends StateNotifier<ChatState> {
     state = state.copyWith(messagesByRoom: updated);
   }
 
-  /// Parses backend ChatMessageDTO (same shape used by game chat).
-  /// Shape: { _id, user: { _id, username, fullName, profilePicture }, content, type, createdAt }
+  /// Parses backend ChatMessageDTO
+  /// Handles both old format (nested user object) and new format (flat senderId/text)
   ChatMessage _parseDTO(Map<String, dynamic> json, String roomId) {
+    // Try new format first (senderId field)
+    final newFormatSenderId = json['senderId'] as String?;
+    
+    if (newFormatSenderId != null && newFormatSenderId.isNotEmpty) {
+      // New REST API format: senderId, senderName, text
+      final senderId = (newFormatSenderId).trim();
+      final senderName = (json['senderName'] as String?)?.trim() ?? 'Unknown';
+      final senderAvatar = (json['senderAvatar'] as String?)?.trim();
+      final type = json['type'] as String? ?? 'text';
+      final isSystem = type == 'system';
+      final msgId = (json['_id'] as String? ?? json['id'] as String? ?? '').trim();
+
+      return ChatMessage(
+        id: msgId.isNotEmpty ? msgId : 'msg_${DateTime.now().microsecondsSinceEpoch}',
+        roomId: roomId,
+        senderId: isSystem ? 'system' : senderId,
+        senderName: isSystem ? 'System' : (senderName.isNotEmpty ? senderName : 'Unknown'),
+        senderAvatar: senderAvatar?.isNotEmpty == true ? senderAvatar : null,
+        content: json['text'] as String? ?? '',
+        type: isSystem ? MessageType.system : MessageType.text,
+        sentAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
+        isRead: json['isRead'] as bool? ?? false,
+      );
+    }
+    
+    // Fallback: Old backend format with nested user object
     final rawUser = json['user'];
     String senderId = '';
-    String senderName = 'User';
+    String senderName = 'Unknown';
     String? senderAvatar;
 
     if (rawUser is Map<String, dynamic>) {
       senderId = (rawUser['_id'] as String? ?? rawUser['id'] as String? ?? '').trim();
-      senderName = rawUser['fullName'] as String? ?? rawUser['username'] as String? ?? 'User';
+      final fullName = (rawUser['fullName'] as String?)?.trim() ?? '';
+      final username = (rawUser['username'] as String?)?.trim() ?? '';
+      senderName = fullName.isNotEmpty ? fullName : (username.isNotEmpty ? username : 'Unknown');
       senderAvatar = rawUser['profilePicture'] as String?;
     } else if (rawUser != null) {
       senderId = rawUser.toString().trim();
@@ -452,7 +363,6 @@ class ChatNotifier extends StateNotifier<ChatState> {
 
   @override
   void dispose() {
-    _disconnectSocket();
     super.dispose();
   }
 }
