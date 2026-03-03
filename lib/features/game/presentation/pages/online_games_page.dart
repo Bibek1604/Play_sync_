@@ -8,8 +8,23 @@ import '../widgets/game_card.dart';
 import '../widgets/create_game_sheet.dart';
 import 'game_detail_page.dart';
 
-class OnlineGamesPage extends ConsumerWidget {
+class OnlineGamesPage extends ConsumerStatefulWidget {
   const OnlineGamesPage({super.key});
+
+  @override
+  ConsumerState<OnlineGamesPage> createState() => _OnlineGamesPageState();
+}
+
+class _OnlineGamesPageState extends ConsumerState<OnlineGamesPage> {
+  @override
+  void initState() {
+    super.initState();
+    // Load joined/created game lists so we can detect already-joined games
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(gameProvider.notifier).fetchMyJoinedGames();
+      ref.read(gameProvider.notifier).fetchMyCreatedGames();
+    });
+  }
 
   void _showCreateSheet(BuildContext context) {
     showModalBottomSheet(
@@ -21,11 +36,17 @@ class OnlineGamesPage extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state       = ref.watch(gameProvider);
-    final authState   = ref.watch(authNotifierProvider);
+  Widget build(BuildContext context) {
+    final state = ref.watch(gameProvider);
+    final authState = ref.watch(authNotifierProvider);
     final currentUserId = authState.user?.userId;
     final onlineGames = state.games.where((g) => g.isOnline).toList();
+
+    // Build a set of joined + created game IDs for quick lookup
+    final joinedGameIds = <String>{
+      ...state.myJoinedGames.map((g) => g.id),
+      ...state.myCreatedGames.map((g) => g.id),
+    };
 
     Future<void> doAction(Future<bool> Function() action, String successMsg,
         String failKey) async {
@@ -90,7 +111,13 @@ class OnlineGamesPage extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded, color: AppColors.textSecondary),
-            onPressed: () => ref.read(gameProvider.notifier).fetchGames(refresh: true),
+            onPressed: () async {
+              await Future.wait([
+                ref.read(gameProvider.notifier).fetchGames(refresh: true),
+                ref.read(gameProvider.notifier).fetchMyJoinedGames(),
+                ref.read(gameProvider.notifier).fetchMyCreatedGames(),
+              ]);
+            },
           ),
         ],
       ),
@@ -102,17 +129,30 @@ class OnlineGamesPage extends ConsumerWidget {
               ? _EmptyState(onCreateTap: () => _showCreateSheet(context))
               : RefreshIndicator(
                   color: AppColors.primary,
-                  onRefresh: () =>
+                  onRefresh: () async {
+                    await Future.wait([
                       ref.read(gameProvider.notifier).fetchGames(refresh: true),
+                      ref.read(gameProvider.notifier).fetchMyJoinedGames(),
+                      ref.read(gameProvider.notifier).fetchMyCreatedGames(),
+                    ]);
+                  },
                   child: ListView.separated(
                     padding: EdgeInsets.all(AppSpacing.lg),
                     itemCount: onlineGames.length,
-                    separatorBuilder: (_, _) => SizedBox(height: AppSpacing.md),
+                    separatorBuilder: (_, __) => SizedBox(height: AppSpacing.md),
                     itemBuilder: (_, i) {
                       final game = onlineGames[i];
+                      // A user is "joined" if they appear in myJoinedGames/myCreatedGames
+                      // OR if the participants list on the game itself contains them.
+                      final isAlreadyJoined = currentUserId != null && (
+                        joinedGameIds.contains(game.id) ||
+                        game.isCreator(currentUserId) ||
+                        game.isParticipant(currentUserId)
+                      );
                       return GameCard(
                         game: game,
                         currentUserId: currentUserId,
+                        isAlreadyJoined: isAlreadyJoined,
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -123,12 +163,18 @@ class OnlineGamesPage extends ConsumerWidget {
                           ),
                         ),
                         onJoin: () => doAction(
-                          () => ref.read(gameProvider.notifier).joinGame(game.id),
+                          () async {
+                            final result = await ref.read(gameProvider.notifier).joinGame(game.id);
+                            return result != null;
+                          },
                           'Joined game!',
                           'Failed to join',
                         ),
                         onLeave: () => doAction(
-                          () => ref.read(gameProvider.notifier).leaveGame(game.id),
+                          () async {
+                            final result = await ref.read(gameProvider.notifier).leaveGame(game.id);
+                            return result != null;
+                          },
                           'Left game',
                           'Failed to leave',
                         ),
@@ -166,7 +212,7 @@ class _EmptyState extends StatelessWidget {
               padding: EdgeInsets.all(AppSpacing.xxl),
               decoration: const BoxDecoration(
                   color: AppColors.surfaceLight, shape: BoxShape.circle),
-              child: const Icon(Icons.wifi_off_rounded,
+              child: const Icon(Icons.wifi_rounded,
                   size: 56, color: AppColors.textTertiary),
             ),
             SizedBox(height: AppSpacing.xl),

@@ -60,12 +60,18 @@ class AvailableGamesPage extends ConsumerWidget {
         onRefresh: () =>
             ref.read(gameProvider.notifier).fetchGames(refresh: true),
         onJoin: (gameId) => doAction(
-          () => ref.read(gameProvider.notifier).joinGame(gameId),
+          () async {
+            final result = await ref.read(gameProvider.notifier).joinGame(gameId);
+            return result != null;
+          },
           'Joined game!',
           'Failed to join',
         ),
         onLeave: (gameId) => doAction(
-          () => ref.read(gameProvider.notifier).leaveGame(gameId),
+          () async {
+            final result = await ref.read(gameProvider.notifier).leaveGame(gameId);
+            return result != null;
+          },
           'Left game',
           'Failed to leave',
         ),

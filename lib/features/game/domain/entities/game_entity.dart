@@ -139,6 +139,11 @@ class GameEntity extends Equatable {
   bool get isEnded => status == GameStatus.ENDED;
   bool get isCancelled => status == GameStatus.CANCELLED;
   int get spotsLeft => maxPlayers - currentPlayers;
+  
+  /// Returns the full image URL for the game cover image.
+  /// Converts relative paths (e.g., "/uploads/games/abc.jpg") to full URLs.
+  /// Returns null if no image is set.
+  String? get imageUrl => _resolveImageUrl(image);
 
   bool isParticipant(String oderId) =>
       participants.any((p) => p.oderId == oderId && p.status == ParticipantStatus.ACTIVE);
@@ -190,6 +195,36 @@ class GameEntity extends Equatable {
       updatedAt: DateTime.tryParse(json['updatedAt']?.toString() ?? '') ?? DateTime.now(),
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'title': title,
+    'description': description,
+    'sport': sport,
+    'category': category,
+    'maxPlayers': maxPlayers,
+    'status': status.name,
+    'currentPlayers': currentPlayers,
+    'participants': participants.map((p) => {
+      'userId': {
+        '_id': p.oderId,
+        'fullName': p.displayName,
+        if (p.avatar != null) 'profilePicture': p.avatar,
+      },
+      'status': p.status.name,
+      'joinedAt': p.joinedAt.toIso8601String(),
+    }).toList(),
+    'creatorId': creatorId,
+    'creatorName': creatorName,
+    if (creatorAvatar != null) 'creatorAvatar': creatorAvatar,
+    if (imageUrl != null && imageUrl!.isNotEmpty) 'imageUrl': imageUrl,
+    if (startTime != null) 'startTime': startTime!.toIso8601String(),
+    if (endTime != null) 'endTime': endTime!.toIso8601String(),
+    if (location != null) 'location': location!.toJson(),
+    if (tags.isNotEmpty) 'tags': tags,
+    'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt.toIso8601String(),
+  };
 
   Map<String, dynamic> toCreateJson() => {
     'title': title,

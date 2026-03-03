@@ -101,10 +101,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                               onTap: () => Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => GameChatPage(
-                                    gameId: game.id,
-                                    gameTitle: game.title,
-                                  ),
+                                  builder: (_) => GameChatPage(game: game),
                                 ),
                               ),
                             );

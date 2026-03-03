@@ -60,6 +60,8 @@ class _GamePageState extends ConsumerState<GamePage>
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(gameProvider.notifier).fetchGames(refresh: true);
+      ref.read(gameProvider.notifier).fetchMyJoinedGames();
+      ref.read(gameProvider.notifier).fetchMyCreatedGames();
     });
   }
 
@@ -93,6 +95,12 @@ class _GamePageState extends ConsumerState<GamePage>
   Widget build(BuildContext context) {
     final state = ref.watch(gameProvider);
     final currentUserId = ref.watch(authNotifierProvider).user?.userId;
+
+    // Build a set of joined + created game IDs for quick lookup
+    final joinedGameIds = <String>{
+      ...state.myJoinedGames.map((g) => g.id),
+      ...state.myCreatedGames.map((g) => g.id),
+    };
 
     final displayed = _selectedSport == 'All'
         ? state.filteredGames
@@ -355,20 +363,27 @@ class _GamePageState extends ConsumerState<GamePage>
                                     color: AppColors.primary)),
                           );
                         }
+                        final game = displayed[i];
+                        final isAlreadyJoined = currentUserId != null && (
+                          joinedGameIds.contains(game.id) ||
+                          game.isCreator(currentUserId) ||
+                          game.isParticipant(currentUserId)
+                        );
                         return GameCard(
-                          game: displayed[i],
+                          game: game,
                           currentUserId: currentUserId,
+                          isAlreadyJoined: isAlreadyJoined,
                           onTap: () =>
-                              _openDetail(context, displayed[i]),
+                              _openDetail(context, game),
                           onJoin: () => ref
                               .read(gameProvider.notifier)
-                              .joinGame(displayed[i].id),
+                              .joinGame(game.id),
                           onLeave: () => ref
                               .read(gameProvider.notifier)
-                              .leaveGame(displayed[i].id),
+                              .leaveGame(game.id),
                           onDelete: () => ref
                               .read(gameProvider.notifier)
-                              .cancelGame(displayed[i].id),
+                              .cancelGame(game.id),
                         );
                       },
                     ),

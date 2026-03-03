@@ -14,6 +14,7 @@ import '../../features/game/presentation/pages/game_detail_page.dart';
 import '../../features/game/presentation/pages/available_games_page.dart';
 import '../../features/game/presentation/pages/online_games_page.dart';
 import '../../features/game/presentation/pages/offline_games_page.dart';
+import '../../features/game/domain/entities/game_entity.dart';
 import '../../features/chat/presentation/pages/chat_page.dart';
 import '../../features/game/presentation/pages/game_chat_page.dart';
 import '../../features/leaderboard/presentation/pages/leaderboard_page.dart';
@@ -115,14 +116,21 @@ class AppRouter {
 
       // ── Game Chat (per-game room) ─────────────────────────────────────
       case AppRoutes.gameChat:
-        final args = settings.arguments as Map<String, String>;
-        return _buildRoute(
-          AuthGuard(
-            child: GameChatPage(
-              gameId: args['gameId']!,
-              gameTitle: args['gameTitle']!,
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        final game = args['game'] as GameEntity?;
+        if (game == null) {
+          // Fallback: Game object required
+          // Users should pass full GameEntity via MaterialPageRoute
+          return MaterialPageRoute(
+            builder: (_) => const Scaffold(
+              body: Center(
+                child: Text('Error: Game not found. Please navigate from game details.'),
+              ),
             ),
-          ),
+          );
+        }
+        return _buildRoute(
+          AuthGuard(child: GameChatPage(game: game)),
           settings,
         );
 

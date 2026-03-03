@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../../app/routes/app_routes.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../domain/entities/game_entity.dart';
+import '../pages/game_chat_page.dart';
 
 /// GameCard — shows game info with state-driven action buttons.
 ///
@@ -13,6 +13,9 @@ import '../../domain/entities/game_entity.dart';
 ///   • Not joined + OPEN + full → "Game Full" (disabled)
 ///   • ENDED   → "View Results"
 ///   • CANCELLED → badge only, no action
+///
+/// [isAlreadyJoined] — override from parent: true when the game appears in
+/// myJoinedGames or myCreatedGames even if participant list isn't populated.
 class GameCard extends StatelessWidget {
   final GameEntity game;
   final String? currentUserId;
@@ -20,6 +23,9 @@ class GameCard extends StatelessWidget {
   final VoidCallback? onJoin;
   final VoidCallback? onLeave;
   final VoidCallback? onDelete;
+  /// External override: set to true when the parent knows the user has already
+  /// joined (e.g., by checking myJoinedGames/myCreatedGames lists).
+  final bool isAlreadyJoined;
 
   const GameCard({
     super.key,
@@ -29,6 +35,7 @@ class GameCard extends StatelessWidget {
     this.onJoin,
     this.onLeave,
     this.onDelete,
+    this.isAlreadyJoined = false,
   });
 
   bool get _isCreator =>
@@ -37,8 +44,9 @@ class GameCard extends StatelessWidget {
   bool get _isParticipant =>
       currentUserId != null && game.isParticipant(currentUserId!);
 
-  /// Whether the current user is involved in the game (creator or participant)
-  bool get _isJoined => _isCreator || _isParticipant;
+  /// Whether the current user is involved in the game (creator or participant).
+  /// Prefers [isAlreadyJoined] override, then falls back to participant list check.
+  bool get _isJoined => isAlreadyJoined || _isCreator || _isParticipant;
 
   @override
   Widget build(BuildContext context) {
@@ -163,10 +171,11 @@ class _ActionButtons extends StatelessWidget {
   });
 
   void _goToChat() {
-    Navigator.pushNamed(
+    Navigator.push(
       context,
-      AppRoutes.gameChat,
-      arguments: {'gameId': game.id, 'gameTitle': game.title},
+      MaterialPageRoute(
+        builder: (_) => GameChatPage(game: game),
+      ),
     );
   }
 
@@ -177,7 +186,7 @@ class _ActionButtons extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    // ── ENDED → View Results ────────────────────────────────────
+    // ── ENDED → no actions ────────────────────────────────────
     if (game.status == GameStatus.ENDED) {
       return const SizedBox.shrink();
     }

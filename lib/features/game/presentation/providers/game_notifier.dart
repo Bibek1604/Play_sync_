@@ -3,8 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import '../../../../core/api/api_client.dart';
-import '../../../../core/api/api_endpoints.dart';
 import '../../domain/entities/game_entity.dart';
+import '../../data/repositories/game_repository.dart';
 
 // ─── State ───────────────────────────────────────────────────────────────────
 
@@ -21,6 +21,9 @@ class GameState extends Equatable {
   final bool hasMore;
   final int page;
 
+  // Current game being viewed (for detail page state sync)
+  final GameEntity? currentGame;
+
   // Location-based filtering (offline games)
   final double? nearLatitude;
   final double? nearLongitude;
@@ -36,6 +39,7 @@ class GameState extends Equatable {
     this.categoryFilter,
     this.hasMore = true,
     this.page = 1,
+    this.currentGame,
     this.nearLatitude,
     this.nearLongitude,
     this.nearRadius = 10,
@@ -69,6 +73,8 @@ class GameState extends Equatable {
     String? categoryFilter,
     bool? hasMore,
     int? page,
+    GameEntity? currentGame,
+    bool clearCurrentGame = false,
     bool clearError = false,
     bool clearCategory = false,
     double? nearLatitude,
@@ -86,6 +92,7 @@ class GameState extends Equatable {
       categoryFilter: clearCategory ? null : (categoryFilter ?? this.categoryFilter),
       hasMore: hasMore ?? this.hasMore,
       page: page ?? this.page,
+      currentGame: clearCurrentGame ? null : (currentGame ?? this.currentGame),
       nearLatitude: clearLocation ? null : (nearLatitude ?? this.nearLatitude),
       nearLongitude: clearLocation ? null : (nearLongitude ?? this.nearLongitude),
       nearRadius: nearRadius ?? this.nearRadius,
@@ -97,7 +104,7 @@ class GameState extends Equatable {
   @override
   List<Object?> get props => [
         games, myCreatedGames, myJoinedGames, isLoading, error,
-        filter, categoryFilter, hasMore, page,
+        filter, categoryFilter, hasMore, page, currentGame,
         nearLatitude, nearLongitude, nearRadius,
       ];
 }
@@ -105,9 +112,22 @@ class GameState extends Equatable {
 // ─── Notifier ────────────────────────────────────────────────────────────────
 
 class GameNotifier extends StateNotifier<GameState> {
-  final ApiClient _api;
-  GameNotifier(this._api) : super(const GameState()) {
+  final GameRepository _repository;
+  
+  GameNotifier(this._repository) : super(const GameState()) {
+    // Load from cache first (instant display)
+    loadFromCache();
+    // Then fetch fresh data in background
     fetchGames();
+  }
+
+  /// Loads games from Hive cache on app startup for instant display.
+  void loadFromCache() {
+    final cached = _repository.loadCachedGames();
+    if (cached.isNotEmpty) {
+      state = state.copyWith(games: cached, isLoading: false);
+      debugPrint('[GameNotifier] ✓ Loaded ${cached.length} games from cache');
+    }
   }
 
   Future<void> fetchGames({bool refresh = false}) async {
@@ -115,33 +135,23 @@ class GameNotifier extends StateNotifier<GameState> {
     final page = refresh ? 1 : state.page;
     state = state.copyWith(isLoading: true, clearError: true, page: page);
     try {
-      final resp = await _api.get(
-        ApiEndpoints.getGames,
-        queryParameters: {
-          'page': page,
-          'limit': 20,
-          if (state.filter != GameFilter.all) 'status': state.filter.name,
-          if (state.categoryFilter != null) 'category': state.categoryFilter,
-          // Location-based filtering
-          if (state.nearLatitude != null) 'latitude': state.nearLatitude,
-          if (state.nearLongitude != null) 'longitude': state.nearLongitude,
-          if (state.hasLocationFilter) 'radius': state.nearRadius,
-          if (state.hasLocationFilter) 'sortBy': 'distance',
-        },
+      final result = await _repository.fetchGames(
+        page: page,
+        limit: 20,
+        status: state.filter != GameFilter.all ? state.filter.name : null,
+        category: state.categoryFilter,
+        latitude: state.nearLatitude,
+        longitude: state.nearLongitude,
+        radius: state.hasLocationFilter ? state.nearRadius : null,
       );
-      // Backend: { success, message, data: { games: [], pagination: {} } }
-      final body = resp.data as Map<String, dynamic>;
-      final inner = (body['data'] as Map<String, dynamic>?) ?? body;
-      final list = _parseGameList(inner['games'] ?? []);
-      final pagination = inner['pagination'] as Map<String, dynamic>? ?? {};
-      final hasNext = pagination['hasNext'] as bool? ?? list.length >= 20;
+      
       state = state.copyWith(
-        games: refresh ? list : [...state.games, ...list],
+        games: refresh ? result.games : [...state.games, ...result.games],
         isLoading: false,
-        hasMore: hasNext,
+        hasMore: result.hasMore,
         page: page + 1,
       );
-    } on DioException catch (e) {
+    } catch (e) {
       state = state.copyWith(isLoading: false, error: _errorMsg(e));
     }
   }
@@ -168,35 +178,38 @@ class GameNotifier extends StateNotifier<GameState> {
 
   Future<void> fetchMyCreatedGames() async {
     try {
-      final resp = await _api.get(ApiEndpoints.getMyCreatedGames);
-      final body = resp.data as Map<String, dynamic>;
-      final inner = (body['data'] as Map<String, dynamic>?) ?? body;
-      state = state.copyWith(myCreatedGames: _parseGameList(inner['games'] ?? []));
-    } on DioException catch (e) {
-      debugPrint('[GameNotifier] fetchMyCreatedGames error: ${e.message}');
+      final games = await _repository.fetchMyCreatedGames();
+      state = state.copyWith(myCreatedGames: games);
+    } catch (e) {
+      debugPrint('[GameNotifier] fetchMyCreatedGames error: ${e.toString()}');
     }
   }
 
   Future<void> fetchMyJoinedGames() async {
     try {
-      final resp = await _api.get(ApiEndpoints.getMyJoinedGames);
-      final body = resp.data as Map<String, dynamic>;
-      final inner = (body['data'] as Map<String, dynamic>?) ?? body;
-      state = state.copyWith(myJoinedGames: _parseGameList(inner['games'] ?? []));
-    } on DioException catch (e) {
-      debugPrint('[GameNotifier] fetchMyJoinedGames error: ${e.message}');
+      final games = await _repository.fetchMyJoinedGames();
+      state = state.copyWith(myJoinedGames: games);
+    } catch (e) {
+      debugPrint('[GameNotifier] fetchMyJoinedGames error: ${e.toString()}');
     }
   }
 
-  Future<GameEntity?> fetchGameById(String id) async {
+  /// Fetches a game by ID and updates currentGame state.
+  /// Always fetches fresh data from backend with full participant details.
+  /// [forceRefresh] bypasses cache and always fetches from API.
+  Future<GameEntity?> fetchGameById(String id, {bool forceRefresh = false}) async {
     try {
-      final resp = await _api.get(ApiEndpoints.getGameById(id));
-      final body = resp.data as Map<String, dynamic>;
-      final inner = (body['data'] as Map<String, dynamic>?) ?? body;
-      // Backend: { data: { game: {...} } } or { data: { ...game fields... } }
-      final raw = inner['game'] ?? inner;
-      return GameEntity.fromJson(raw as Map<String, dynamic>);
-    } on DioException catch (e) {
+      final game = await _repository.getGame(id, forceRefresh: forceRefresh);
+      
+      // Update currentGame state for UI reactivity
+      state = state.copyWith(currentGame: game);
+      
+      // Update in games list if present
+      final updatedGames = state.games.map((g) => g.id == id ? game : g).toList();
+      state = state.copyWith(games: updatedGames);
+      
+      return game;
+    } catch (e) {
       state = state.copyWith(error: _errorMsg(e));
       return null;
     }
@@ -205,72 +218,115 @@ class GameNotifier extends StateNotifier<GameState> {
   /// [gameData] may be a plain [Map] or a Dio [FormData] (for image uploads).
   Future<bool> createGame(dynamic gameData) async {
     try {
-      final opts = gameData is FormData
-          ? Options(contentType: 'multipart/form-data')
-          : null;
-      await _api.post(ApiEndpoints.createGame, data: gameData, options: opts);
+      await _repository.createGame(gameData);
       await fetchGames(refresh: true);
       return true;
-    } on DioException catch (e) {
+    } catch (e) {
       state = state.copyWith(error: _errorMsg(e));
       return false;
     }
   }
 
-  Future<bool> joinGame(String gameId) async {
+  /// Joins a game and returns the updated game entity.
+  /// Ensures state is synchronized across all lists and currentGame.
+  Future<GameEntity?> joinGame(String gameId) async {
     try {
-      await _api.post(ApiEndpoints.joinGame(gameId));
-      await fetchGames(refresh: true);
-      await fetchMyJoinedGames(); // keep joined-games list in sync
-      return true;
-    } on DioException catch (e) {
+      // Join via repository (updates cache automatically)
+      final updatedGame = await _repository.joinGame(gameId);
+      
+      // Update currentGame state for UI reactivity
+      state = state.copyWith(currentGame: updatedGame);
+      
+      // Update in games list if present
+      final updatedGames = state.games.map((g) => g.id == gameId ? updatedGame : g).toList();
+      state = state.copyWith(games: updatedGames);
+      
+      // Update joined games list in background
+      fetchMyJoinedGames();
+      
+      return updatedGame;
+    } catch (e) {
       state = state.copyWith(error: _errorMsg(e));
-      return false;
+      return null;
     }
   }
 
-  Future<bool> leaveGame(String gameId) async {
+  /// Leaves a game and returns the updated game entity.
+  /// Ensures state is synchronized across all lists and currentGame.
+  Future<GameEntity?> leaveGame(String gameId) async {
     try {
-      await _api.post(ApiEndpoints.leaveGame(gameId));
-      await fetchGames(refresh: true);
-      await fetchMyJoinedGames(); // remove from joined-games list
-      return true;
-    } on DioException catch (e) {
+      // Leave via repository (updates cache automatically)
+      final updatedGame = await _repository.leaveGame(gameId);
+      
+      // Update currentGame state for UI reactivity
+      state = state.copyWith(currentGame: updatedGame);
+      
+      // Update in games list if present
+      final updatedGames = state.games.map((g) => g.id == gameId ? updatedGame : g).toList();
+      state = state.copyWith(games: updatedGames);
+      
+      // Update joined games list in background
+      fetchMyJoinedGames();
+      
+      return updatedGame;
+    } catch (e) {
       state = state.copyWith(error: _errorMsg(e));
-      return false;
+      return null;
     }
   }
 
   Future<bool> deleteGame(String gameId) async {
     try {
-      await _api.delete(ApiEndpoints.deleteGame(gameId));
+      await _repository.deleteGame(gameId);
       await fetchGames(refresh: true);
       return true;
-    } on DioException catch (e) {
+    } catch (e) {
       state = state.copyWith(error: _errorMsg(e));
       return false;
     }
   }
 
-  Future<bool> cancelGame(String gameId) async {
+  /// Cancels a game (creator only) and returns updated game entity.
+  Future<GameEntity?> cancelGame(String gameId) async {
     try {
-      await _api.patch(ApiEndpoints.cancelGame(gameId));
-      await fetchGames(refresh: true);
-      return true;
-    } on DioException catch (e) {
+      final updatedGame = await _repository.cancelGame(gameId);
+      
+      // Update currentGame state
+      state = state.copyWith(currentGame: updatedGame);
+      
+      // Update in games list if present
+      final updatedGames = state.games.map((g) => g.id == gameId ? updatedGame : g).toList();
+      state = state.copyWith(games: updatedGames);
+      
+      // Refresh lists in background
+      fetchGames(refresh: true);
+      
+      return updatedGame;
+    } catch (e) {
       state = state.copyWith(error: _errorMsg(e));
-      return false;
+      return null;
     }
   }
 
-  Future<bool> completeGame(String gameId) async {
+  /// Completes a game (creator only) and returns updated game entity.
+  Future<GameEntity?> completeGame(String gameId) async {
     try {
-      await _api.patch(ApiEndpoints.completeGame(gameId));
-      await fetchGames(refresh: true);
-      return true;
-    } on DioException catch (e) {
+      final updatedGame = await _repository.completeGame(gameId);
+      
+      // Update currentGame state
+      state = state.copyWith(currentGame: updatedGame);
+      
+      // Update in games list if present
+      final updatedGames = state.games.map((g) => g.id == gameId ? updatedGame : g).toList();
+      state = state.copyWith(games: updatedGames);
+      
+      // Refresh lists in background
+      fetchGames(refresh: true);
+      
+      return updatedGame;
+    } catch (e) {
       state = state.copyWith(error: _errorMsg(e));
-      return false;
+      return null;
     }
   }
 
@@ -305,21 +361,24 @@ class GameNotifier extends StateNotifier<GameState> {
   }
 
   // helpers
-  List<GameEntity> _parseGameList(dynamic raw) {
-    if (raw is List) {
-      return raw.map((j) => GameEntity.fromJson(j as Map<String, dynamic>)).toList();
+  String _errorMsg(dynamic e) {
+    if (e is DioException) {
+      final msg = (e.response?.data is Map) ? (e.response!.data as Map)['message'] : null;
+      return msg?.toString() ?? e.message ?? 'Something went wrong';
     }
-    return [];
-  }
-
-  String _errorMsg(DioException e) {
-    final msg = (e.response?.data is Map) ? (e.response!.data as Map)['message'] : null;
-    return msg?.toString() ?? e.message ?? 'Something went wrong';
+    return e.toString();
   }
 }
 
 // ─── Providers ───────────────────────────────────────────────────────────────
 
+/// Repository provider for game data with Hive cache coordination
+final gameRepositoryProvider = Provider<GameRepository>((ref) {
+  final api = ref.watch(apiClientProvider);
+  return GameRepository(api);
+});
+
+/// Main game state provider (singleton)
 final gameProvider = StateNotifierProvider<GameNotifier, GameState>(
-  (ref) => GameNotifier(ref.watch(apiClientProvider)),
+  (ref) => GameNotifier(ref.watch(gameRepositoryProvider)),
 );

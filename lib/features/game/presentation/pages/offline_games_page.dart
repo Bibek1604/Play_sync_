@@ -23,6 +23,16 @@ class OfflineGamesPage extends ConsumerStatefulWidget {
 class _OfflineGamesPageState extends ConsumerState<OfflineGamesPage> {
   OfflineFilter _selectedFilter = OfflineFilter.all;
 
+  @override
+  void initState() {
+    super.initState();
+    // Load joined/created game lists so we can detect already-joined games
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(gameProvider.notifier).fetchMyJoinedGames();
+      ref.read(gameProvider.notifier).fetchMyCreatedGames();
+    });
+  }
+
   void _showCreateSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -53,6 +63,12 @@ class _OfflineGamesPageState extends ConsumerState<OfflineGamesPage> {
     final currentUserId = authState.user?.userId;
     final allOfflineGames = state.games.where((g) => g.isOffline).toList();
     final filteredGames = _getFilteredGames(allOfflineGames, currentUserId);
+
+    // Build a set of joined + created game IDs for quick lookup
+    final joinedGameIds = <String>{
+      ...state.myJoinedGames.map((g) => g.id),
+      ...state.myCreatedGames.map((g) => g.id),
+    };
 
     Future<void> doAction(Future<bool> Function() action, String successMsg,
         String failKey) async {
@@ -117,8 +133,13 @@ class _OfflineGamesPageState extends ConsumerState<OfflineGamesPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded, color: AppColors.textSecondary),
-            onPressed: () =>
+            onPressed: () async {
+              await Future.wait([
                 ref.read(gameProvider.notifier).fetchGames(refresh: true),
+                ref.read(gameProvider.notifier).fetchMyJoinedGames(),
+                ref.read(gameProvider.notifier).fetchMyCreatedGames(),
+              ]);
+            },
           ),
         ],
         bottom: PreferredSize(
@@ -166,17 +187,30 @@ class _OfflineGamesPageState extends ConsumerState<OfflineGamesPage> {
                 )
               : RefreshIndicator(
                   color: AppColors.primary,
-                  onRefresh: () =>
+                  onRefresh: () async {
+                    await Future.wait([
                       ref.read(gameProvider.notifier).fetchGames(refresh: true),
+                      ref.read(gameProvider.notifier).fetchMyJoinedGames(),
+                      ref.read(gameProvider.notifier).fetchMyCreatedGames(),
+                    ]);
+                  },
                   child: ListView.separated(
                     padding: EdgeInsets.all(AppSpacing.lg),
                     itemCount: filteredGames.length,
                     separatorBuilder: (_, __) => SizedBox(height: AppSpacing.md),
                     itemBuilder: (_, i) {
                       final game = filteredGames[i];
+                      // A user is "joined" if they appear in myJoinedGames/myCreatedGames
+                      // OR if the participants list on the game itself contains them.
+                      final isAlreadyJoined = currentUserId != null && (
+                        joinedGameIds.contains(game.id) ||
+                        game.isCreator(currentUserId) ||
+                        game.isParticipant(currentUserId)
+                      );
                       return GameCard(
                         game: game,
                         currentUserId: currentUserId,
+                        isAlreadyJoined: isAlreadyJoined,
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -187,12 +221,18 @@ class _OfflineGamesPageState extends ConsumerState<OfflineGamesPage> {
                           ),
                         ),
                         onJoin: () => doAction(
-                          () => ref.read(gameProvider.notifier).joinGame(game.id),
+                          () async {
+                            final result = await ref.read(gameProvider.notifier).joinGame(game.id);
+                            return result != null;
+                          },
                           'Joined game!',
                           'Failed to join',
                         ),
                         onLeave: () => doAction(
-                          () => ref.read(gameProvider.notifier).leaveGame(game.id),
+                          () async {
+                            final result = await ref.read(gameProvider.notifier).leaveGame(game.id);
+                            return result != null;
+                          },
                           'Left game',
                           'Failed to leave',
                         ),

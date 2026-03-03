@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/game_entity.dart';
 import '../providers/game_notifier.dart';
+import 'game_chat_page.dart';
 import '../../../../app/routes/app_routes.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../features/auth/presentation/providers/auth_notifier.dart';
@@ -109,12 +110,10 @@ class _MyGameChatsPageState extends ConsumerState<MyGameChatsPage> {
                       return _GameChatTile(
                         game: game,
                         isCreator: isCreator,
-                        onTap: () => Navigator.of(context).pushNamed(
-                          AppRoutes.gameChat,
-                          arguments: {
-                            'gameId': game.id,
-                            'gameTitle': game.title,
-                          },
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => GameChatPage(game: game),
+                          ),
                         ),
                         onDelete: isCreator
                             ? () async {

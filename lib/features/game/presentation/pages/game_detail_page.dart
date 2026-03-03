@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:play_sync_new/app/routes/app_routes.dart';
 import 'package:play_sync_new/core/constants/app_colors.dart';
 import 'package:play_sync_new/features/game/domain/entities/game_entity.dart';
 import 'package:play_sync_new/features/game/presentation/providers/game_notifier.dart';
 import 'package:play_sync_new/features/auth/presentation/providers/auth_notifier.dart';
+import 'game_chat_page.dart';
 
 /// Detailed view of a single game with join/leave/cancel actions.
 class GameDetailPage extends ConsumerStatefulWidget {
@@ -42,22 +42,26 @@ class _GameDetailPageState extends ConsumerState<GameDetailPage> {
       _game?.isParticipant(_currentUserId!) == true && 
       !_isCreator;
 
-  void _goToChat() {
+  /// Navigate to chat and refresh game state when returning
+  void _goToChat() async {
     if (_game == null) return;
-    Navigator.pushNamed(
+    await Navigator.push(
       context,
-      AppRoutes.gameChat,
-      arguments: {'gameId': _game!.id, 'gameTitle': _game!.title},
+      MaterialPageRoute(
+        builder: (_) => GameChatPage(game: _game!),
+      ),
     );
+    // Refresh game state when returning from chat to prevent stale data
+    if (mounted) {
+      _fetchGame();
+    }
   }
 
   @override
   void initState() {
     super.initState();
-    if (widget.preloadedGame != null) {
-      _game = widget.preloadedGame;
-      _loading = false;
-    }
+    // Always fetch fresh data on mount to prevent stale state
+    // Ignores preloadedGame to ensure participants list is current
     _fetchGame();
   }
 
@@ -67,7 +71,11 @@ class _GameDetailPageState extends ConsumerState<GameDetailPage> {
       _error = null;
     });
     try {
-      final game = await ref.read(gameProvider.notifier).fetchGameById(widget.gameId);
+      // Force refresh on GameDetails to ensure always-fresh data
+      final game = await ref.read(gameProvider.notifier).fetchGameById(
+        widget.gameId,
+        forceRefresh: true, // Always bypass cache for GameDetails
+      );
       if (mounted) {
         setState(() {
           _game = game;
@@ -87,42 +95,64 @@ class _GameDetailPageState extends ConsumerState<GameDetailPage> {
   Future<void> _joinGame() async {
     setState(() => _actionLoading = true);
     try {
-      await ref.read(gameProvider.notifier).joinGame(widget.gameId);
-      await _fetchGame();
-      if (mounted) {
+      // Join game and get fresh updated game with participants
+      final updatedGame = await ref.read(gameProvider.notifier).joinGame(widget.gameId);
+      
+      if (updatedGame != null && mounted) {
+        // Update local state with fresh game data
+        setState(() {
+          _game = updatedGame;
+          _actionLoading = false;
+        });
+        
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Joined game!'), backgroundColor: AppColors.success),
+        );
+      } else if (mounted) {
+        setState(() => _actionLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to join game'), backgroundColor: AppColors.error),
         );
       }
     } catch (e) {
       if (mounted) {
+        setState(() => _actionLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to join: $e'), backgroundColor: AppColors.error),
         );
       }
-    } finally {
-      if (mounted) setState(() => _actionLoading = false);
     }
   }
 
   Future<void> _leaveGame() async {
     setState(() => _actionLoading = true);
     try {
-      await ref.read(gameProvider.notifier).leaveGame(widget.gameId);
-      await _fetchGame();
-      if (mounted) {
+      // Leave game and get fresh updated game with participants
+      final updatedGame = await ref.read(gameProvider.notifier).leaveGame(widget.gameId);
+      
+      if (updatedGame != null && mounted) {
+        // Update local state with fresh game data
+        setState(() {
+          _game = updatedGame;
+          _actionLoading = false;
+        });
+        
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Left game'), backgroundColor: AppColors.warning),
+        );
+      } else if (mounted) {
+        setState(() => _actionLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to leave game'), backgroundColor: AppColors.error),
         );
       }
     } catch (e) {
       if (mounted) {
+        setState(() => _actionLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to leave: $e'), backgroundColor: AppColors.error),
         );
       }
-    } finally {
-      if (mounted) setState(() => _actionLoading = false);
     }
   }
 
@@ -145,21 +175,32 @@ class _GameDetailPageState extends ConsumerState<GameDetailPage> {
 
     setState(() => _actionLoading = true);
     try {
-      await ref.read(gameProvider.notifier).cancelGame(widget.gameId);
-      await _fetchGame();
-      if (mounted) {
+      // Cancel game and get updated game entity
+      final updatedGame = await ref.read(gameProvider.notifier).cancelGame(widget.gameId);
+      
+      if (updatedGame != null && mounted) {
+        // Update local state with fresh game data
+        setState(() {
+          _game = updatedGame;
+          _actionLoading = false;
+        });
+        
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Game cancelled'), backgroundColor: AppColors.error),
+        );
+      } else if (mounted) {
+        setState(() => _actionLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to cancel game'), backgroundColor: AppColors.error),
         );
       }
     } catch (e) {
       if (mounted) {
+        setState(() => _actionLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to cancel: $e'), backgroundColor: AppColors.error),
         );
       }
-    } finally {
-      if (mounted) setState(() => _actionLoading = false);
     }
   }
 
