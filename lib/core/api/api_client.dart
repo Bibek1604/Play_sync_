@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:play_sync_new/core/api/api_endpoints.dart';
 import 'package:play_sync_new/core/api/secure_storage_provider.dart';
+import 'package:play_sync_new/core/services/app_logger.dart';
 
 final apiClientProvider = Provider<ApiClient>((ref) {
   final secureStorage = ref.watch(secureStorageProvider);
@@ -54,6 +55,7 @@ class ApiClient {
           responseBody: true,
           responseHeader: false,
           error: true,
+          logPrint: (obj) => AppLogger.api(obj.toString()),
         ),
       );
     }
@@ -85,7 +87,10 @@ class ApiClient {
     _isRefreshing = true;
     try {
       final storedRefresh = await _secureStorage.read(key: 'refresh_token');
-      if (storedRefresh == null) return false;
+      if (storedRefresh == null) {
+        AppLogger.api('Refresh token not found', isError: true);
+        return false;
+      }
 
       // Use a fresh Dio to avoid interceptor recursion
       final freshDio = Dio(BaseOptions(
@@ -93,6 +98,7 @@ class ApiClient {
         contentType: Headers.jsonContentType,
       ));
 
+      AppLogger.api('Attempting to refresh token...');
       final resp = await freshDio.post(
         ApiEndpoints.refreshToken,
         data: {'refreshToken': storedRefresh},
@@ -107,11 +113,13 @@ class ApiClient {
 
       if (newAccess != null) {
         await saveTokens(access: newAccess, refresh: newRefresh);
+        AppLogger.api('Token refreshed successfully');
         return true;
       }
+      AppLogger.api('Refresh response did not contain new access token', isError: true);
       return false;
     } catch (e) {
-      debugPrint('[ApiClient] Token refresh failed: $e');
+      AppLogger.api('Token refresh failed', isError: true, error: e);
       return false;
     } finally {
       _isRefreshing = false;

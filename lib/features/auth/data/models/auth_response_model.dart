@@ -27,39 +27,51 @@ class AuthResponseModel {
   /// Parse from JSON response - handles nested 'data' or 'user' objects
   factory AuthResponseModel.fromJson(Map<String, dynamic> json) {
     // Check if response has nested data/user object
-    final Map<String, dynamic> userData;
+    final Map<String, dynamic> responseData;
     if (json.containsKey('data') && json['data'] is Map) {
-      userData = json['data'] as Map<String, dynamic>;
+      responseData = json['data'] as Map<String, dynamic>;
+    } else {
+      responseData = json;
+    }
+
+    // Now look for user data, which might be in responseData['user'] or in responseData itself
+    final Map<String, dynamic> userData;
+    if (responseData.containsKey('user') && responseData['user'] is Map) {
+      userData = responseData['user'] as Map<String, dynamic>;
     } else if (json.containsKey('user') && json['user'] is Map) {
       userData = json['user'] as Map<String, dynamic>;
     } else {
-      userData = json;
+      userData = responseData;
     }
 
     // Extract token from root or nested object
     final token = json['token'] ?? 
                   json['accessToken'] ?? 
                   json['access_token'] ??
+                  responseData['token'] ??
+                  responseData['accessToken'] ??
                   userData['token'] ??
                   userData['accessToken'];
     
     final refreshToken = json['refreshToken'] ?? 
                          json['refresh_token'] ??
+                         responseData['refreshToken'] ??
+                         responseData['refresh_token'] ??
                          userData['refreshToken'] ??
                          userData['refresh_token'];
 
     return AuthResponseModel(
-      userId: userData['_id'] ?? userData['userId'] ?? userData['id'],
+      userId: userData['_id'] ?? userData['userId'] ?? userData['id'] ?? responseData['id'],
       fullName: userData['fullName'] ?? userData['full_name'] ?? userData['name'],
-      email: userData['email'] ?? json['email'] ?? '',
-      role: userData['role'] ?? json['role'] ?? 'user',
+      email: userData['email'] ?? responseData['email'] ?? json['email'] ?? '',
+      role: userData['role'] ?? responseData['role'] ?? json['role'] ?? 'user',
       token: token,
       refreshToken: refreshToken,
-      message: json['message'],
+      message: json['message'] ?? responseData['message'],
       createdAt: userData['createdAt'] != null
           ? DateTime.tryParse(userData['createdAt'].toString())
           : null,
-      isVerified: userData['isVerified'] ?? false,
+      isVerified: userData['isVerified'] ?? responseData['isVerified'] ?? false,
     );
   }
 

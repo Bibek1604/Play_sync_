@@ -71,10 +71,28 @@ class _GameHistoryPageState extends ConsumerState<GameHistoryPage>
             backgroundColor: AppColors.background,
             pinned: true,
             floating: false,
-            expandedHeight: 200,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_rounded),
-              onPressed: () => Navigator.of(context).pop(),
+            expandedHeight: 240,
+            leading: Center(
+              child: Container(
+                margin: const EdgeInsets.only(left: 8),
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.cardDark : Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4),
+                  ],
+                ),
+                child: IconButton(
+                  constraints: const BoxConstraints(),
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                  iconSize: 18,
+                  padding: EdgeInsets.zero,
+                  color: isDark ? Colors.white : AppColors.primary,
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ),
             ),
             flexibleSpace: FlexibleSpaceBar(
               collapseMode: CollapseMode.pin,
@@ -179,10 +197,6 @@ class _UserBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final createdCount = gameState.myCreatedGames.length;
-    final joinedCount = gameState.myJoinedGames.length;
-    final totalCount = histState.totalGames;
-
     return Container(
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -239,16 +253,6 @@ class _UserBanner extends StatelessWidget {
                   ],
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              _MiniStat(label: 'Total', value: '$totalCount'),
-              const SizedBox(width: 12),
-              _MiniStat(label: 'Created', value: '$createdCount'),
-              const SizedBox(width: 12),
-              _MiniStat(label: 'Joined', value: '$joinedCount'),
             ],
           ),
         ],
@@ -578,14 +582,16 @@ class _GameEntityCard extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(
-                        child: Text(
-                          game.title,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
-                            color: isDark ? AppColors.secondary : AppColors.textPrimary,
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Text(
+                            game.title,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                              color: isDark ? AppColors.secondary : AppColors.textPrimary,
+                            ),
                           ),
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       Container(

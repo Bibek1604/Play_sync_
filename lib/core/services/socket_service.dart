@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
+import 'package:play_sync_new/core/services/app_logger.dart';
 import '../api/api_endpoints.dart';
 
 /// States the socket connection can be in
@@ -86,19 +87,19 @@ class SocketService {
 
     _socket!
       ..onConnect((_) {
-        debugPrint('[Socket] Connected');
+        AppLogger.socket('Connected');
         _updateState(SocketState.connected);
       })
       ..onDisconnect((reason) {
-        debugPrint('[Socket] Disconnected: $reason');
+        AppLogger.socket('Disconnected: $reason');
         _updateState(SocketState.disconnected);
       })
       ..onConnectError((error) {
-        debugPrint('[Socket] Connect error: $error');
+        AppLogger.socket('Connect error: $error', isError: true);
         _updateState(SocketState.error);
       })
       ..onError((error) {
-        debugPrint('[Socket] Error: $error');
+        AppLogger.socket('Error: $error', isError: true);
       });
   }
 

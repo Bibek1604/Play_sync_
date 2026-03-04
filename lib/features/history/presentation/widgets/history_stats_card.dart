@@ -8,6 +8,7 @@ class HistoryStatsCard extends StatelessWidget {
   final int ended;
   final int cancelled;
   final int active;
+  final bool isCompact;
 
   const HistoryStatsCard({
     super.key,
@@ -15,6 +16,7 @@ class HistoryStatsCard extends StatelessWidget {
     required this.ended,
     required this.cancelled,
     required this.active,
+    this.isCompact = false,
   });
 
   @override

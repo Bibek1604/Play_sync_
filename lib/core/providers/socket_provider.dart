@@ -52,21 +52,27 @@ class SocketConnectionNotifier extends StateNotifier<SocketConnectionState> {
 
   /// Connect to the WebSocket server with the given token.
   void connect(String token, String? userId) {
-    if (state.isConnected && _socket != null) return;
+    if (state.isConnected && _socket != null) {
+      debugPrint('[SocketProvider] Already connected, skipping...');
+      return;
+    }
 
     try {
+      debugPrint('[SocketProvider] 🔌 Connecting to WebSocket...');
+      debugPrint('[SocketProvider] User ID: $userId');
       _socket = SocketService.instance.getSocket(token: token);
 
       // Listen to connection state changes
       _socketStateSub?.cancel();
       _socketStateSub =
           SocketService.instance.stateStream.listen((socketState) {
+        debugPrint('[SocketProvider] State changed: $socketState');
         state = state.copyWith(state: socketState, socket: _socket);
 
         // Join personal room on connect
         if (socketState == SocketState.connected && userId != null) {
           _socket?.emit('join-room', {'roomId': 'user:$userId'});
-          debugPrint('[SocketProvider] Joined room user:$userId');
+          debugPrint('[SocketProvider] ✓ Joined room user:$userId');
         }
       });
 
@@ -77,14 +83,17 @@ class SocketConnectionNotifier extends StateNotifier<SocketConnectionState> {
 
       // Also listen for game discovery events
       _socket?.on('game:updated', (data) {
-        debugPrint('[SocketProvider] Game updated: $data');
+        debugPrint('[SocketProvider] 📢 Game updated: $data');
       });
 
       _socket?.on('game:slots:updated', (data) {
-        debugPrint('[SocketProvider] Game slots updated: $data');
+        debugPrint('[SocketProvider] 📢 Game slots updated: $data');
       });
-    } catch (e) {
-      debugPrint('[SocketProvider] Connect error: $e');
+      
+      debugPrint('[SocketProvider] ✓ Socket listeners registered');
+    } catch (e, stack) {
+      debugPrint('[SocketProvider] ✗ Connect error: $e');
+      debugPrint('[SocketProvider] Stack: $stack');
     }
   }
 

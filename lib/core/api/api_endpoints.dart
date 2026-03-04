@@ -6,15 +6,25 @@ class ApiEndpoints {
   ApiEndpoints._();
 
   // ========== BASE URL & TIMEOUTS ==========
+
+  /// Override via: flutter run --dart-define=DEV_BACKEND_URL=http://192.168.x.x:5000/api/v1
+  static const String _customBackendUrl = String.fromEnvironment('DEV_BACKEND_URL', defaultValue: '');
+
   static String get baseUrl {
+    // If a custom URL is provided at build time (for physical device dev), use it
+    if (_customBackendUrl.isNotEmpty) {
+      return _customBackendUrl;
+    }
+
     if (kIsWeb) {
       return 'http://localhost:5000/api/v1';
     }
     
-    // For Android Emulator, use 10.0.2.2 to access host's localhost
+    // For Android physical device, use the development machine's IP
+    // For emulator, use --dart-define=DEV_BACKEND_URL=http://10.0.2.2:5000/api/v1
     try {
       if (Platform.isAndroid) {
-        return 'http://10.0.2.2:5000/api/v1';
+        return 'http://192.168.1.70:5000/api/v1';
       }
     } catch (_) {
       // Platform check may fail on some web environments if not handled by kIsWeb
@@ -31,7 +41,7 @@ class ApiEndpoints {
     
     try {
       if (Platform.isAndroid) {
-        return 'http://10.0.2.2:5000';
+        return 'http://192.168.1.70:5000';
       }
     } catch (_) {
       // Platform check may fail

@@ -79,6 +79,7 @@ class AuthRepository implements IAuthRepository {
       await _secureStorage.write(key: 'user_id', value: response.userId);
       await _secureStorage.write(key: 'user_email', value: response.email);
       await _secureStorage.write(key: 'user_role', value: response.role);
+      await _secureStorage.write(key: 'user_fullName', value: response.fullName);
       
       return Right(response.toEntity());
     } catch (e) {
@@ -92,12 +93,13 @@ class AuthRepository implements IAuthRepository {
       final datasource = await _getDataSource();
       await datasource.logout();
       
-      // Clear secure storage
+      // Clear all user data from secure storage
       await _secureStorage.delete(key: 'access_token');
       await _secureStorage.delete(key: 'refresh_token');
       await _secureStorage.delete(key: 'user_id');
       await _secureStorage.delete(key: 'user_email');
       await _secureStorage.delete(key: 'user_role');
+      await _secureStorage.delete(key: 'user_fullName');
       
       return const Right(true);
     } catch (e) {
@@ -112,16 +114,20 @@ class AuthRepository implements IAuthRepository {
       final email = await _secureStorage.read(key: 'user_email');
       final role = await _secureStorage.read(key: 'user_role');
       final token = await _secureStorage.read(key: 'access_token');
+      final refreshToken = await _secureStorage.read(key: 'refresh_token');
+      final fullName = await _secureStorage.read(key: 'user_fullName');
 
       if (email == null || token == null) {
         return const Right(null);
       }
 
-        return Right(AuthEntity(
+      return Right(AuthEntity(
         userId: userId,
+        fullName: fullName,
         email: email,
         role: _parseRole(role ?? 'user'),
         token: token,
+        refreshToken: refreshToken,
       ));
     } catch (e) {
       return Left(AuthFailure(message: 'Failed to get user: ${e.toString()}'));

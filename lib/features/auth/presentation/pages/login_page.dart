@@ -103,9 +103,11 @@ class _LoginPageState extends ConsumerState<LoginPage>
     final authState = ref.watch(authNotifierProvider);
     final isLoading = authState.isLoading;
 
-    // Show session-expired / error banner
+    // Show session-expired / error banner (only when not successfully logged in)
     ref.listen<AuthState>(authNotifierProvider, (prev, next) {
-      if (next.error != null && prev?.error != next.error) {
+      if (next.error != null &&
+          prev?.error != next.error &&
+          next.status != AuthStatus.authenticated) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(

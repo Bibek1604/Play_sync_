@@ -292,7 +292,7 @@ class _GameDetailPageState extends ConsumerState<GameDetailPage> {
           padding: EdgeInsets.all(8.0),
           child: BackButtonWidget(label: 'Back'),
         ),
-        leadingWidth: 100,
+        leadingWidth: 110,
         title: Text(_game?.title ?? 'Game Details'),
       ),
       body: _loading

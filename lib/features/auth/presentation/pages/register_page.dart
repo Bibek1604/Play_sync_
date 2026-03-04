@@ -86,17 +86,19 @@ class _RegisterPageState extends ConsumerState<RegisterPage> with SingleTickerPr
     final fullName = _fullNameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
     
-    _performRegistration(fullName, email, password);
+    _performRegistration(fullName, email, password, confirmPassword);
   }
 
-  Future<void> _performRegistration(String fullName, String email, String password) async {
+  Future<void> _performRegistration(String fullName, String email, String password, String confirmPassword) async {
     final notifier = ref.read(authNotifierProvider.notifier);
     
     final result = await notifier.register(
       fullName: fullName,
       email: email,
       password: password,
+      confirmPassword: confirmPassword,
     );
 
     result.fold(

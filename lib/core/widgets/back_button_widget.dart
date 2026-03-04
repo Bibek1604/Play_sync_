@@ -30,7 +30,7 @@ class BackButtonWidget extends StatelessWidget {
         onTap: onPressed ?? () => Navigator.of(context).pop(),
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           decoration: BoxDecoration(
             color: defaultBgColor,
             borderRadius: BorderRadius.circular(12),
@@ -48,13 +48,17 @@ class BackButtonWidget extends StatelessWidget {
                 color: defaultColor,
               ),
               if (label != null && label!.isNotEmpty) ...[
-                const SizedBox(width: 6),
-                Text(
-                  label!,
-                  style: TextStyle(
-                    color: defaultColor,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    label!,
+                    style: TextStyle(
+                      color: defaultColor,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],

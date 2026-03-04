@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:play_sync_new/core/api/api_endpoints.dart';
+import 'package:play_sync_new/core/services/app_logger.dart';
 
 /// Provider for connectivity service
 final connectivityServiceProvider = Provider((ref) => ConnectivityService());
@@ -14,23 +14,23 @@ class ConnectivityService {
   /// Returns true if backend is available, false otherwise
   Future<bool> isBackendAvailable() async {
     try {
-      debugPrint('[CONNECTIVITY] Checking backend at: ${ApiEndpoints.baseUrl}');
+      AppLogger.debug('Checking backend at: ${ApiEndpoints.baseUrl}', tag: 'CONNECTIVITY');
       
       // Try to reach backend root endpoint
       final response = await _dio.get(
         ApiEndpoints.baseUrl,
         options: Options(
-          receiveTimeout: const Duration(seconds: 5),
-          sendTimeout: const Duration(seconds: 5),
+          receiveTimeout: const Duration(seconds: 3), // Shorter timeout for check
+          sendTimeout: const Duration(seconds: 3),
           validateStatus: (status) => true, // Accept all status codes
         ),
       );
 
       final isAvailable = response.statusCode != null && response.statusCode! < 500;
-      debugPrint('[CONNECTIVITY] Backend response: ${response.statusCode}, available: $isAvailable');
+      AppLogger.debug('Backend response: ${response.statusCode}, available: $isAvailable', tag: 'CONNECTIVITY');
       return isAvailable;
     } catch (e) {
-      debugPrint('[CONNECTIVITY] Backend check failed: $e');
+      AppLogger.warning('Backend check failed: $e', tag: 'CONNECTIVITY');
       return false;
     }
   }
