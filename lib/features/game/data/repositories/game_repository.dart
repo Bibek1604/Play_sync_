@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import '../../../../core/api/api_client.dart';
 import '../../../../core/api/api_endpoints.dart';
 import '../../../../core/constants/hive_table_constant.dart';
+import 'package:play_sync_new/core/services/isolate_service.dart';
 import '../../domain/entities/game_entity.dart';
 import '../../domain/entities/invite_link_entity.dart';
 import '../../domain/entities/game_invitation_entity.dart';
@@ -407,9 +408,11 @@ class GameRepository {
       final gamesList = (inner['games'] as List?) ?? [];
       final pagination = (inner['pagination'] as Map<String, dynamic>?) ?? {};
 
-      final games = gamesList
-          .map((json) => GameEntity.fromJson(json as Map<String, dynamic>))
-          .toList();
+      final games = await IsolateService.run(
+        GameEntity.fromJsonList,
+        gamesList,
+        debugName: 'Parse Games (fetchGames)',
+      );
 
       // Cache each game individually
       for (final game in games) {
@@ -435,9 +438,11 @@ class GameRepository {
       final inner = (body['data'] as Map<String, dynamic>?) ?? body;
       final gamesList = (inner['games'] as List?) ?? [];
 
-      final games = gamesList
-          .map((json) => GameEntity.fromJson(json as Map<String, dynamic>))
-          .toList();
+      final games = await IsolateService.run(
+        GameEntity.fromJsonList,
+        gamesList,
+        debugName: 'Parse Created Games',
+      );
 
       // Cache each game
       for (final game in games) {
@@ -460,9 +465,11 @@ class GameRepository {
       final inner = (body['data'] as Map<String, dynamic>?) ?? body;
       final gamesList = (inner['games'] as List?) ?? [];
 
-      final games = gamesList
-          .map((json) => GameEntity.fromJson(json as Map<String, dynamic>))
-          .toList();
+      final games = await IsolateService.run(
+        GameEntity.fromJsonList,
+        gamesList,
+        debugName: 'Parse Joined Games',
+      );
 
       // Cache each game
       for (final game in games) {
@@ -480,25 +487,21 @@ class GameRepository {
   // ─── Cache Management ───────────────────────────────────────────────────
 
   /// Loads all cached games on app startup.
-  List<GameEntity> loadCachedGames() {
+  Future<List<GameEntity>> loadCachedGames() async {
     try {
-      final cached = _gamesBox.values
-          .where((value) => value is Map)
-          .map((value) {
-            try {
-              final map = Map<String, dynamic>.from(value as Map);
-              // Only return if cache is fresh
-              if (_isCacheFresh(map)) {
-                return GameEntity.fromJson(map);
-              }
-              return null;
-            } catch (e) {
-              debugPrint('[GameRepository] ⚠️ Failed to parse cached game: $e');
-              return null;
-            }
-          })
-          .whereType<GameEntity>()
+      final rawValues = _gamesBox.values
+          .where((v) => v is Map)
+          .map((v) => Map<String, dynamic>.from(v as Map))
+          .where((m) => _isCacheFresh(m))
           .toList();
+
+      if (rawValues.isEmpty) return [];
+
+      final cached = await IsolateService.run(
+        GameEntity.fromJsonList,
+        rawValues,
+        debugName: 'Parse Cached Games',
+      );
 
       debugPrint('[GameRepository] ✓ Loaded ${cached.length} fresh games from cache');
       return cached;

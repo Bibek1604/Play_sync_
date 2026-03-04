@@ -175,7 +175,6 @@ class GameEntity extends Equatable {
     if (normalizedSearchId.isEmpty) return false;
     return normalizedCreatorId == normalizedSearchId;
   }
-
   factory GameEntity.fromJson(Map<String, dynamic> json) {
     // Parse creator (may be populated object or plain string id)
     final creator = json['creatorId'];
@@ -220,6 +219,14 @@ class GameEntity extends Equatable {
       createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now(),
       updatedAt: DateTime.tryParse(json['updatedAt']?.toString() ?? '') ?? DateTime.now(),
     );
+  }
+
+  /// Helper for bulk parsing, ideal for background isolates.
+  static List<GameEntity> fromJsonList(List<dynamic> list) {
+    return list
+        .where((item) => item is Map<String, dynamic>)
+        .map((item) => GameEntity.fromJson(item as Map<String, dynamic>))
+        .toList();
   }
 
   Map<String, dynamic> toJson() => {

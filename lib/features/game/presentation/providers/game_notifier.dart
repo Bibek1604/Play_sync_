@@ -141,8 +141,8 @@ class GameNotifier extends StateNotifier<GameState> {
   }
 
   /// Loads games from Hive cache on app startup for instant display.
-  void loadFromCache() {
-    final cached = _repository.loadCachedGames();
+  Future<void> loadFromCache() async {
+    final cached = await _repository.loadCachedGames();
     if (cached.isNotEmpty) {
       state = state.copyWith(games: cached, isLoading: false);
       debugPrint('[GameNotifier] ✓ Loaded ${cached.length} games from cache');

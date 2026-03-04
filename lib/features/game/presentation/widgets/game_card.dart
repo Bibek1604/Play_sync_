@@ -395,7 +395,7 @@ class _ActionButtons extends StatelessWidget {
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textTertiary)),
-        ),
+        )
       );
     }
 
