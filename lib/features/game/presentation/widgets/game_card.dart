@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_theme.dart';
+import '../../../../core/providers/camera_dark_mode_provider.dart';
 import '../../domain/entities/game_entity.dart';
 import 'package:play_sync_new/features/game_chat/game_chat.dart';
 
@@ -18,7 +20,7 @@ import 'package:play_sync_new/features/game_chat/game_chat.dart';
 ///
 /// [isAlreadyJoined] — override from parent: true when the game appears in
 /// myJoinedGames or myCreatedGames even if participant list isn't populated.
-class GameCard extends StatelessWidget {
+class GameCard extends ConsumerStatefulWidget {
   final GameEntity game;
   final String? currentUserId;
   final VoidCallback? onTap;
@@ -47,47 +49,86 @@ class GameCard extends StatelessWidget {
     this.isAlreadyCreator = false,
   });
 
+  @override
+  ConsumerState<GameCard> createState() => _GameCardState();
+}
+
+class _GameCardState extends ConsumerState<GameCard> {
+  bool _isProcessing = false;
+
   /// Creator check: prefer the reliable server-backed flag, fall back to local field.
   bool get _isCreator =>
-      isAlreadyCreator ||
-      (currentUserId != null && game.isCreator(currentUserId!));
+      widget.isAlreadyCreator ||
+      (widget.currentUserId != null && widget.game.isCreator(widget.currentUserId!));
 
   bool get _isParticipant =>
-      currentUserId != null && game.isParticipant(currentUserId!);
+      widget.currentUserId != null && widget.game.isParticipant(widget.currentUserId!);
 
   /// Whether the current user is involved in the game (creator or participant).
   /// Prefers [isAlreadyJoined] override, then falls back to participant list check.
-  bool get _isJoined => isAlreadyJoined || _isCreator || _isParticipant;
+  bool get _isJoined => widget.isAlreadyJoined || _isCreator || _isParticipant;
+
+  /// Check if user can access chat (creator or participant)
+  bool get _canAccessChat => _isCreator || _isParticipant || widget.isAlreadyJoined;
+
+  /// Prevent duplicate action calls
+  Future<void> _handleAction(Future<void> Function() action) async {
+    if (_isProcessing) return;
+    setState(() => _isProcessing = true);
+    try {
+      await action();
+    } finally {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (currentUserId != null && (game.isCreator(currentUserId!) || isAlreadyCreator)) {
-      debugPrint('[GameCard] Detected CREATOR for ${game.title}: currentUserId=$currentUserId, game.creatorId=${game.creatorId}, isAlreadyCreator=$isAlreadyCreator');
-    }
-    
+    // Use camera dark mode provider for theme detection
+    final cameraDarkMode = ref.watch(cameraDarkModeProvider);
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final isDark = cameraDarkMode; // Use camera sensor for dark mode
+    
+    if (widget.currentUserId != null && (widget.game.isCreator(widget.currentUserId!) || widget.isAlreadyCreator)) {
+      debugPrint('[GameCard] Detected CREATOR for ${widget.game.title}: currentUserId=${widget.currentUserId}, game.creatorId=${widget.game.creatorId}, isAlreadyCreator=${widget.isAlreadyCreator}');
+    }
 
     return Card(
       margin: EdgeInsets.zero,
-      elevation: 2,
+      elevation: isDark ? 4 : 2,
+      shadowColor: isDark ? Colors.black45 : Colors.black12,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        side: BorderSide(color: theme.dividerColor, width: 1),
+        side: BorderSide(
+          color: isDark ? const Color(0xFF334155) : theme.dividerColor,
+          width: isDark ? 1.5 : 1,
+        ),
       ),
-      color: theme.cardColor,
+      color: isDark ? const Color(0xFF1E293B) : Colors.white,
       child: Stack(
         children: [
           InkWell(
-            onTap: () {
+            onTap: _isProcessing ? null : () {
               if (_isJoined) {
-                onTap?.call();
+                widget.onTap?.call();
                 return;
               }
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: const Text('Join game first to view game details.'),
+                  content: Row(
+                    children: [
+                      const Icon(Icons.lock_outline, color: Colors.white, size: 20),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text('Join game first to view details & access chat'),
+                      ),
+                    ],
+                  ),
                   backgroundColor: theme.colorScheme.error,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               );
             },
@@ -98,44 +139,84 @@ class GameCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // ── Game Image / Placeholder ──────────────────────────
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                    child: SizedBox(
-                      height: 180,
-                      width: double.infinity,
-                      child: game.imageUrl != null && game.imageUrl!.isNotEmpty
-                          ? CachedNetworkImage(
-                              imageUrl: game.imageUrl!,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => Container(
-                                color: theme.dividerColor,
-                                child: Center(
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: theme.colorScheme.primary,
+                  Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        child: SizedBox(
+                          height: 180,
+                          width: double.infinity,
+                          child: widget.game.imageUrl != null && widget.game.imageUrl!.isNotEmpty
+                              ? CachedNetworkImage(
+                                  imageUrl: widget.game.imageUrl!,
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) => Container(
+                                    color: theme.dividerColor,
+                                    child: Center(
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: theme.colorScheme.primary,
+                                      ),
+                                    ),
+                                  ),
+                                  errorWidget: (context, url, error) => _GameImagePlaceholder(
+                                    sport: widget.game.sport,
+                                    isDark: isDark,
+                                  ),
+                                )
+                              : _GameImagePlaceholder(sport: widget.game.sport, isDark: isDark),
+                        ),
+                      ),
+                      // Chat access indicator
+                      if (_canAccessChat)
+                        Positioned(
+                          top: 12,
+                          right: 12,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: AppColors.success.withOpacity(0.9),
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.chat_bubble, color: Colors.white, size: 14),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Chat Unlocked',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                              ),
-                              errorWidget: (context, url, error) => _GameImagePlaceholder(
-                                sport: game.sport,
-                              ),
-                            )
-                          : _GameImagePlaceholder(sport: game.sport),
-                    ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                   SizedBox(height: AppSpacing.md),
 
                   // ── Header ──────────────────────────────────────────
                   Row(
                     children: [
-                      _SportIcon(sport: game.sport),
+                      _SportIcon(sport: widget.game.sport),
                       SizedBox(width: AppSpacing.md),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              game.title,
+                              widget.game.title,
                               style: theme.textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.w700,
                                     color: theme.colorScheme.onSurface,
@@ -143,11 +224,11 @@ class GameCard extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                               maxLines: 1,
                             ),
-                            if (game.creatorName.isNotEmpty)
+                            if (widget.game.creatorName.isNotEmpty)
                               Row(
                                 children: [
                                   Text(
-                                    'by ${game.creatorName}',
+                                    'by ${widget.game.creatorName}',
                                     style: theme.textTheme.bodySmall?.copyWith(
                                           color: theme.colorScheme.onSurfaceVariant),
                                   ),
@@ -174,17 +255,17 @@ class GameCard extends StatelessWidget {
                       // Leave space for the delete icon when creator
                       if (_isCreator) const SizedBox(width: 38),
                       const SizedBox(width: 8),
-                      _CategoryChip(category: game.category),
+                      _CategoryChip(category: widget.game.category),
                       const SizedBox(width: 6),
-                      _StatusChip(status: game.status),
+                      _StatusChip(status: widget.game.status),
                     ],
                   ),
 
                   // ── Description ──────────────────────────────────────
-                  if (game.description.isNotEmpty) ...[  
+                  if (widget.game.description.isNotEmpty) ...[  
                     SizedBox(height: AppSpacing.sm),
                     Text(
-                      game.description,
+                      widget.game.description,
                       style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant, height: 1.4),
                       maxLines: 2,
@@ -204,14 +285,14 @@ class GameCard extends StatelessWidget {
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         _InfoItem(
-                          icon: game.isOnline ? Icons.wifi_rounded : Icons.location_on_outlined,
-                          text: game.isOnline ? 'Online' : (game.location?.address ?? 'Local'),
+                          icon: widget.game.isOnline ? Icons.wifi_rounded : Icons.location_on_outlined,
+                          text: widget.game.isOnline ? 'Online' : (widget.game.location?.address ?? 'Local'),
                           color: theme.colorScheme.primary,
                         ),
                         _InfoItem(
                           icon: Icons.group_outlined,
-                          text: '${game.currentPlayers}/${game.maxPlayers} players',
-                          color: game.isFull ? theme.colorScheme.error : theme.colorScheme.onSurfaceVariant,
+                          text: '${widget.game.currentPlayers}/${widget.game.maxPlayers} players',
+                          color: widget.game.isFull ? theme.colorScheme.error : theme.colorScheme.onSurfaceVariant,
                         ),
                       ],
                     ),
@@ -221,14 +302,23 @@ class GameCard extends StatelessWidget {
                   SizedBox(height: AppSpacing.md),
                   _ActionButtons(
                     context: context,
-                    game: game,
+                    game: widget.game,
                     isCreator: _isCreator,
                     isJoined: _isJoined,
-                    onViewDetails: onTap,
-                    onJoin: onJoin,
-                    onLeave: onLeave,
-                    onCancel: onCancel,
-                    onDelete: onDelete,
+                    isProcessing: _isProcessing,
+                    onViewDetails: widget.onTap,
+                    onJoin: () => _handleAction(() async {
+                      if (widget.onJoin != null) widget.onJoin!();
+                    }),
+                    onLeave: () => _handleAction(() async {
+                      if (widget.onLeave != null) widget.onLeave!();
+                    }),
+                    onCancel: () => _handleAction(() async {
+                      if (widget.onCancel != null) widget.onCancel!();
+                    }),
+                    onDelete: widget.onDelete != null ? () => _handleAction(() async {
+                      if (widget.onDelete != null) widget.onDelete!();
+                    }) : null,
                   ),
                 ],
               ),
@@ -236,7 +326,7 @@ class GameCard extends StatelessWidget {
           ),
 
           // ── Top-right delete icon (creator only) ────────────────
-          if (_isCreator && onDelete != null)
+          if (_isCreator && widget.onDelete != null)
             Positioned(
               top: 10,
               right: 10,
@@ -246,7 +336,9 @@ class GameCard extends StatelessWidget {
                   message: 'Delete Game',
                   child: InkWell(
                     borderRadius: BorderRadius.circular(24),
-                    onTap: onDelete,
+                    onTap: _isProcessing ? null : () => _handleAction(() async {
+                      widget.onDelete!();
+                    }),
                     child: Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
@@ -277,6 +369,7 @@ class _ActionButtons extends StatelessWidget {
   final GameEntity game;
   final bool isCreator;
   final bool isJoined;
+  final bool isProcessing;
   final VoidCallback? onViewDetails;
   final VoidCallback? onJoin;
   final VoidCallback? onLeave;
@@ -288,6 +381,7 @@ class _ActionButtons extends StatelessWidget {
     required this.game,
     required this.isCreator,
     required this.isJoined,
+    required this.isProcessing,
     this.onViewDetails,
     this.onJoin,
     this.onLeave,
@@ -329,13 +423,24 @@ class _ActionButtons extends StatelessWidget {
             width: double.infinity,
             height: 40,
             child: ElevatedButton.icon(
-              onPressed: isCreator ? _goToChat : onViewDetails,
-              icon: Icon(
-                isCreator
-                    ? Icons.chat_bubble_outline_rounded
-                    : Icons.visibility_outlined,
-                size: 16,
-              ),
+              onPressed: (isProcessing || (isCreator ? false : onViewDetails == null)) 
+                  ? null 
+                  : (isCreator ? _goToChat : onViewDetails),
+              icon: isProcessing
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : Icon(
+                      isCreator
+                          ? Icons.chat_bubble_outline_rounded
+                          : Icons.visibility_outlined,
+                      size: 16,
+                    ),
               label: Text(
                 isCreator ? 'Go to Chat' : 'View Details',
                 style: const TextStyle(
@@ -365,8 +470,17 @@ class _ActionButtons extends StatelessWidget {
               width: double.infinity,
               height: 40,
               child: OutlinedButton.icon(
-                onPressed: onCancel,
-                icon: const Icon(Icons.cancel_outlined, size: 16),
+                onPressed: isProcessing || onCancel == null ? null : onCancel,
+                icon: isProcessing
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.warning),
+                        ),
+                      )
+                    : const Icon(Icons.cancel_outlined, size: 16),
                 label: const Text('Cancel Game',
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                 style: OutlinedButton.styleFrom(
@@ -383,8 +497,17 @@ class _ActionButtons extends StatelessWidget {
               width: double.infinity,
               height: 40,
               child: OutlinedButton.icon(
-                onPressed: onLeave,
-                icon: const Icon(Icons.exit_to_app_rounded, size: 16),
+                onPressed: isProcessing || onLeave == null ? null : onLeave,
+                icon: isProcessing
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.warning),
+                        ),
+                      )
+                    : const Icon(Icons.exit_to_app_rounded, size: 16),
                 label: const Text('Leave Game',
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                 style: OutlinedButton.styleFrom(
@@ -424,10 +547,21 @@ class _ActionButtons extends StatelessWidget {
       width: double.infinity,
       height: 40,
       child: ElevatedButton.icon(
-        onPressed: onJoin,
-        icon: const Icon(Icons.login_rounded, size: 18),
+        onPressed: isProcessing || onJoin == null ? null : onJoin,
+        icon: isProcessing
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : const Icon(Icons.login_rounded, size: 18),
         label: Text(
-          'Join Game · ${game.spotsLeft} ${game.spotsLeft == 1 ? 'spot' : 'spots'} left',
+          isProcessing 
+              ? 'Joining...' 
+              : 'Join Game · ${game.spotsLeft} ${game.spotsLeft == 1 ? 'spot' : 'spots'} left',
           style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
         ),
         style: ElevatedButton.styleFrom(
@@ -570,7 +704,8 @@ class _StatusChip extends StatelessWidget {
 
 class _GameImagePlaceholder extends StatelessWidget {
   final String sport;
-  const _GameImagePlaceholder({required this.sport});
+  final bool isDark;
+  const _GameImagePlaceholder({required this.sport, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
@@ -578,10 +713,15 @@ class _GameImagePlaceholder extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            theme.colorScheme.primary.withValues(alpha: 0.12),
-            theme.colorScheme.secondary.withValues(alpha: 0.08),
-          ],
+          colors: isDark
+              ? [
+                  const Color(0xFF334155),
+                  const Color(0xFF1E293B),
+                ]
+              : [
+                  theme.colorScheme.primary.withValues(alpha: 0.12),
+                  theme.colorScheme.secondary.withValues(alpha: 0.08),
+                ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -593,13 +733,15 @@ class _GameImagePlaceholder extends StatelessWidget {
             Icon(
               Icons.image_outlined,
               size: 42,
-              color: AppColors.textSecondary.withValues(alpha: 0.8),
+              color: isDark
+                  ? const Color(0xFF64748B)
+                  : AppColors.textSecondary.withValues(alpha: 0.8),
             ),
             const SizedBox(height: 8),
             Text(
               sport.isEmpty ? 'Game Image' : '$sport Image',
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                     fontWeight: FontWeight.w600,
                   ),
             ),

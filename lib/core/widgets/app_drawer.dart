@@ -20,9 +20,10 @@ class AppDrawer extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentRoute = ModalRoute.of(context)?.settings.name ?? "";
 
-    final Color drawerBg = isDark ? const Color(0xFF1E293B) : const Color(0xFFE0E7FF);
-    final Color headerBgStart = isDark ? const Color(0xFF3B82F6) : const Color(0xFF93C5FD);
-    final Color headerBgEnd = isDark ? const Color(0xFF1E3A8A) : const Color(0xFF60A5FA);
+    // Premium sidebar color scheme - light blue gradient theme
+    final Color drawerBg = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+    final Color headerBgStart = isDark ? const Color(0xFF3B82F6) : const Color(0xFF0EA5E9);
+    final Color headerBgEnd = isDark ? const Color(0xFF1E40AF) : const Color(0xFF0284C7);
 
     return Drawer(
       backgroundColor: Colors.transparent,
@@ -30,9 +31,21 @@ class AppDrawer extends ConsumerWidget {
       width: MediaQuery.of(context).size.width * 0.85,
       child: Container(
         decoration: BoxDecoration(
-          color: drawerBg,
-          borderRadius: const BorderRadius.only(topRight: Radius.circular(32), bottomRight: Radius.circular(32)),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(isDark ? 0.5 : 0.08), blurRadius: 40, offset: const Offset(10, 0))],
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: isDark 
+              ? [const Color(0xFF0F172A), const Color(0xFF1E293B)]
+              : [const Color(0xFFF8FAFC), const Color(0xFFE0F2FE)],
+          ),
+          borderRadius: const BorderRadius.only(topRight: Radius.circular(28), bottomRight: Radius.circular(28)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.4 : 0.06),
+              blurRadius: 30,
+              offset: const Offset(8, 0),
+            )
+          ],
         ),
         child: Column(
           children: [
@@ -40,8 +53,12 @@ class AppDrawer extends ConsumerWidget {
               width: double.infinity,
               padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 24, bottom: 24, left: 24, right: 24),
               decoration: BoxDecoration(
-                gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [headerBgStart, headerBgEnd]),
-                borderRadius: const BorderRadius.only(topRight: Radius.circular(32)),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [headerBgStart, headerBgEnd],
+                ),
+                borderRadius: const BorderRadius.only(topRight: Radius.circular(28)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,18 +126,17 @@ class AppDrawer extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
                 physics: const BouncingScrollPhysics(),
                 children: [
-                  _MenuLabel(title: "GAMEPLAY", isDark: isDark),
+                  _MenuLabel(title: "🎮 GAMEPLAY", isDark: isDark),
                   _DrawerItem(icon: Icons.dashboard_customize_rounded, label: "Dashboard", isActive: currentRoute == AppRoutes.dashboard, onTap: () => _navigate(context, AppRoutes.dashboard)),
                   _DrawerItem(icon: Icons.sports_esports_rounded, label: "Active Arenas", isActive: currentRoute == AppRoutes.game, onTap: () => _navigate(context, AppRoutes.game)),
                   _DrawerItem(icon: Icons.military_tech_rounded, label: "Tournaments", isActive: currentRoute == AppRoutes.tournaments, onTap: () => _navigate(context, AppRoutes.tournaments)),
                   const SizedBox(height: 24),
-                  _MenuLabel(title: "MANAGEMENT", isDark: isDark),
+                  _MenuLabel(title: "⚙️ SESSION MANAGEMENT", isDark: isDark),
                   _DrawerItem(icon: Icons.wifi_off_rounded, label: "Create Offline Game", isActive: currentRoute == AppRoutes.offlineGames, onTap: () => _navigate(context, AppRoutes.offlineGames)),
                   _DrawerItem(icon: Icons.public_rounded, label: "Create Online Game", isActive: currentRoute == AppRoutes.onlineGames, onTap: () => _navigate(context, AppRoutes.onlineGames)),
-                  _DrawerItem(icon: Icons.emoji_events_rounded, label: "Create Tournament", isActive: currentRoute == AppRoutes.tournamentCreate, onTap: () => _navigate(context, AppRoutes.tournamentCreate)),
                   _DrawerItem(icon: Icons.notifications_active_rounded, label: "Notifications", isActive: currentRoute == AppRoutes.notifications, onTap: () => _navigate(context, AppRoutes.notifications)),
                   const SizedBox(height: 24),
-                  _MenuLabel(title: "ACCOUNT", isDark: isDark),
+                  _MenuLabel(title: "👤 ACCOUNT", isDark: isDark),
                   _DrawerItem(icon: Icons.person_rounded, label: "Profile Info", isActive: currentRoute == AppRoutes.profile, onTap: () => _navigate(context, AppRoutes.profile)),
                   _DrawerItem(icon: Icons.settings_rounded, label: "Preferences", isActive: currentRoute == AppRoutes.settings, onTap: () => _navigate(context, AppRoutes.settings)),
                 ],
@@ -162,8 +178,18 @@ class _MenuLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 12, bottom: 8),
-      child: Text(title, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1.5, color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary)),
+      padding: const EdgeInsets.only(left: 8, bottom: 12, top: 8),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 1.2,
+          color: isDark
+              ? AppColors.textSecondaryDark.withOpacity(0.7)
+              : const Color(0xFF64748B),
+        ),
+      ),
     );
   }
 }
