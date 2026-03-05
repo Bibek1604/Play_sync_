@@ -153,31 +153,25 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                         
                         const SizedBox(height: 32),
 
-                        // Sections
+                        // Games I Created Section
                         _GamesSection(
-                          title: "Offline / Local Games",
-                          games: gameState.myCreatedGames, // Using created as placeholder for offline if needed
+                          title: "🎮 Games I Created",
+                          games: gameState.myCreatedGames,
                           isLoading: gameState.isLoading && gameState.myCreatedGames.isEmpty,
-                          emptyText: "No offline sessions",
+                          emptyText: "You haven't created any games yet",
                           currentUserId: currentUserId,
+                          isCreatorSection: true,
                         ),
                         const SizedBox(height: 28),
                         
+                        // Games I Joined Section
                         _GamesSection(
-                          title: "Online / Remote Games",
-                          games: gameState.myJoinedGames, // Using joined as placeholder for online
+                          title: "🏆 Games I Joined",
+                          games: gameState.myJoinedGames,
                           isLoading: gameState.isLoading && gameState.myJoinedGames.isEmpty,
-                          emptyText: "No online games joined",
+                          emptyText: "You haven't joined any games yet",
                           currentUserId: currentUserId,
-                        ),
-                        const SizedBox(height: 28),
-                        
-                        _GamesSection(
-                          title: "Other Activity",
-                          games: const [], // Placeholder for other things
-                          isLoading: false,
-                          emptyText: "No other activity available",
-                          currentUserId: currentUserId,
+                          isCreatorSection: false,
                         ),
                         
                         const SizedBox(height: 40),
@@ -356,6 +350,7 @@ class _GamesSection extends StatelessWidget {
   final bool isLoading;
   final String emptyText;
   final String? currentUserId;
+  final bool isCreatorSection;
 
   const _GamesSection({
     required this.title,
@@ -363,6 +358,7 @@ class _GamesSection extends StatelessWidget {
     required this.isLoading,
     required this.emptyText,
     required this.currentUserId,
+    required this.isCreatorSection,
   });
 
   @override
@@ -421,13 +417,18 @@ class _GamesSection extends StatelessWidget {
             height: 250,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
               itemCount: games.length,
               itemBuilder: (context, index) {
+                final game = games[index];
                 return Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: GameTileWidget(
-                    game: games[index],
-                    currentUserId: currentUserId,
+                  padding: EdgeInsets.only(right: 12, left: index == 0 ? 4 : 0),
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.72,
+                    child: GameTileWidget(
+                      game: game,
+                      currentUserId: currentUserId,
+                    ),
                   ),
                 );
               },

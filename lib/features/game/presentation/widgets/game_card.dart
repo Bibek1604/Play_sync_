@@ -227,10 +227,14 @@ class _GameCardState extends ConsumerState<GameCard> {
                             if (widget.game.creatorName.isNotEmpty)
                               Row(
                                 children: [
-                                  Text(
-                                    'by ${widget.game.creatorName}',
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                          color: theme.colorScheme.onSurfaceVariant),
+                                  Flexible(
+                                    child: Text(
+                                      'by ${widget.game.creatorName}',
+                                      style: theme.textTheme.bodySmall?.copyWith(
+                                            color: theme.colorScheme.onSurfaceVariant),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
                                   ),
                                   if (_isCreator) ...[
                                     const SizedBox(width: 6),
@@ -252,12 +256,18 @@ class _GameCardState extends ConsumerState<GameCard> {
                           ],
                         ),
                       ),
-                      // Leave space for the delete icon when creator
-                      if (_isCreator) const SizedBox(width: 38),
-                      const SizedBox(width: 8),
-                      _CategoryChip(category: widget.game.category),
-                      const SizedBox(width: 6),
-                      _StatusChip(status: widget.game.status),
+                      // Chips wrapped in Flexible to prevent overflow
+                      Flexible(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (_isCreator) const SizedBox(width: 8),
+                            _CategoryChip(category: widget.game.category),
+                            const SizedBox(width: 6),
+                            _StatusChip(status: widget.game.status),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
 

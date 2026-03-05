@@ -8,6 +8,7 @@ import '../../../auth/presentation/view_model/auth_viewmodel.dart';
 import '../../domain/entities/message_entity.dart';
 import '../notifiers/game_chat_notifier.dart';
 import '../../../game/domain/entities/game_entity.dart';
+import '../../../game/presentation/providers/game_notifier.dart';
 import '../../../../core/services/socket_service.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import '../../data/models/message_model.dart';
@@ -192,6 +193,7 @@ class _GameChatRoomPageState extends ConsumerState<GameChatRoomPage> {
   @override
   Widget build(BuildContext context) {
     final chatState = ref.watch(gameChatNotifierProvider(widget.gameId));
+    final gameState = ref.watch(gameProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -204,6 +206,82 @@ class _GameChatRoomPageState extends ConsumerState<GameChatRoomPage> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) setState(() => _currentUserId = bestId);
       });
+    }
+
+    // ── ACCESS CONTROL: Check if user has access to this chat ──────────
+    GameEntity? currentGame;
+    
+    // Try to find the game in created games
+    try {
+      currentGame = gameState.myCreatedGames.firstWhere(
+        (g) => g.id == widget.gameId,
+      );
+    } catch (_) {
+      // Try to find in joined games
+      try {
+        currentGame = gameState.myJoinedGames.firstWhere(
+          (g) => g.id == widget.gameId,
+        );
+      } catch (_) {
+        // Game not found in either list
+      }
+    }
+
+    // Check if user has access (is creator or participant)
+    final bool hasAccess = currentGame != null && bestId.isNotEmpty && 
+        (currentGame.isCreator(bestId) || currentGame.isParticipant(bestId));
+
+    // If no access, show access denied screen
+    if (!hasAccess && bestId.isNotEmpty) {
+      return Scaffold(
+        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.background,
+        appBar: AppBar(
+          title: Text(widget.gameTitle),
+          backgroundColor: isDark ? AppColors.surfaceDark : Colors.white,
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.lock_outline_rounded,
+                  size: 80,
+                  color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Chat Access Restricted',
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'You must join this game to access the chat.',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                ElevatedButton.icon(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.arrow_back),
+                  label: const Text('Go Back'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
     }
 
     // Auto-scroll when message count grows
