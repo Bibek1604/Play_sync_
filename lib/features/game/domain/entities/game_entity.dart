@@ -10,7 +10,17 @@ String? _resolveImageUrl(String? url) {
   if (url == null || url.isEmpty) return null;
   if (url.startsWith('http://') || url.startsWith('https://')) return url;
   // Relative path like /uploads/... — prepend server base
-  return '${ApiEndpoints.imageBaseUrl}$url';
+  return url.startsWith('/')
+      ? '${ApiEndpoints.imageBaseUrl}$url'
+      : '${ApiEndpoints.imageBaseUrl}/$url';
+}
+
+String? _extractGameImage(Map<String, dynamic> json) {
+  final raw = json['imageUrl'] as String? ??
+      json['image'] as String? ??
+      json['coverImage'] as String? ??
+      json['thumbnail'] as String?;
+  return _resolveImageUrl(raw);
 }
 
 /// Backend participant statuses
@@ -215,7 +225,7 @@ class GameEntity extends Equatable {
       location: json['location'] != null ? GeoLocation.fromJson(json['location'] as Map<String, dynamic>) : null,
       tags: List<String>.from(json['tags'] as List? ?? []),
       participants: parsedParticipants,
-      image: json['image'] as String?,
+      image: _extractGameImage(json),
       createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now(),
       updatedAt: DateTime.tryParse(json['updatedAt']?.toString() ?? '') ?? DateTime.now(),
     );

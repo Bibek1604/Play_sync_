@@ -85,7 +85,7 @@ class TournamentChatNotifier extends StateNotifier<TournamentChatState> {
     );
 
     // Load cached messages first
-    final cached = _localDs.getCachedChatMessages(tournamentId);
+    final cached = await _localDs.getCachedChatMessages(tournamentId);
     if (cached != null && cached.isNotEmpty) {
       state = state.copyWith(messages: cached);
     }

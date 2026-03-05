@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_theme.dart';
 import '../providers/leaderboard_provider.dart';
 import '../widgets/leaderboard_row.dart';
 import '../widgets/leaderboard_podium.dart';
-import '../widgets/xp_bar_chart.dart';
 import '../../domain/value_objects/leaderboard_filter.dart';
-import '../../../../core/widgets/app_drawer.dart';
 
 class LeaderboardPage extends ConsumerWidget {
   static const routeName = '/leaderboard';
@@ -17,24 +14,39 @@ class LeaderboardPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state    = ref.watch(leaderboardProvider);
     final notifier = ref.read(leaderboardProvider.notifier);
+    final canPop   = Navigator.of(context).canPop();
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded),
+        leading: canPop ? IconButton(
+          icon: const Icon(Icons.arrow_back_ios_rounded, size: 20),
           onPressed: () => Navigator.of(context).pop(),
+        ) : null,
+        title: const Text(
+          'Champions',
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            fontSize: 22,
+            letterSpacing: -1.0,
+          ),
         ),
-        title: const Text('Leaderboard'),
-        backgroundColor: AppColors.surface,
-        surfaceTintColor: Colors.transparent,
-        scrolledUnderElevation: 0.5,
-        shadowColor: AppColors.border,
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        centerTitle: false,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.tune_rounded, color: AppColors.textSecondary),
-            tooltip: 'Filter',
-            onPressed: () => _showFilterSheet(context, ref, state.filter),
+          Container(
+            margin: const EdgeInsets.only(right: 16),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.tune_rounded, size: 20, color: AppColors.primary),
+              tooltip: 'Filter',
+              onPressed: () => _showFilterSheet(context, ref, state.filter),
+            ),
           ),
         ],
       ),
@@ -77,23 +89,41 @@ class LeaderboardPage extends ConsumerWidget {
 
     return RefreshIndicator(
       color: AppColors.primary,
+      backgroundColor: AppColors.surface,
+      strokeWidth: 3,
       onRefresh: notifier.load,
       child: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
         slivers: [
-          // ── Filter pill ──────────────────────────────────────────
+          // ── Header Section ─────────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Row(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _FilterPill(
-                    label: state.filter.scope.name,
-                    icon: Icons.public_rounded,
+                  Text(
+                    'Hall of Fame'.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.textTertiary.withValues(alpha: 0.6),
+                      letterSpacing: 2.0,
+                    ),
                   ),
-                  const SizedBox(width: 8),
-                  _FilterPill(
-                    label: state.filter.period.name,
-                    icon: Icons.calendar_today_rounded,
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      _FilterPill(
+                        label: state.filter.scope.name.toUpperCase(),
+                        icon: Icons.public_rounded,
+                      ),
+                      const SizedBox(width: 8),
+                      _FilterPill(
+                        label: state.filter.period.name.toUpperCase(),
+                        icon: Icons.calendar_today_rounded,
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -104,7 +134,7 @@ class LeaderboardPage extends ConsumerWidget {
           if (top3.length == 3)
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                 child: LeaderboardPodium(
                   firstUsername:  top3[0].fullName,
                   secondUsername: top3[1].fullName,
@@ -119,40 +149,9 @@ class LeaderboardPage extends ConsumerWidget {
               ),
             ),
 
-          // ── XP Bar Chart ──────────────────────────────────────────
-          if (state.entries.isNotEmpty)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                child: Container(
-                  padding: EdgeInsets.all(AppSpacing.lg),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'XP Distribution',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      SizedBox(height: AppSpacing.md),
-                      XpBarChart(entries: state.entries),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
           // ── Rest of the list ──────────────────────────────────────
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate(
                 (ctx, i) {
@@ -166,7 +165,7 @@ class LeaderboardPage extends ConsumerWidget {
                     }
                     if (state.hasMore) {
                       return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         child: OutlinedButton(
                           onPressed: notifier.loadMore,
                           style: OutlinedButton.styleFrom(
@@ -180,7 +179,7 @@ class LeaderboardPage extends ConsumerWidget {
                         ),
                       );
                     }
-                    return const SizedBox(height: 32);
+                    return const SizedBox(height: 100);
                   }
                   return LeaderboardRow(entry: rest[i]);
                 },

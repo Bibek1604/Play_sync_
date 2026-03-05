@@ -129,33 +129,39 @@ class _EsewaPaymentPageState extends State<EsewaPaymentPage> {
   }
 
   NavigationDecision _handleNavigation(String url) {
-    // eSewa redirects to success/failure URL with `data` query param
-    // Success URL pattern: .../success?data=<base64>
-    // Failure URL pattern: .../failure?data=<base64>
+    // eSewa can redirect with either:
+    // 1) `data=<base64>` callback payload, or
+    // 2) status-only query params (`?status=success|failure`) on classic flow.
 
     final uri = Uri.tryParse(url);
     if (uri == null) return NavigationDecision.navigate;
 
-    // Check for success callback
-    if (url.contains('/success') || url.contains('/payment/verify')) {
-      final data = uri.queryParameters['data'];
-      if (data != null && data.isNotEmpty && !_paymentHandled) {
-        _paymentHandled = true;
-        // Validate it's valid base64
+    final status = uri.queryParameters['status']?.toLowerCase();
+    final isSuccessCallback =
+        url.contains('/success') || url.contains('/payment/verify') || status == 'success';
+    final isFailureCallback =
+        url.contains('/failure') || url.contains('/cancel') || status == 'failure';
+
+    if (isSuccessCallback && !_paymentHandled) {
+      _paymentHandled = true;
+      final data = uri.queryParameters['data'] ?? '';
+
+      // Validate it's valid base64 when present.
+      if (data.isNotEmpty) {
         try {
           base64Decode(data);
         } catch (_) {
-          // Not valid base64, pass it anyway — backend will handle
+          // Not valid base64; backend fallback verification handles this flow.
         }
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) Navigator.pop(context, data);
-        });
-        return NavigationDecision.prevent;
       }
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) Navigator.pop(context, data);
+      });
+      return NavigationDecision.prevent;
     }
 
-    // Check for failure/cancel callback
-    if (url.contains('/failure') || url.contains('/cancel')) {
+    if (isFailureCallback) {
       if (!_paymentHandled) {
         _paymentHandled = true;
         WidgetsBinding.instance.addPostFrameCallback((_) {

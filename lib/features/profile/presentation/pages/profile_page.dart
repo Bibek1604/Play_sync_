@@ -1,349 +1,78 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:play_sync_new/core/api/api_client.dart';
-import 'package:play_sync_new/core/api/api_endpoints.dart';
-import 'package:play_sync_new/core/constants/app_colors.dart';
-import 'package:play_sync_new/features/profile/data/models/profile_response_model.dart';
-import 'package:play_sync_new/features/profile/domain/entities/profile_entity.dart';
-import 'package:play_sync_new/features/profile/presentation/pages/edit_profile_page.dart';
-import 'package:play_sync_new/features/profile/presentation/viewmodel/profile_notifier.dart';
-import 'package:play_sync_new/core/widgets/app_drawer.dart';
+import "package:flutter/material.dart";
+import "package:flutter_riverpod/flutter_riverpod.dart";
+import "package:play_sync_new/app/routes/app_routes.dart";
+import "package:play_sync_new/core/constants/app_colors.dart";
+import "../viewmodel/profile_notifier.dart";
 
-/// Profile Page - View user profile
-/// 
-/// Pass [userId] to view another user's profile.
-/// When [userId] is null, the current user's own profile is shown.
 class ProfilePage extends ConsumerStatefulWidget {
-  /// Optional user ID for visiting another user's profile.
-  final String? userId;
-  const ProfilePage({super.key, this.userId});
+  const ProfilePage({super.key});
 
   @override
   ConsumerState<ProfilePage> createState() => _ProfilePageState();
 }
 
 class _ProfilePageState extends ConsumerState<ProfilePage> {
-  ProfileEntity? _visitedProfile;
-  bool _visitedLoading = false;
-  String? _visitedError;
-
-  bool get _isOwnProfile => widget.userId == null;
-
   @override
   void initState() {
     super.initState();
-    if (_isOwnProfile) {
-      Future.microtask(
-          () => ref.read(profileNotifierProvider.notifier).getProfile());
-    } else {
-      _fetchVisitedProfile();
-    }
-  }
-
-  Future<void> _fetchVisitedProfile() async {
-    setState(() {
-      _visitedLoading = true;
-      _visitedError = null;
-    });
-    try {
-      final api = ref.read(apiClientProvider);
-      final response =
-          await api.get(ApiEndpoints.getProfileById(widget.userId!));
-      final model = ProfileResponseModel.fromJson(response.data);
-      if (mounted) {
-        setState(() {
-          _visitedProfile = model.toEntity();
-          _visitedLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _visitedError = e.toString();
-          _visitedLoading = false;
-        });
-      }
-    }
+    Future.microtask(() => ref.read(profileNotifierProvider.notifier).getProfile());
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final state = ref.watch(profileNotifierProvider);
+    final profile = state.profile;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Own-profile path uses the notifier; visited-profile path uses local state
-    final isLoading =
-        _isOwnProfile ? ref.watch(profileNotifierProvider).isLoading : _visitedLoading;
-    final error =
-        _isOwnProfile ? ref.watch(profileNotifierProvider).error : _visitedError;
-    final profile =
-        _isOwnProfile ? ref.watch(profileNotifierProvider).profile : _visitedProfile;
+    if (state.isLoading && profile == null) {
+      return Scaffold(
+        backgroundColor: isDark ? AppColors.backgroundDark : Colors.white,
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text(_isOwnProfile ? 'Profile' : (profile?.fullName ?? 'Profile')),
-        actions: [
-          if (_isOwnProfile)
-            IconButton(
-              icon: const Icon(Icons.edit),
-              onPressed: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const EditProfilePage()),
-                );
-                if (mounted) {
-                  ref.read(profileNotifierProvider.notifier).getProfile();
-                }
-              },
-            ),
-        ],
-      ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : error != null
-              ? _ErrorView(
-                  error: error,
-                  onRetry: _isOwnProfile
-                      ? () => ref
-                          .read(profileNotifierProvider.notifier)
-                          .getProfile()
-                      : _fetchVisitedProfile,
-                  isDark: isDark,
-                )
-              : profile == null
-                  ? _EmptyView(isDark: isDark)
-                  : RefreshIndicator(
-                      onRefresh: _isOwnProfile
-                          ? () => ref
-                              .read(profileNotifierProvider.notifier)
-                              .getProfile()
-                          : () => _fetchVisitedProfile(),
-                      child: SingleChildScrollView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        child: Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Column(
-                            children: [
-                              // Profile Header
-                              _ProfileHeader(
-                                profile: profile,
-                                isDark: isDark,
-                              ),
-
-                              const SizedBox(height: 24),
-
-                              // XP & Level Section
-                              _XpLevelCard(
-                                profile: profile,
-                                isDark: isDark,
-                              ),
-
-                              const SizedBox(height: 20),
-
-                              // Stats Row
-                              _StatsRow(
-                                profile: profile,
-                                isDark: isDark,
-                              ),
-
-                              const SizedBox(height: 24),
-
-                              // Profile Info Cards
-                              _InfoCard(
-                                icon: Icons.phone,
-                                title: 'Phone',
-                                value: profile.phone ?? 'Not set',
-                                isDark: isDark,
-                              ),
-
-                              const SizedBox(height: 12),
-
-                              _InfoCard(
-                                icon: Icons.location_on,
-                                title: 'Location',
-                                value: profile.place ?? 'Not set',
-                                isDark: isDark,
-                              ),
-
-                              const SizedBox(height: 12),
-
-                              _InfoCard(
-                                icon: Icons.info_outline,
-                                title: 'Bio',
-                                value: profile.bio ?? 'No bio yet',
-                                isDark: isDark,
-                                maxLines: 3,
-                              ),
-
-                              const SizedBox(height: 12),
-
-                              _InfoCard(
-                                icon: Icons.sports_esports,
-                                title: 'Favorite Game',
-                                value: profile.favoriteGame ?? 'Not set',
-                                isDark: isDark,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+      backgroundColor: isDark ? AppColors.backgroundDark : Colors.white,
+      body: RefreshIndicator(
+        onRefresh: () => ref.read(profileNotifierProvider.notifier).getProfile(),
+        child: CustomScrollView(
+          slivers: [
+            _buildAppBar(isDark, profile?.fullName ?? "Gamer", profile?.avatar),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildStatsGrid(
+                      isDark: isDark,
+                      wins: profile?.wins ?? 0,
+                      level: profile?.level ?? 1,
+                      xp: profile?.xp ?? 0,
                     ),
-    );
-  }
-}
-
-/// XP & Level Card
-class _XpLevelCard extends StatelessWidget {
-  final ProfileEntity profile;
-  final bool isDark;
-
-  const _XpLevelCard({required this.profile, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.7)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Level ${profile.level}',
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                    const SizedBox(height: 28),
+                    _buildSectionHeader("Account Details", isDark),
+                    const SizedBox(height: 14),
+                    _buildProfileTile(Icons.alternate_email_rounded, "Email Address", profile?.email ?? "-", isDark),
+                    _buildProfileTile(Icons.phone_iphone_rounded, "Phone Number", profile?.phone ?? "-", isDark),
+                    _buildProfileTile(Icons.location_on_outlined, "Region", profile?.place ?? "-", isDark),
+                    _buildProfileTile(Icons.sports_esports_rounded, "Favorite Game", profile?.favoriteGame ?? "-", isDark),
+                    const SizedBox(height: 28),
+                    _buildSectionHeader("Actions", isDark),
+                    const SizedBox(height: 14),
+                    _buildActionTile(Icons.edit_rounded, "Edit Profile", isDark, () => Navigator.pushNamed(context, AppRoutes.settings)),
+                    _buildActionTile(Icons.pin_drop_outlined, "Update Location", isDark, () => Navigator.pushNamed(context, AppRoutes.location)),
+                    _buildActionTile(Icons.settings_rounded, "Preferences", isDark, () => Navigator.pushNamed(context, AppRoutes.settings)),
+                    if (state.error != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        state.error!,
+                        style: const TextStyle(color: AppColors.error, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                    const SizedBox(height: 36),
+                  ],
                 ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '${profile.xp} XP',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
-              value: profile.xpProgress,
-              minHeight: 8,
-              backgroundColor: Colors.white.withValues(alpha: 0.2),
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              '${(profile.xpProgress * 100).toStringAsFixed(0)}% to Level ${profile.level + 1}',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.white.withValues(alpha: 0.8),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Stats Row (Games, Wins, Losses, Win Rate)
-class _StatsRow extends StatelessWidget {
-  final ProfileEntity profile;
-  final bool isDark;
-
-  const _StatsRow({required this.profile, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        _StatTile(label: 'Games', value: '${profile.totalGames}', isDark: isDark),
-        const SizedBox(width: 12),
-        _StatTile(label: 'Wins', value: '${profile.wins}', isDark: isDark, color: AppColors.success),
-        const SizedBox(width: 12),
-        _StatTile(label: 'Losses', value: '${profile.losses}', isDark: isDark, color: AppColors.error),
-        const SizedBox(width: 12),
-        _StatTile(
-          label: 'Win Rate',
-          value: '${(profile.winRate * 100).toStringAsFixed(0)}%',
-          isDark: isDark,
-          color: AppColors.primary,
-        ),
-      ],
-    );
-  }
-}
-
-class _StatTile extends StatelessWidget {
-  final String label;
-  final String value;
-  final bool isDark;
-  final Color? color;
-
-  const _StatTile({required this.label, required this.value, required this.isDark, this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.cardDark : AppColors.background,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isDark ? AppColors.borderDark : AppColors.border,
-          ),
-        ),
-        child: Column(
-          children: [
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: color ?? (isDark ? AppColors.secondary : AppColors.primaryDark),
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
               ),
             ),
           ],
@@ -351,272 +80,150 @@ class _StatTile extends StatelessWidget {
       ),
     );
   }
-}
 
-/// Profile Header Widget
-class _ProfileHeader extends StatelessWidget {
-  final ProfileEntity profile;
-  final bool isDark;
-
-  const _ProfileHeader({
-    required this.profile,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Profile Picture
-        Container(
-          width: 120,
-          height: 120,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              colors: isDark
-                  ? [AppColors.primaryDark, AppColors.primary]
-                  : [AppColors.primary, AppColors.primaryLight],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
+  Widget _buildAppBar(bool isDark, String name, String? avatarUrl) {
+    return SliverAppBar(
+      expandedHeight: 250,
+      pinned: true,
+      stretch: true,
+      backgroundColor: AppColors.backgroundDark,
+      flexibleSpace: FlexibleSpaceBar(
+        stretchModes: const [StretchMode.zoomBackground],
+        background: Stack(
+          fit: StackFit.expand,
+          children: [
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.backgroundDark, AppColors.surfaceDark],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
               ),
-            ],
-          ),
-          child: profile.avatar != null && profile.avatar!.isNotEmpty
-              ? ClipOval(
-                  child: CachedNetworkImage(
-                    // Use the avatar URL itself as the cache key so that after
-                    // an upload (URL changes) the old image is not served from
-                    // disk cache.
-                    cacheKey: profile.avatar!,
-                    imageUrl: profile.avatar!,
-                    fit: BoxFit.cover,
-                    width: 120,
-                    height: 120,
-                    placeholder: (_, __) => const Center(
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                    errorWidget: (_, __, ___) => Center(
-                      child: Text(
-                        profile.initials,
-                        style: const TextStyle(
-                          fontSize: 40,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                )
-              : Center(
-                  child: Text(
-                    profile.initials,
-                    style: const TextStyle(
-                        fontSize: 40,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white),
-                  ),
-                ),
-        ),
-
-        const SizedBox(height: 20),
-
-        // Name
-        Text(
-          profile.fullName ?? 'No Name',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: isDark ? AppColors.secondary : AppColors.primaryDark,
-          ),
-        ),
-
-        const SizedBox(height: 8),
-
-        // Email
-        Text(
-          profile.email ?? '',
-          style: TextStyle(
-            fontSize: 14,
-            color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
-          ),
-        ),
-
-        if (profile.role != null) ...[
-          const SizedBox(height: 6),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
             ),
-            child: Text(
-              profile.role!.toUpperCase(),
-              style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-/// Info Card Widget
-class _InfoCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String value;
-  final bool isDark;
-  final int maxLines;
-
-  const _InfoCard({
-    required this.icon,
-    required this.title,
-    required this.value,
-    required this.isDark,
-    this.maxLines = 1,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.cardDark : AppColors.background,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.border,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: AppColors.primary, size: 24),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            Column(
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                  child: CircleAvatar(
+                    radius: 48,
+                    backgroundColor: AppColors.surfaceVariantDark,
+                    backgroundImage: avatarUrl != null && avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
+                    child: avatarUrl == null || avatarUrl.isEmpty
+                        ? const Icon(Icons.person_rounded, size: 56, color: Colors.white70)
+                        : null,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 14),
                 Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? AppColors.secondary : AppColors.primaryDark,
-                  ),
-                  maxLines: maxLines,
-                  overflow: TextOverflow.ellipsis,
+                  name,
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white),
                 ),
+                const SizedBox(height: 28),
               ],
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
-}
 
+  Widget _buildStatsGrid({required bool isDark, required int wins, required int level, required int xp}) {
+    return Row(
+      children: [
+        _buildCompactStat("Wins", wins.toString(), Icons.emoji_events_rounded, isDark),
+        const SizedBox(width: 12),
+        _buildCompactStat("Level", level.toString(), Icons.military_tech_rounded, isDark),
+        const SizedBox(width: 12),
+        _buildCompactStat("XP", xp.toString(), Icons.bolt_rounded, isDark),
+      ],
+    );
+  }
 
-/// Error View
-class _ErrorView extends StatelessWidget {
-  final String error;
-  final VoidCallback onRetry;
-  final bool isDark;
-
-  const _ErrorView({
-    required this.error,
-    required this.onRetry,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
+  Widget _buildCompactStat(String label, String value, IconData icon, bool isDark) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.surfaceDark : AppColors.primary.withOpacity(0.04),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: isDark ? AppColors.borderDark : AppColors.primary.withOpacity(0.1)),
+        ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 80,
-              color: isDark ? AppColors.error.withValues(alpha: 0.7) : AppColors.error,
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Error Loading Profile',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: isDark ? AppColors.secondary : AppColors.primaryDark,
+            Icon(icon, size: 18, color: AppColors.primary),
+            const SizedBox(height: 6),
+            Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: isDark ? Colors.white : AppColors.textPrimary)),
+            Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: isDark ? Colors.white54 : Colors.black45)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, bool isDark) {
+    return Text(
+      title.toUpperCase(),
+      style: TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w900,
+        letterSpacing: 1.3,
+        color: isDark ? AppColors.primary.withOpacity(0.8) : AppColors.primary,
+      ),
+    );
+  }
+
+  Widget _buildProfileTile(IconData icon, String label, String value, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.surfaceDark.withOpacity(0.5) : Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: isDark ? AppColors.borderDark : AppColors.border),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: isDark ? Colors.white54 : Colors.black45),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: TextStyle(fontSize: 11, color: isDark ? Colors.white54 : Colors.black45)),
+                  const SizedBox(height: 2),
+                  Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: isDark ? Colors.white : AppColors.textPrimary),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              error,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 30),
-            ElevatedButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
             ),
           ],
         ),
       ),
     );
   }
-}
 
-/// Empty View
-class _EmptyView extends StatelessWidget {
-  final bool isDark;
-
-  const _EmptyView({required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.person_outline,
-            size: 80,
-            color: isDark ? AppColors.textSecondaryDark : AppColors.textTertiary,
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'No Profile Data',
-            style: TextStyle(
-              fontSize: 18,
-              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
-            ),
-          ),
-        ],
+  Widget _buildActionTile(IconData icon, String title, bool isDark, VoidCallback onTap) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: ListTile(
+        onTap: onTap,
+        dense: true,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: BorderSide(color: isDark ? AppColors.borderDark : AppColors.border),
+        ),
+        tileColor: isDark ? AppColors.surfaceDark : Colors.white,
+        leading: Icon(icon, color: isDark ? Colors.white : AppColors.textPrimary, size: 21),
+        title: Text(title, style: TextStyle(color: isDark ? Colors.white : AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 14)),
+        trailing: Icon(Icons.chevron_right_rounded, color: isDark ? Colors.white24 : Colors.black26),
       ),
     );
   }

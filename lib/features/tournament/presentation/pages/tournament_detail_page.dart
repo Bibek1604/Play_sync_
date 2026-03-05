@@ -1,377 +1,185 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
+import "package:flutter/material.dart";
+import "package:intl/intl.dart";
+import "package:flutter_riverpod/flutter_riverpod.dart";
+import "package:play_sync_new/core/constants/app_colors.dart";
+import "../../domain/entities/tournament_entity.dart";
 
-import '../../../../app/routes/app_routes.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../auth/presentation/providers/auth_notifier.dart';
-import '../../domain/entities/tournament_entity.dart';
-import '../../domain/entities/tournament_payment_entity.dart';
-import '../providers/tournament_notifier.dart';
-import '../providers/tournament_payment_notifier.dart';
-import '../../../../core/widgets/back_button_widget.dart';
-
-/// Detailed view of a single tournament with join / pay / chat actions.
 class TournamentDetailPage extends ConsumerStatefulWidget {
-  final String tournamentId;
+  final TournamentEntity tournament;
 
-  const TournamentDetailPage({super.key, required this.tournamentId});
+  const TournamentDetailPage({Key? key, required this.tournament}) : super(key: key);
 
   @override
-  ConsumerState<TournamentDetailPage> createState() =>
-      _TournamentDetailPageState();
+  ConsumerState<TournamentDetailPage> createState() => _TournamentDetailPageState();
 }
 
 class _TournamentDetailPageState extends ConsumerState<TournamentDetailPage> {
   @override
-  void initState() {
-    super.initState();
-    // Fetch fresh data
-    Future.microtask(() {
-      ref.read(tournamentProvider.notifier).fetchTournamentById(widget.tournamentId);
-      ref.read(tournamentPaymentProvider.notifier).checkPaymentStatus(widget.tournamentId);
-    });
-  }
-
-  String? get _currentUserId =>
-      ref.read(authNotifierProvider).user?.userId;
-
-  @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final tState = ref.watch(tournamentProvider);
-    final pState = ref.watch(tournamentPaymentProvider);
-    final tournament = tState.selectedTournament;
+    final tournament = widget.tournament;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color textColor = isDark ? (AppColors.textPrimaryDark ?? Colors.white) : AppColors.textPrimary;
+    final Color subTextColor = isDark ? (AppColors.textSecondaryDark ?? Colors.grey) : AppColors.textSecondary;
+    final Color surfaceColor = isDark ? (AppColors.surfaceVariantDark ?? Colors.grey[900]!) : Colors.white;
 
     return Scaffold(
-      appBar: AppBar(
-        leading: const Padding(
-          padding: EdgeInsets.all(8.0),
-          child: BackButtonWidget(label: 'Back'),
-        ),
-        leadingWidth: 100,
-        title: Text(tournament?.name ?? 'Tournament'),
-        actions: [
-          if (tournament != null &&
-              _currentUserId != null &&
-              tournament.isCreator(_currentUserId!))
-            PopupMenuButton<String>(
-              onSelected: (v) => _onCreatorAction(v, tournament),
-              itemBuilder: (_) => [
-                const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                const PopupMenuItem(value: 'payments', child: Text('View Payments')),
-                const PopupMenuItem(
-                    value: 'delete',
-                    child: Text('Delete', style: TextStyle(color: Colors.red))),
+      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.background,
+      body: CustomScrollView(
+        slivers: [
+          // Banner Section
+          SliverAppBar(
+            expandedHeight: 280,
+            pinned: true,
+            stretch: true,
+            flexibleSpace: FlexibleSpaceBar(
+              background: Container(
+                color: AppColors.primary.withOpacity(0.1), 
+                child: Icon(Icons.emoji_events, size: 80, color: AppColors.primary.withOpacity(0.5))
+              ),
+              stretchModes: const [
+                StretchMode.zoomBackground,
+                StretchMode.fadeTitle,
               ],
             ),
-        ],
-      ),
-      body: tState.isLoading && tournament == null
-          ? const Center(child: CircularProgressIndicator())
-          : tState.error != null && tournament == null
-              ? _buildError(tState.error!)
-              : tournament == null
-                  ? const Center(child: Text('Tournament not found'))
-                  : _buildBody(tournament, pState, theme),
-    );
-  }
-
-  Widget _buildError(String error) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.error_outline, size: 48, color: AppColors.error),
-          const SizedBox(height: 12),
-          Text(error, textAlign: TextAlign.center),
-          const SizedBox(height: 12),
-          FilledButton.icon(
-            onPressed: () => ref
-                .read(tournamentProvider.notifier)
-                .fetchTournamentById(widget.tournamentId),
-            icon: const Icon(Icons.refresh),
-            label: const Text('Retry'),
           ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildBody(
-    TournamentEntity t,
-    TournamentPaymentState pState,
-    ThemeData theme,
-  ) {
-    final df = DateFormat('MMM d, yyyy • h:mm a');
-    final isCreator = _currentUserId != null && t.isCreator(_currentUserId!);
-    final isParticipant = _currentUserId != null && t.isParticipant(_currentUserId!);
-    final isPaid = pState.lastPayment?.status == PaymentStatus.success;
-
-    return RefreshIndicator(
-      onRefresh: () async {
-        await ref
-            .read(tournamentProvider.notifier)
-            .fetchTournamentById(widget.tournamentId);
-      },
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // ── Header ────────────────────────────────────────────────────
-          Text(t.name, style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          if (t.description != null)
-            Text(t.description!, style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600)),
-          const SizedBox(height: 16),
-
-          // ── Info Grid ─────────────────────────────────────────────────
-          Card(
+          // Content Section
+          SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _DetailRow(label: 'Status', value: t.status.name.toUpperCase()),
-                  _DetailRow(label: 'Type', value: t.type),
-                  _DetailRow(label: 'Players', value: '${t.currentPlayers} / ${t.maxPlayers}'),
-                  if (t.entryFee > 0)
-                    _DetailRow(label: 'Entry Fee', value: 'Rs. ${t.entryFee}'),
-                  if (t.prize != null)
-                    _DetailRow(label: 'Prize', value: t.prize!),
-                  if (t.startDate != null)
-                    _DetailRow(label: 'Start', value: df.format(t.startDate!)),
-                  if (t.endDate != null)
-                    _DetailRow(label: 'End', value: df.format(t.endDate!)),
-                  if (t.game != null)
-                    _DetailRow(label: 'Game', value: t.game!),
+                  // Title and Category
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          tournament.name,
+                          style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: textColor, letterSpacing: -0.5),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          tournament.game ?? "Various",
+                          style: const TextStyle(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Key Stats Row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildStatItem("Prize", tournament.prize ?? "Trophy", Icons.emoji_events, isDark),
+                      _buildStatItem("Players", "${tournament.currentPlayers}/${tournament.maxPlayers}", Icons.people_alt, isDark),
+                      _buildStatItem("Entry Fee", tournament.entryFee == 0 ? "Free" : "NPR ${tournament.entryFee}", Icons.confirmation_number, isDark),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Event Schedule Card
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: surfaceColor,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: isDark ? (AppColors.borderDark ?? Colors.grey[800]!) : AppColors.border),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("EVENT SCHEDULE", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: subTextColor, letterSpacing: 0.8)),
+                        const SizedBox(height: 16),
+                        _buildScheduleItem(
+                          "Starting Date", 
+                          tournament.startDate != null ? DateFormat("MMMM dd, yyyy").format(tournament.startDate!) : "To Be Decided", 
+                          Icons.calendar_today, 
+                          isDark
+                        ),
+                        const Divider(height: 24, thickness: 0.5),
+                        _buildScheduleItem("Type", tournament.type.toUpperCase(), Icons.layers_outlined, isDark),
+                        const Divider(height: 24, thickness: 0.5),
+                        _buildScheduleItem("Platform", "Online / Local", Icons.monitor, isDark),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Description
+                  Text("ABOUT TOURNAMENT", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: subTextColor, letterSpacing: 0.8)),
+                  const SizedBox(height: 12),
+                  Text(
+                    tournament.description ?? "This tournament is open to all skill levels. Join us for a competitive and fun environment where you can showcase your gaming skills and win amazing prizes. Rules will be shared upon registration.",
+                    style: TextStyle(fontSize: 15, color: subTextColor, height: 1.6),
+                  ),
+                  const SizedBox(height: 100), // Spacing for bottom button
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 16),
-
-          // ── Rules ─────────────────────────────────────────────────────
-          if (t.rules != null && t.rules!.isNotEmpty) ...[
-            Text('Rules', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(t.rules!, style: theme.textTheme.bodyMedium),
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
-
-          // ── Participants ──────────────────────────────────────────────
-          Text('Participants (${t.participants.length})',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          if (t.participants.isEmpty)
-            const Card(child: ListTile(title: Text('No participants yet')))
-          else
-            Card(
-              child: Column(
-                children: t.participants
-                    .take(10)
-                    .map((p) => ListTile(
-                          leading: CircleAvatar(
-                            backgroundImage: p.avatar != null
-                                ? NetworkImage(p.avatar!)
-                                : null,
-                            child: p.avatar == null
-                                ? Text((p.fullName ?? '?')[0].toUpperCase())
-                                : null,
-                          ),
-                          title: Text(p.fullName ?? 'Participant'),
-                        ))
-                    .toList(),
-              ),
-            ),
-          const SizedBox(height: 24),
-
-          // ── Action Buttons ────────────────────────────────────────────
-          _buildActions(t, isCreator, isParticipant, isPaid, pState),
-          const SizedBox(height: 32),
         ],
+      ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: surfaceColor,
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))],
+        ),
+        child: SafeArea(
+          child: ElevatedButton(
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Registration requested!")),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 56),
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              backgroundColor: AppColors.primary,
+            ),
+            child: const Text("JOIN TOURNAMENT", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: 1.1)),
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildActions(
-    TournamentEntity t,
-    bool isCreator,
-    bool isParticipant,
-    bool isPaid,
-    TournamentPaymentState pState,
-  ) {
+  Widget _buildStatItem(String label, String value, IconData icon, bool isDark) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Join via payment
-        if (!isCreator &&
-            !isParticipant &&
-            t.requiresPayment &&
-            t.isJoinable) ...[
-          FilledButton.icon(
-            onPressed: pState.flowStatus == PaymentFlowStatus.initiating
-                ? null
-                : () => _initiatePayment(),
-            icon: const Icon(Icons.payment),
-            label: Text(
-              pState.flowStatus == PaymentFlowStatus.initiating
-                  ? 'Processing...'
-                  : 'Pay & Join (Rs. ${t.entryFee})',
-            ),
-          ),
-          const SizedBox(height: 8),
-        ],
-
-        // Free join (no entry fee)
-        if (!isCreator &&
-            !isParticipant &&
-            !t.requiresPayment &&
-            t.isJoinable)
-          FilledButton.icon(
-            onPressed: () {}, // TODO: implement free join
-            icon: const Icon(Icons.person_add),
-            label: const Text('Join Tournament'),
-          ),
-
-        // Chat access (for paid / creator / free tournaments)
-        if ((isCreator || isParticipant || isPaid) &&
-            t.status != TournamentStatus.cancelled) ...[
-          const SizedBox(height: 8),
-          OutlinedButton.icon(
-            onPressed: () => Navigator.pushNamed(
-              context,
-              AppRoutes.tournamentChat,
-              arguments: {
-                'tournamentId': t.id,
-                'tournamentName': t.name,
-              },
-            ),
-            icon: const Icon(Icons.chat_bubble_outline),
-            label: const Text('Tournament Chat'),
-          ),
-        ],
-
-        // Payment status message
-        if (pState.flowStatus == PaymentFlowStatus.success) ...[
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.green.shade50,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.green.shade300),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.green.shade700, size: 20),
-                const SizedBox(width: 8),
-                const Text('Payment successful! You can now access the chat.'),
-              ],
-            ),
-          ),
-        ],
+        Icon(icon, color: AppColors.primary, size: 28),
+        const SizedBox(height: 10),
+        Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: isDark ? Colors.white : AppColors.textPrimary)),
+        const SizedBox(height: 4),
+        Text(label, style: TextStyle(fontSize: 11, color: isDark ? (AppColors.textSecondaryDark ?? Colors.grey) : AppColors.textSecondary, letterSpacing: 0.5)),
       ],
     );
   }
 
-  void _initiatePayment() async {
-    final notifier = ref.read(tournamentPaymentProvider.notifier);
-    await notifier.initiatePayment(widget.tournamentId);
-
-    if (!mounted) return;
-    final pState = ref.read(tournamentPaymentProvider);
-
-    if (pState.flowStatus == PaymentFlowStatus.awaitingPayment &&
-        pState.paymentInitiation != null) {
-      // Navigate to eSewa WebView
-      final result = await Navigator.pushNamed(
-        context,
-        AppRoutes.esewaPayment,
-        arguments: {
-          'paymentUrl': pState.paymentInitiation!.paymentUrl,
-          'params': pState.paymentInitiation!.params,
-          'tournamentId': widget.tournamentId,
-        },
-      );
-
-      // result is the base64 data from eSewa callback
-      if (result is String && result.isNotEmpty) {
-        await notifier.verifyPayment(result);
-        if (mounted) {
-          ref.read(tournamentProvider.notifier).fetchTournamentById(widget.tournamentId);
-        }
-      }
-    }
-  }
-
-  void _onCreatorAction(String action, TournamentEntity tournament) async {
-    switch (action) {
-      case 'edit':
-        Navigator.pushNamed(
-          context,
-          AppRoutes.tournamentCreate,
-          arguments: {'tournament': tournament},
-        );
-        break;
-      case 'payments':
-        Navigator.pushNamed(
-          context,
-          AppRoutes.tournamentPayments,
-          arguments: {'tournamentId': tournament.id},
-        );
-        break;
-      case 'delete':
-        final confirm = await showDialog<bool>(
-          context: context,
-          builder: (_) => AlertDialog(
-            title: const Text('Delete Tournament?'),
-            content: const Text('This action cannot be undone.'),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-              FilledButton(
-                onPressed: () => Navigator.pop(context, true),
-                style: FilledButton.styleFrom(backgroundColor: Colors.red),
-                child: const Text('Delete'),
-              ),
-            ],
-          ),
-        );
-        if (confirm == true && mounted) {
-          final success =
-              await ref.read(tournamentProvider.notifier).deleteTournament(tournament.id);
-          if (success && mounted) Navigator.pop(context);
-        }
-        break;
-    }
-  }
-}
-
-// ── Helpers ─────────────────────────────────────────────────────────────────
-
-class _DetailRow extends StatelessWidget {
-  final String label;
-  final String value;
-  const _DetailRow({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 100,
-            child: Text(label,
-                style: TextStyle(
-                    fontWeight: FontWeight.w500, color: Colors.grey.shade600)),
-          ),
-          Expanded(child: Text(value)),
-        ],
-      ),
+  Widget _buildScheduleItem(String label, String value, IconData icon, bool isDark) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: AppColors.primary),
+        const SizedBox(width: 12),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: TextStyle(fontSize: 10, color: isDark ? (AppColors.textSecondaryDark ?? Colors.grey) : AppColors.textSecondary)),
+            Text(value, style: TextStyle(fontSize: 14, color: isDark ? Colors.white : AppColors.textPrimary, fontWeight: FontWeight.w600)),
+          ],
+        ),
+      ],
     );
   }
 }

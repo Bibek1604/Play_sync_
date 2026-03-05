@@ -26,12 +26,14 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   
   XFile? _selectedImage;
   final ImagePicker _imagePicker = ImagePicker();
+  bool _prefilled = false;
 
   @override
   void initState() {
     super.initState();
-    // Pre-fill form with existing profile data
+    // Always fetch fresh profile for edit page
     Future.microtask(() {
+      ref.read(profileNotifierProvider.notifier).getProfile();
       final profile = ref.read(profileNotifierProvider).profile;
       if (profile != null) {
         _fullNameController.text = profile.fullName ?? '';
@@ -42,6 +44,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         if (profile.favoriteGame != null && profile.favoriteGame!.isNotEmpty) {
           _favoriteGameController.text = profile.favoriteGame!;
         }
+        _prefilled = true;
       }
     });
   }
@@ -146,8 +149,19 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   @override
   Widget build(BuildContext context) {
     final profileState = ref.watch(profileNotifierProvider);
+    final profile = profileState.profile;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+
+    // Fill once when async profile data arrives
+    if (!_prefilled && profile != null) {
+      _fullNameController.text = profile.fullName ?? '';
+      _phoneController.text = profile.phone ?? '';
+      _locationController.text = profile.place ?? '';
+      _bioController.text = profile.bio ?? '';
+      _favoriteGameController.text = profile.favoriteGame ?? '';
+      _prefilled = true;
+    }
 
     // Listen to state changes
     ref.listen<ProfileState>(profileNotifierProvider, (previous, next) {
@@ -212,6 +226,11 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (profileState.isLoading && profile == null)
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 12),
+                    child: LinearProgressIndicator(minHeight: 2),
+                  ),
                 // Profile Picture Section
                 Center(
                   child: Stack(

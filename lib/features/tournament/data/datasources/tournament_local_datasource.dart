@@ -10,21 +10,40 @@ import '../../domain/entities/tournament_payment_entity.dart';
 class TournamentLocalDataSource {
   // ── Tournament list cache ─────────────────────────────────────────────────
 
-  Box get _tournamentsBox => Hive.box(HiveTableConstant.tournamentsBox);
-  Box get _chatBox => Hive.box(HiveTableConstant.tournamentChatBox);
-  Box get _paymentsBox => Hive.box(HiveTableConstant.tournamentPaymentsBox);
+  Future<Box> get _tournamentsBox async {
+    if (!Hive.isBoxOpen(HiveTableConstant.tournamentsBox)) {
+      return await Hive.openBox(HiveTableConstant.tournamentsBox);
+    }
+    return Hive.box(HiveTableConstant.tournamentsBox);
+  }
+
+  Future<Box> get _chatBox async {
+    if (!Hive.isBoxOpen(HiveTableConstant.tournamentChatBox)) {
+      return await Hive.openBox(HiveTableConstant.tournamentChatBox);
+    }
+    return Hive.box(HiveTableConstant.tournamentChatBox);
+  }
+
+  Future<Box> get _paymentsBox async {
+    if (!Hive.isBoxOpen(HiveTableConstant.tournamentPaymentsBox)) {
+      return await Hive.openBox(HiveTableConstant.tournamentPaymentsBox);
+    }
+    return Hive.box(HiveTableConstant.tournamentPaymentsBox);
+  }
 
   /// Cache a list of tournaments
   Future<void> cacheTournaments(
       List<TournamentEntity> tournaments, String cacheKey) async {
+    final box = await _tournamentsBox;
     final jsonList = tournaments.map((t) => t.toJson()).toList();
-    await _tournamentsBox.put(cacheKey, jsonEncode(jsonList));
+    await box.put(cacheKey, jsonEncode(jsonList));
     debugPrint('[TournamentLocal] Cached ${tournaments.length} tournaments ($cacheKey)');
   }
 
   /// Get cached tournaments
-  List<TournamentEntity>? getCachedTournaments(String cacheKey) {
-    final raw = _tournamentsBox.get(cacheKey);
+  Future<List<TournamentEntity>?> getCachedTournaments(String cacheKey) async {
+    final box = await _tournamentsBox;
+    final raw = box.get(cacheKey);
     if (raw == null) return null;
     try {
       final list = jsonDecode(raw as String) as List<dynamic>;
@@ -39,13 +58,15 @@ class TournamentLocalDataSource {
 
   /// Cache a single tournament
   Future<void> cacheTournament(TournamentEntity tournament) async {
-    await _tournamentsBox.put(
+    final box = await _tournamentsBox;
+    await box.put(
         'tournament_${tournament.id}', jsonEncode(tournament.toJson()));
   }
 
   /// Get single cached tournament
-  TournamentEntity? getCachedTournament(String id) {
-    final raw = _tournamentsBox.get('tournament_$id');
+  Future<TournamentEntity?> getCachedTournament(String id) async {
+    final box = await _tournamentsBox;
+    final raw = box.get('tournament_$id');
     if (raw == null) return null;
     try {
       return TournamentEntity.fromJson(
@@ -62,19 +83,21 @@ class TournamentLocalDataSource {
   /// Cache chat messages for a tournament
   Future<void> cacheChatMessages(
       String tournamentId, List<TournamentChatMessage> messages) async {
+    final box = await _chatBox;
     // Keep only the last N messages
     final trimmed = messages.length > _maxCachedMessages
         ? messages.sublist(messages.length - _maxCachedMessages)
         : messages;
     final jsonList = trimmed.map((m) => m.toJson()).toList();
-    await _chatBox.put('chat_$tournamentId', jsonEncode(jsonList));
+    await box.put('chat_$tournamentId', jsonEncode(jsonList));
     debugPrint(
         '[TournamentLocal] Cached ${trimmed.length} chat messages ($tournamentId)');
   }
 
   /// Get cached chat messages
-  List<TournamentChatMessage>? getCachedChatMessages(String tournamentId) {
-    final raw = _chatBox.get('chat_$tournamentId');
+  Future<List<TournamentChatMessage>?> getCachedChatMessages(String tournamentId) async {
+    final box = await _chatBox;
+    final raw = box.get('chat_$tournamentId');
     if (raw == null) return null;
     try {
       final list = jsonDecode(raw as String) as List<dynamic>;
@@ -90,7 +113,7 @@ class TournamentLocalDataSource {
   /// Append a single message and trim
   Future<void> appendChatMessage(
       String tournamentId, TournamentChatMessage message) async {
-    final existing = getCachedChatMessages(tournamentId) ?? [];
+    final existing = await getCachedChatMessages(tournamentId) ?? [];
     // Deduplicate by id
     if (message.id != null && existing.any((m) => m.id == message.id)) return;
     existing.add(message);
@@ -101,12 +124,14 @@ class TournamentLocalDataSource {
 
   Future<void> cachePayments(
       String key, List<TournamentPaymentEntity> payments) async {
+    final box = await _paymentsBox;
     final jsonList = payments.map((p) => p.toJson()).toList();
-    await _paymentsBox.put(key, jsonEncode(jsonList));
+    await box.put(key, jsonEncode(jsonList));
   }
 
-  List<TournamentPaymentEntity>? getCachedPayments(String key) {
-    final raw = _paymentsBox.get(key);
+  Future<List<TournamentPaymentEntity>?> getCachedPayments(String key) async {
+    final box = await _paymentsBox;
+    final raw = box.get(key);
     if (raw == null) return null;
     try {
       final list = jsonDecode(raw as String) as List<dynamic>;
@@ -122,13 +147,17 @@ class TournamentLocalDataSource {
   // ── Clear ─────────────────────────────────────────────────────────────────
 
   Future<void> clearAll() async {
-    await _tournamentsBox.clear();
-    await _chatBox.clear();
-    await _paymentsBox.clear();
+    final tBox = await _tournamentsBox;
+    final cBox = await _chatBox;
+    final pBox = await _paymentsBox;
+    await tBox.clear();
+    await cBox.clear();
+    await pBox.clear();
     debugPrint('[TournamentLocal] All caches cleared');
   }
 
   Future<void> clearChat(String tournamentId) async {
-    await _chatBox.delete('chat_$tournamentId');
+    final box = await _chatBox;
+    await box.delete('chat_$tournamentId');
   }
 }

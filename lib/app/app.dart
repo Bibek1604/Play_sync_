@@ -3,17 +3,41 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'routes/app_router.dart';
 import 'theme/theme_provider.dart';
+import 'theme/dynamic_theme_service.dart';
 import '../core/providers/socket_provider.dart';
+import '../core/services/service_initializer.dart';
 
 /// PlaySync Application Root Widget
 /// 
 /// Main application widget with theme and routing configuration.
-class PlaySyncApp extends ConsumerWidget {
+class PlaySyncApp extends ConsumerStatefulWidget {
   const PlaySyncApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(themeModeProvider);
+  ConsumerState<PlaySyncApp> createState() => _PlaySyncAppState();
+}
+
+class _PlaySyncAppState extends ConsumerState<PlaySyncApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Initialize services after first frame is rendered
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+       debugPrint('[MAIN] First frame rendered in PlaySyncApp, starting initialization...');
+       try {
+         await ServiceInitializer.initialize(ref);
+         debugPrint('[MAIN] ✓ All services initialized successfully');
+       } catch (e, stack) {
+         debugPrint('[MAIN] ✗ Service initialization failed: $e');
+         debugPrint('[MAIN] Stack trace: $stack');
+       }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Watch the dynamic theme mode that accounts for camera usage
+    final themeMode = ref.watch(dynamicThemeModeProvider);
 
     // Initialize socket connection (auto-connects when authenticated)
     ref.watch(socketProvider);

@@ -1,0 +1,472 @@
+Analyzing play_sync_new...                                      
+
+   info - Unnecessary use of double quotes - lib\app\theme\theme_provider.dart:1:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\app\theme\theme_provider.dart:2:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\app\theme\theme_provider.dart:3:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\app\theme\theme_provider.dart:5:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\app\theme\theme_provider.dart:6:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\app\theme\theme_provider.dart:13:34 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\app\theme\theme_provider.dart:14:35 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\app\theme\theme_provider.dart:25:58 - prefer_single_quotes
+   info - Empty catch block - lib\app\theme\theme_provider.dart:37:17 - empty_catches
+   info - Unnecessary use of double quotes - lib\app\theme\theme_provider.dart:52:36 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\app\theme\theme_provider.dart:53:35 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\app\theme\theme_provider.dart:54:37 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\app\theme\theme_provider.dart:60:12 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\app\theme\theme_provider.dart:61:12 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\core\constants\app_colors.dart:1:8 - prefer_single_quotes
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\core\constants\app_colors.dart:55:56 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\core\constants\app_colors.dart:56:52 - deprecated_member_use
+   info - Unnecessary use of double quotes - lib\core\constants\app_theme.dart:1:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\core\constants\app_theme.dart:2:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\core\constants\app_theme.dart:3:8 - prefer_single_quotes
+warning - This 'onError' handler must return a value assignable to 'Box<dynamic>', but ends without returning a value - lib\core\database\hive_init.dart:49:58 - body_might_complete_normally_catch_error
+warning - This 'onError' handler must return a value assignable to 'Box<dynamic>', but ends without returning a value - lib\core\database\hive_init.dart:74:58 - body_might_complete_normally_catch_error
+   info - Parameters ''message' and 'statusCode'' could be super parameters - lib\core\error\failure.dart:20:9 - use_super_parameters
+   info - Parameters ''message' and 'statusCode'' could be super parameters - lib\core\error\failure.dart:28:9 - use_super_parameters
+   info - Parameters ''message' and 'statusCode'' could be super parameters - lib\core\error\failure.dart:36:9 - use_super_parameters
+   info - Parameters ''message' and 'statusCode'' could be super parameters - lib\core\error\failure.dart:44:9 - use_super_parameters
+   info - Parameters ''message' and 'statusCode'' could be super parameters - lib\core\error\failure.dart:52:9 - use_super_parameters
+   info - Parameters ''message' and 'statusCode'' could be super parameters - lib\core\error\failure.dart:60:9 - use_super_parameters
+   info - Parameters ''message' and 'statusCode'' could be super parameters - lib\core\error\failure.dart:68:9 - use_super_parameters
+   info - Parameters ''message' and 'statusCode'' could be super parameters - lib\core\error\failure.dart:76:9 - use_super_parameters
+   info - Parameters ''message' and 'statusCode'' could be super parameters - lib\core\error\failure.dart:84:9 - use_super_parameters
+   info - Parameter 'message' could be a super parameter - lib\core\error\failures.dart:63:9 - use_super_parameters
+   info - Parameter 'message' could be a super parameter - lib\core\error\failures.dart:68:9 - use_super_parameters
+   info - Parameter 'message' could be a super parameter - lib\core\error\failures.dart:93:9 - use_super_parameters
+warning - Unused import: 'package:flutter/foundation.dart' - lib\core\services\performance_monitor.dart:1:8 - unused_import
+   info - The type parameter name 'Type' matches a visible type name - lib\core\usecases\usecase.dart:10:24 - avoid_types_as_parameter_names
+   info - Unnecessary use of double quotes - lib\core\widgets\app_drawer.dart:1:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\core\widgets\app_drawer.dart:2:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\core\widgets\app_drawer.dart:3:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\core\widgets\app_drawer.dart:4:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\core\widgets\app_drawer.dart:5:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\core\widgets\app_drawer.dart:6:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\core\widgets\app_drawer.dart:17:74 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\core\widgets\app_drawer.dart:18:65 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\core\widgets\app_drawer.dart:21:67 - prefer_single_quotes
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\core\widgets\app_drawer.dart:35:53 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\core\widgets\app_drawer.dart:55:66 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\core\widgets\app_drawer.dart:58:51 - deprecated_member_use
+   info - Unnecessary use of multiple underscores - lib\core\widgets\app_drawer.dart:67:95 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\core\widgets\app_drawer.dart:67:99 - unnecessary_underscores
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\core\widgets\app_drawer.dart:76:57 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\core\widgets\app_drawer.dart:97:43 - deprecated_member_use
+   info - Unnecessary use of double quotes - lib\core\widgets\app_drawer.dart:112:37 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\core\widgets\app_drawer.dart:113:79 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\core\widgets\app_drawer.dart:114:74 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\core\widgets\app_drawer.dart:115:73 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\core\widgets\app_drawer.dart:117:37 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\core\widgets\app_drawer.dart:118:68 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\core\widgets\app_drawer.dart:119:66 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\core\widgets\app_drawer.dart:120:72 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\core\widgets\app_drawer.dart:121:80 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\core\widgets\app_drawer.dart:123:37 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\core\widgets\app_drawer.dart:124:66 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\core\widgets\app_drawer.dart:125:68 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\core\widgets\app_drawer.dart:147:63 - prefer_single_quotes
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\core\widgets\app_drawer.dart:188:55 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\core\widgets\app_drawer.dart:190:74 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\core\widgets\app_drawer.dart:216:77 - deprecated_member_use
+   info - Unnecessary use of double quotes - lib\core\widgets\app_drawer.dart:219:110 - prefer_single_quotes
+warning - Unused import: '../constants/app_theme.dart' - lib\core\widgets\app_shell.dart:12:8 - unused_import
+   info - 'scale' is deprecated and shouldn't be used. Use scaleByVector3, scaleByVector4, or scaleByDouble instead - lib\core\widgets\responsive_layout.dart:297:44 - deprecated_member_use
+warning - Unused import: 'package:hive_flutter/hive_flutter.dart' - lib\features\auth\presentation\pages\forgot_password_page.dart:3:8 - unused_import
+warning - Unused import: '../../../../core/constants/app_theme.dart' - lib\features\auth\presentation\pages\forgot_password_page.dart:6:8 - unused_import
+warning - Unused import: '../../../../core/constants/app_theme.dart' - lib\features\auth\presentation\pages\login_page_new.dart:6:8 - unused_import
+   info - Unnecessary use of double quotes - lib\features\auth\presentation\pages\register_page.dart:1:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\auth\presentation\pages\register_page.dart:2:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\auth\presentation\pages\register_page.dart:3:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\auth\presentation\pages\register_page.dart:4:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\auth\presentation\pages\register_page.dart:5:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\auth\presentation\pages\register_page.dart:49:23 - prefer_single_quotes
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\auth\presentation\pages\register_page.dart:105:58 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\auth\presentation\pages\register_page.dart:105:91 - deprecated_member_use
+   info - Unnecessary use of double quotes - lib\features\auth\presentation\pages\register_page.dart:123:25 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\auth\presentation\pages\register_page.dart:134:25 - prefer_single_quotes
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\auth\presentation\pages\register_page.dart:149:46 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\auth\presentation\pages\register_page.dart:150:46 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\auth\presentation\pages\register_page.dart:154:48 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\auth\presentation\pages\register_page.dart:155:48 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\auth\presentation\pages\register_page.dart:160:51 - deprecated_member_use
+   info - Unnecessary use of double quotes - lib\features\auth\presentation\pages\register_page.dart:170:38 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\auth\presentation\pages\register_page.dart:171:37 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\auth\presentation\pages\register_page.dart:174:62 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\auth\presentation\pages\register_page.dart:182:38 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\auth\presentation\pages\register_page.dart:183:37 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\auth\presentation\pages\register_page.dart:187:68 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\auth\presentation\pages\register_page.dart:188:49 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\auth\presentation\pages\register_page.dart:188:62 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\auth\presentation\pages\register_page.dart:198:38 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\auth\presentation\pages\register_page.dart:199:37 - prefer_single_quotes
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\auth\presentation\pages\register_page.dart:206:60 - deprecated_member_use
+   info - Unnecessary use of double quotes - lib\features\auth\presentation\pages\register_page.dart:211:68 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\auth\presentation\pages\register_page.dart:212:58 - prefer_single_quotes
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\auth\presentation\pages\register_page.dart:230:66 - deprecated_member_use
+   info - Unnecessary use of double quotes - lib\features\auth\presentation\pages\register_page.dart:248:45 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\auth\presentation\pages\register_page.dart:272:29 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\auth\presentation\pages\register_page.dart:281:31 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\auth\presentation\pages\register_page.dart:300:27 - prefer_single_quotes
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\auth\presentation\pages\register_page.dart:304:101 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\auth\presentation\pages\register_page.dart:376:87 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\auth\presentation\pages\register_page.dart:379:71 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\auth\presentation\pages\register_page.dart:383:32 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\auth\presentation\pages\register_page.dart:393:36 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\auth\presentation\pages\register_page.dart:394:40 - deprecated_member_use
+   info - The import of 'package:flutter/services.dart' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' - lib\features\auth\presentation\pages\reset_password_page.dart:2:8 - unnecessary_import
+warning - Unused import: 'package:hive_flutter/hive_flutter.dart' - lib\features\auth\presentation\pages\reset_password_page.dart:4:8 - unused_import
+warning - Unused import: '../../../../core/constants/app_theme.dart' - lib\features\auth\presentation\pages\reset_password_page.dart:7:8 - unused_import
+warning - Unused import: 'package:hive_flutter/hive_flutter.dart' - lib\features\auth\presentation\pages\verify_otp_page.dart:5:8 - unused_import
+warning - Unused import: '../../../../core/constants/app_theme.dart' - lib\features\auth\presentation\pages\verify_otp_page.dart:8:8 - unused_import
+   info - The private field _isLoading could be 'final' - lib\features\auth\presentation\pages\verify_otp_page.dart:33:8 - prefer_final_fields
+warning - The declaration '_handleBackspace' isn't referenced - lib\features\auth\presentation\pages\verify_otp_page.dart:124:8 - unused_element
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\auth\presentation\pages\verify_otp_page.dart:251:46 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\auth\presentation\pages\verify_otp_page.dart:401:37 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\auth\presentation\pages\verify_otp_page.dart:402:32 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\auth\presentation\pages\verify_otp_page.dart:422:35 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\auth\presentation\pages\verify_otp_page.dart:431:51 - deprecated_member_use
+warning - Unused import: 'package:dio/dio.dart' - lib\features\auth\presentation\providers\password_reset_providers.dart:2:8 - unused_import
+   info - Dangling library doc comment - lib\features\camera_theme\camera_theme.dart:1:1 - dangling_library_doc_comments
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\camera_theme\examples\camera_page_example.dart:70:37 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\camera_theme\examples\camera_page_example.dart:72:56 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\camera_theme\presentation\camera_wrapper_widget.dart:142:57 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\camera_theme\presentation\camera_wrapper_widget.dart:152:27 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\camera_theme\presentation\camera_wrapper_widget.dart:163:27 - deprecated_member_use
+warning - Unused import: '../../../../core/constants/app_colors.dart' - lib\features\chat\presentation\pages\chat_room_page.dart:3:8 - unused_import
+warning - Unused import: 'package:flutter/foundation.dart' - lib\features\chat\presentation\providers\chat_notifier.dart:3:8 - unused_import
+warning - The declaration '_parseDTO' isn't referenced - lib\features\chat\presentation\providers\chat_notifier.dart:303:15 - unused_element
+   info - Unnecessary override - lib\features\chat\presentation\providers\chat_notifier.dart:365:8 - unnecessary_overrides
+   info - Unnecessary use of double quotes - lib\features\dashboard\presentation\pages\dashboard_page.dart:1:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\dashboard\presentation\pages\dashboard_page.dart:2:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\dashboard\presentation\pages\dashboard_page.dart:3:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\dashboard\presentation\pages\dashboard_page.dart:4:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\dashboard\presentation\pages\dashboard_page.dart:5:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\dashboard\presentation\pages\dashboard_page.dart:6:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\dashboard\presentation\pages\dashboard_page.dart:7:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\dashboard\presentation\pages\dashboard_page.dart:8:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\dashboard\presentation\pages\dashboard_page.dart:9:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\dashboard\presentation\pages\dashboard_page.dart:10:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\dashboard\presentation\pages\dashboard_page.dart:48:71 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\dashboard\presentation\pages\dashboard_page.dart:106:27 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\dashboard\presentation\pages\dashboard_page.dart:136:27 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\dashboard\presentation\pages\dashboard_page.dart:146:94 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\dashboard\presentation\pages\dashboard_page.dart:148:92 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\dashboard\presentation\pages\dashboard_page.dart:150:98 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\dashboard\presentation\pages\dashboard_page.dart:158:34 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\dashboard\presentation\pages\dashboard_page.dart:161:38 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\dashboard\presentation\pages\dashboard_page.dart:167:34 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\dashboard\presentation\pages\dashboard_page.dart:170:38 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\dashboard\presentation\pages\dashboard_page.dart:176:34 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\dashboard\presentation\pages\dashboard_page.dart:179:38 - prefer_single_quotes
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\dashboard\presentation\pages\dashboard_page.dart:219:64 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\dashboard\presentation\pages\dashboard_page.dart:225:62 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\dashboard\presentation\pages\dashboard_page.dart:236:44 - deprecated_member_use
+   info - Unnecessary use of double quotes - lib\features\dashboard\presentation\pages\dashboard_page.dart:245:24 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\dashboard\presentation\pages\dashboard_page.dart:246:24 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\dashboard\presentation\pages\dashboard_page.dart:255:33 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\dashboard\presentation\pages\dashboard_page.dart:256:33 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\dashboard\presentation\pages\dashboard_page.dart:257:33 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\dashboard\presentation\pages\dashboard_page.dart:257:52 - prefer_single_quotes
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\dashboard\presentation\pages\dashboard_page.dart:282:26 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\dashboard\presentation\pages\dashboard_page.dart:330:24 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\dashboard\presentation\pages\dashboard_page.dart:332:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\dashboard\presentation\pages\dashboard_page.dart:407:137 - deprecated_member_use
+warning - Unused import: 'package:intl/intl.dart' - lib\features\dashboard\presentation\widgets\game_list_widgets.dart:6:8 - unused_import
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\dashboard\presentation\widgets\game_tile_widget.dart:194:78 - deprecated_member_use
+   info - Unnecessary use of multiple underscores - lib\features\dashboard\presentation\widgets\game_tile_widget.dart:237:43 - unnecessary_underscores
+   info - The import of 'package:flutter/services.dart' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' - lib\features\dashboard\presentation\widgets\quick_action_widget.dart:2:8 - unnecessary_import
+   info - Use 'whereType' to select elements of a given type - lib\features\game\data\repositories\game_repository.dart:505:12 - prefer_iterable_wheretype
+  error - Target of URI doesn't exist: '../../../core/api/secure_storage_provider.dart' - lib\features\game\data\services\game_event_listener.dart:6:8 - uri_does_not_exist
+  error - Target of URI doesn't exist: '../../../core/services/socket_service.dart' - lib\features\game\data\services\game_event_listener.dart:7:8 - uri_does_not_exist
+  error - Target of URI doesn't exist: '../domain/entities/game_entity.dart' - lib\features\game\data\services\game_event_listener.dart:8:8 - uri_does_not_exist
+  error - Target of URI doesn't exist: '../presentation/providers/game_notifier.dart' - lib\features\game\data\services\game_event_listener.dart:9:8 - uri_does_not_exist
+warning - The value of the field 'memberBanned' isn't used - lib\features\game\data\services\game_event_listener.dart:21:16 - unused_field
+  error - Undefined class 'GameNotifier' - lib\features\game\data\services\game_event_listener.dart:33:9 - undefined_class
+  error - Undefined name 'SocketService' - lib\features\game\data\services\game_event_listener.dart:50:15 - undefined_identifier
+  error - Undefined name 'gameProvider' - lib\features\game\data\services\game_event_listener.dart:223:30 - undefined_identifier
+  error - Undefined name 'secureStorageProvider' - lib\features\game\data\services\game_event_listener.dart:224:29 - undefined_identifier
+   info - The constant name 'OPEN' isn't a lowerCamelCase identifier - lib\features\game\domain\entities\game_entity.dart:5:19 - constant_identifier_names
+   info - The constant name 'FULL' isn't a lowerCamelCase identifier - lib\features\game\domain\entities\game_entity.dart:5:25 - constant_identifier_names
+   info - The constant name 'ENDED' isn't a lowerCamelCase identifier - lib\features\game\domain\entities\game_entity.dart:5:31 - constant_identifier_names
+   info - The constant name 'CANCELLED' isn't a lowerCamelCase identifier - lib\features\game\domain\entities\game_entity.dart:5:38 - constant_identifier_names
+   info - The constant name 'ACTIVE' isn't a lowerCamelCase identifier - lib\features\game\domain\entities\game_entity.dart:27:26 - constant_identifier_names
+   info - The constant name 'LEFT' isn't a lowerCamelCase identifier - lib\features\game\domain\entities\game_entity.dart:27:34 - constant_identifier_names
+   info - The constant name 'REMOVED' isn't a lowerCamelCase identifier - lib\features\game\domain\entities\game_entity.dart:27:40 - constant_identifier_names
+   info - The constant name 'BANNED' isn't a lowerCamelCase identifier - lib\features\game\domain\entities\game_entity.dart:27:49 - constant_identifier_names
+   info - Use 'whereType' to select elements of a given type - lib\features\game\domain\entities\game_entity.dart:237:10 - prefer_iterable_wheretype
+warning - Unused import: '../../../../core/constants/app_theme.dart' - lib\features\game\presentation\pages\available_games_page.dart:5:8 - unused_import
+warning - The '!' will have no effect because the receiver can't be null - lib\features\game\presentation\pages\create_offline_game_page.dart:148:43 - unnecessary_non_null_assertion
+   info - Unnecessary use of double quotes - lib\features\game\presentation\pages\game_detail_page.dart:1:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\game\presentation\pages\game_detail_page.dart:2:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\game\presentation\pages\game_detail_page.dart:3:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\game\presentation\pages\game_detail_page.dart:4:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\game\presentation\pages\game_detail_page.dart:5:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\game\presentation\pages\game_detail_page.dart:6:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\game\presentation\pages\game_detail_page.dart:7:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\game\presentation\pages\game_detail_page.dart:8:8 - prefer_single_quotes
+warning - Unused import: '../../../auth/presentation/providers/auth_notifier.dart' - lib\features\game\presentation\pages\game_detail_page.dart:8:8 - unused_import
+   info - Unnecessary use of double quotes - lib\features\game\presentation\pages\game_detail_page.dart:9:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\game\presentation\pages\game_detail_page.dart:47:70 - prefer_single_quotes
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\game\presentation\pages\game_detail_page.dart:59:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\game\presentation\pages\game_detail_page.dart:79:67 - deprecated_member_use
+   info - Unnecessary use of double quotes - lib\features\game\presentation\pages\game_detail_page.dart:109:26 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\game\presentation\pages\game_detail_page.dart:111:76 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\game\presentation\pages\game_detail_page.dart:111:127 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\game\presentation\pages\game_detail_page.dart:111:168 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\game\presentation\pages\game_detail_page.dart:112:73 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\game\presentation\pages\game_detail_page.dart:112:124 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\game\presentation\pages\game_detail_page.dart:112:161 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\game\presentation\pages\game_detail_page.dart:113:73 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\game\presentation\pages\game_detail_page.dart:117:28 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\game\presentation\pages\game_detail_page.dart:119:71 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\game\presentation\pages\game_detail_page.dart:129:39 - prefer_single_quotes
+warning - The value of the field '_selectedSport' isn't used - lib\features\game\presentation\pages\game_page.dart:22:16 - unused_field
+warning - The value of the field '_showJoinedOnly' isn't used - lib\features\game\presentation\pages\game_page.dart:23:14 - unused_field
+warning - The declaration '_CategoryCard' isn't referenced - lib\features\game\presentation\pages\game_page.dart:384:7 - unused_element
+warning - The declaration '_GradientButton' isn't referenced - lib\features\game\presentation\pages\game_page.dart:468:7 - unused_element
+warning - Unused import: '../../../../core/constants/app_theme.dart' - lib\features\game\presentation\pages\offline_games_page.dart:6:8 - unused_import
+   info - Use of 'return' in a 'finally' clause - lib\features\game\presentation\pages\offline_games_page.dart:116:21 - control_flow_in_finally
+   info - Unnecessary use of multiple underscores - lib\features\game\presentation\pages\offline_games_page.dart:359:43 - unnecessary_underscores
+warning - Unused import: '../../../../core/constants/app_theme.dart' - lib\features\game\presentation\pages\online_games_page.dart:5:8 - unused_import
+   info - Unnecessary use of multiple underscores - lib\features\game\presentation\pages\online_games_page.dart:146:43 - unnecessary_underscores
+   info - The constant name 'OPEN' isn't a lowerCamelCase identifier - lib\features\game\presentation\providers\game_notifier.dart:13:24 - constant_identifier_names
+   info - The constant name 'FULL' isn't a lowerCamelCase identifier - lib\features\game\presentation\providers\game_notifier.dart:13:30 - constant_identifier_names
+   info - The constant name 'ENDED' isn't a lowerCamelCase identifier - lib\features\game\presentation\providers\game_notifier.dart:13:36 - constant_identifier_names
+   info - The constant name 'CANCELLED' isn't a lowerCamelCase identifier - lib\features\game\presentation\providers\game_notifier.dart:13:43 - constant_identifier_names
+warning - Unused import: '../../../../core/constants/app_theme.dart' - lib\features\game\presentation\widgets\create_game_sheet.dart:14:8 - unused_import
+warning - The '!' will have no effect because the receiver can't be null - lib\features\game\presentation\widgets\create_game_sheet.dart:212:45 - unnecessary_non_null_assertion
+warning - Unused import: '../../../../core/constants/app_theme.dart' - lib\features\game\presentation\widgets\game_card.dart:5:8 - unused_import
+warning - The value of the local variable 'isDark' isn't used - lib\features\game\presentation\widgets\game_card.dart:69:11 - unused_local_variable
+warning - Unused import: '../../../../core/api/secure_storage_provider.dart' - lib\features\game_chat\presentation\notifiers\game_chat_notifier.dart:3:8 - unused_import
+   info - Constructors in '@immutable' classes should be declared as 'const' - lib\features\game_chat\presentation\pages\game_chat_room_page.dart:315:3 - prefer_const_constructors_in_immutables
+   info - Constructors in '@immutable' classes should be declared as 'const' - lib\features\game_chat\presentation\pages\game_chat_room_page.dart:358:3 - prefer_const_constructors_in_immutables
+warning - Unused import: '../../../../core/constants/app_theme.dart' - lib\features\history\presentation\pages\game_history_page.dart:6:8 - unused_import
+warning - Unused import: '../../../../core/widgets/app_drawer.dart' - lib\features\history\presentation\pages\game_history_page.dart:15:8 - unused_import
+warning - The declaration '_MiniStat' isn't referenced - lib\features\history\presentation\pages\game_history_page.dart:264:7 - unused_element
+warning - Unused import: '../../../../../core/constants/app_theme.dart' - lib\features\history\presentation\widgets\history_stats_card.dart:4:8 - unused_import
+warning - The declaration '_RankBadge' isn't referenced - lib\features\leaderboard\presentation\widgets\leaderboard_row.dart:192:7 - unused_element
+  error - Expected a method, getter, setter or operator declaration - lib\features\leaderboard\presentation\widgets\sport_picker.dart:1:1 - expected_executable
+  error - Expected a method, getter, setter or operator declaration - lib\features\leaderboard\presentation\widgets\sport_picker.dart:1:2 - expected_executable
+  error - Expected a method, getter, setter or operator declaration - lib\features\leaderboard\presentation\widgets\sport_picker.dart:1:3 - expected_executable
+warning - Unused import: '../../../../../core/constants/app_theme.dart' - lib\features\leaderboard\presentation\widgets\xp_bar_chart.dart:5:8 - unused_import
+warning - Unused import: '../../../../app/routes/app_routes.dart' - lib\features\notifications\presentation\pages\notifications_page.dart:8:8 - unused_import
+   info - Unnecessary use of double quotes - lib\features\onboarding\presentation\pages\welcome_page.dart:1:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\onboarding\presentation\pages\welcome_page.dart:2:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\onboarding\presentation\pages\welcome_page.dart:3:8 - prefer_single_quotes
+warning - Unused import: '../providers/onboarding_notifier.dart' - lib\features\onboarding\presentation\pages\welcome_page.dart:3:8 - unused_import
+   info - Unnecessary use of double quotes - lib\features\onboarding\presentation\pages\welcome_page.dart:4:8 - prefer_single_quotes
+   info - Unnecessary use of multiple underscores - lib\features\onboarding\presentation\pages\welcome_page.dart:22:30 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\features\onboarding\presentation\pages\welcome_page.dart:22:34 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\features\onboarding\presentation\pages\welcome_page.dart:24:40 - unnecessary_underscores
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\onboarding\presentation\pages\welcome_page.dart:49:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\onboarding\presentation\pages\welcome_page.dart:50:47 - deprecated_member_use
+   info - Unnecessary use of double quotes - lib\features\onboarding\presentation\pages\welcome_page.dart:86:27 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\onboarding\presentation\pages\welcome_page.dart:95:27 - prefer_single_quotes
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\onboarding\presentation\pages\welcome_page.dart:163:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\onboarding\presentation\pages\welcome_page.dart:163:80 - deprecated_member_use
+   info - Unnecessary use of double quotes - lib\features\onboarding\presentation\pages\welcome_page.dart:166:28 - prefer_single_quotes
+   info - The member 'copyWith' overrides an inherited member but isn't annotated with '@override' - lib\features\profile\location\data\models\location_model.dart:80:17 - annotate_overrides
+warning - The value of the local variable 'gameData' isn't used - lib\features\profile\location\examples\location_usage_examples.dart:109:11 - unused_local_variable
+warning - Unused import: 'package:flutter/material.dart' - lib\features\profile\location\presentation\controllers\location_controller.dart:1:8 - unused_import
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\profile\location\presentation\widgets\location_card.dart:47:59 - deprecated_member_use
+   info - Unnecessary use of double quotes - lib\features\profile\presentation\pages\profile_page.dart:1:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\profile\presentation\pages\profile_page.dart:2:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\profile\presentation\pages\profile_page.dart:3:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\profile\presentation\pages\profile_page.dart:4:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\profile\presentation\pages\profile_page.dart:5:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\profile\presentation\pages\profile_page.dart:40:55 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\profile\presentation\pages\profile_page.dart:54:41 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\profile\presentation\pages\profile_page.dart:56:70 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\profile\presentation\pages\profile_page.dart:56:105 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\profile\presentation\pages\profile_page.dart:57:67 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\profile\presentation\pages\profile_page.dart:57:101 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\profile\presentation\pages\profile_page.dart:58:67 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\profile\presentation\pages\profile_page.dart:58:95 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\profile\presentation\pages\profile_page.dart:59:69 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\profile\presentation\pages\profile_page.dart:59:111 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\profile\presentation\pages\profile_page.dart:61:41 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\profile\presentation\pages\profile_page.dart:63:58 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\profile\presentation\pages\profile_page.dart:64:63 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\profile\presentation\pages\profile_page.dart:65:62 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\profile\presentation\pages\profile_page.dart:136:27 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\profile\presentation\pages\profile_page.dart:138:27 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\profile\presentation\pages\profile_page.dart:140:27 - prefer_single_quotes
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\profile\presentation\pages\profile_page.dart:150:69 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\profile\presentation\pages\profile_page.dart:152:87 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\profile\presentation\pages\profile_page.dart:173:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\profile\presentation\pages\profile_page.dart:184:49 - deprecated_member_use
+warning - Unused import: '../../../../core/constants/app_theme.dart' - lib\features\scorecard\presentation\pages\scorecard_page.dart:4:8 - unused_import
+warning - Unused import: '../../../../core/widgets/app_drawer.dart' - lib\features\scorecard\presentation\pages\scorecard_page.dart:8:8 - unused_import
+warning - Unused import: '../../../../core/constants/app_theme.dart' - lib\features\scorecard\presentation\widgets\xp_bar.dart:3:8 - unused_import
+  error - Undefined name 'AppSpacing' - lib\features\settings\presentation\pages\app_settings_page.dart:44:33 - undefined_identifier
+  error - Undefined name 'AppSpacing' - lib\features\settings\presentation\pages\app_settings_page.dart:48:28 - undefined_identifier
+  error - Undefined name 'AppSpacing' - lib\features\settings\presentation\pages\app_settings_page.dart:61:28 - undefined_identifier
+  error - Undefined name 'AppSpacing' - lib\features\settings\presentation\pages\app_settings_page.dart:65:28 - undefined_identifier
+  error - Undefined name 'AppSpacing' - lib\features\settings\presentation\pages\app_settings_page.dart:97:28 - undefined_identifier
+  error - Undefined name 'AppSpacing' - lib\features\settings\presentation\pages\app_settings_page.dart:110:36 - undefined_identifier
+  error - Undefined name 'AppRadius' - lib\features\settings\presentation\pages\app_settings_page.dart:130:43 - undefined_identifier
+  error - Undefined name 'AppSpacing' - lib\features\settings\presentation\pages\app_settings_page.dart:156:31 - undefined_identifier
+  error - Undefined name 'AppSpacing' - lib\features\settings\presentation\pages\app_settings_page.dart:160:37 - undefined_identifier
+  error - Undefined name 'AppRadius' - lib\features\settings\presentation\pages\app_settings_page.dart:163:51 - undefined_identifier
+  error - Undefined name 'AppSpacing' - lib\features\settings\presentation\pages\app_settings_page.dart:167:27 - undefined_identifier
+  error - Undefined name 'AppSpacing' - lib\features\settings\presentation\pages\app_settings_page.dart:218:31 - undefined_identifier
+  error - Undefined name 'AppSpacing' - lib\features\settings\presentation\pages\app_settings_page.dart:222:37 - undefined_identifier
+  error - Undefined name 'AppRadius' - lib\features\settings\presentation\pages\app_settings_page.dart:225:51 - undefined_identifier
+  error - Undefined name 'AppSpacing' - lib\features\settings\presentation\pages\app_settings_page.dart:229:27 - undefined_identifier
+   info - Unnecessary use of double quotes - lib\features\settings\presentation\pages\settings_page.dart:1:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\settings\presentation\pages\settings_page.dart:2:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\settings\presentation\pages\settings_page.dart:3:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\settings\presentation\pages\settings_page.dart:4:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\settings\presentation\pages\settings_page.dart:5:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\settings\presentation\pages\settings_page.dart:6:8 - prefer_single_quotes
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\settings\presentation\pages\settings_page.dart:41:46 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\settings\presentation\pages\settings_page.dart:41:79 - deprecated_member_use
+   info - Unnecessary use of double quotes - lib\features\settings\presentation\pages\settings_page.dart:50:11 - prefer_single_quotes
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\settings\presentation\pages\settings_page.dart:62:63 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\settings\presentation\pages\settings_page.dart:62:96 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\settings\presentation\pages\settings_page.dart:68:54 - deprecated_member_use
+   info - Unnecessary use of double quotes - lib\features\settings\presentation\pages\settings_page.dart:104:37 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\settings\presentation\pages\settings_page.dart:108:20 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\settings\presentation\pages\settings_page.dart:109:23 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\settings\presentation\pages\settings_page.dart:116:20 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\settings\presentation\pages\settings_page.dart:117:23 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\settings\presentation\pages\settings_page.dart:120:87 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\settings\presentation\pages\settings_page.dart:124:37 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\settings\presentation\pages\settings_page.dart:126:65 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\settings\presentation\pages\settings_page.dart:126:97 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\settings\presentation\pages\settings_page.dart:128:78 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\settings\presentation\pages\settings_page.dart:128:105 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\settings\presentation\pages\settings_page.dart:130:37 - prefer_single_quotes
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\settings\presentation\pages\settings_page.dart:167:57 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\settings\presentation\pages\settings_page.dart:167:90 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\settings\presentation\pages\settings_page.dart:178:113 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\tournament\presentation\pages\payment_failed_screen.dart:103:50 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\tournament\presentation\pages\payment_success_screen.dart:128:62 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\tournament\presentation\pages\payment_success_screen.dart:318:43 - deprecated_member_use
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_detail_page.dart:1:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_detail_page.dart:2:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_detail_page.dart:3:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_detail_page.dart:4:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_detail_page.dart:5:8 - prefer_single_quotes
+   info - Parameter 'key' could be a super parameter - lib\features\tournament\presentation\pages\tournament_detail_page.dart:10:9 - use_super_parameters
+warning - Dead code - lib\features\tournament\presentation\pages\tournament_detail_page.dart:21:65 - dead_code
+warning - The left operand can't be null, so the right operand is never executed - lib\features\tournament\presentation\pages\tournament_detail_page.dart:21:68 - dead_null_aware_expression
+warning - Dead code - lib\features\tournament\presentation\pages\tournament_detail_page.dart:22:70 - dead_code
+warning - The left operand can't be null, so the right operand is never executed - lib\features\tournament\presentation\pages\tournament_detail_page.dart:22:73 - dead_null_aware_expression
+warning - Dead code - lib\features\tournament\presentation\pages\tournament_detail_page.dart:23:71 - dead_code
+warning - The left operand can't be null, so the right operand is never executed - lib\features\tournament\presentation\pages\tournament_detail_page.dart:23:74 - dead_null_aware_expression
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\tournament\presentation\pages\tournament_detail_page.dart:36:42 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\tournament\presentation\pages\tournament_detail_page.dart:37:84 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\tournament\presentation\pages\tournament_detail_page.dart:66:52 - deprecated_member_use
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_detail_page.dart:70:46 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_detail_page.dart:82:38 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_detail_page.dart:82:67 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_detail_page.dart:83:38 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_detail_page.dart:83:49 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_detail_page.dart:84:38 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_detail_page.dart:84:78 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_detail_page.dart:84:87 - prefer_single_quotes
+warning - Dead code - lib\features\tournament\presentation\pages\tournament_detail_page.dart:96:80 - dead_code
+warning - The left operand can't be null, so the right operand is never executed - lib\features\tournament\presentation\pages\tournament_detail_page.dart:96:83 - dead_null_aware_expression
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_detail_page.dart:101:30 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_detail_page.dart:104:27 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_detail_page.dart:105:69 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_detail_page.dart:105:118 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_detail_page.dart:110:44 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_detail_page.dart:112:44 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_detail_page.dart:112:56 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_detail_page.dart:119:24 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_detail_page.dart:122:47 - prefer_single_quotes
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\tournament\presentation\pages\tournament_detail_page.dart:136:53 - deprecated_member_use
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_detail_page.dart:142:46 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_detail_page.dart:151:31 - prefer_single_quotes
+warning - Dead code - lib\features\tournament\presentation\pages\tournament_detail_page.dart:165:97 - dead_code
+warning - The left operand can't be null, so the right operand is never executed - lib\features\tournament\presentation\pages\tournament_detail_page.dart:165:100 - dead_null_aware_expression
+warning - Dead code - lib\features\tournament\presentation\pages\tournament_detail_page.dart:178:101 - dead_code
+warning - The left operand can't be null, so the right operand is never executed - lib\features\tournament\presentation\pages\tournament_detail_page.dart:178:104 - dead_null_aware_expression
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_list_page.dart:1:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_list_page.dart:2:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_list_page.dart:3:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_list_page.dart:4:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_list_page.dart:5:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_list_page.dart:6:8 - prefer_single_quotes
+   info - Parameter 'key' could be a super parameter - lib\features\tournament\presentation\pages\tournament_list_page.dart:9:9 - use_super_parameters
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_list_page.dart:16:23 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_list_page.dart:48:17 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_list_page.dart:78:29 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_list_page.dart:78:50 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_list_page.dart:79:29 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_list_page.dart:79:54 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_list_page.dart:80:29 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_list_page.dart:80:55 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_list_page.dart:81:29 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_list_page.dart:81:61 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_list_page.dart:112:19 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_list_page.dart:158:12 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_list_page.dart:160:12 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\pages\tournament_list_page.dart:162:12 - prefer_single_quotes
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\tournament\presentation\pages\tournament_payment_screen.dart:139:44 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\tournament\presentation\pages\tournament_payment_screen.dart:150:35 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\tournament\presentation\pages\tournament_payment_screen.dart:175:41 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\tournament\presentation\pages\tournament_payment_screen.dart:255:37 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\tournament\presentation\pages\tournament_payment_screen.dart:325:48 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\tournament\presentation\pages\tournament_payment_screen.dart:525:30 - deprecated_member_use
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\widgets\tournament_card.dart:1:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\widgets\tournament_card.dart:2:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\widgets\tournament_card.dart:3:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\widgets\tournament_card.dart:4:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\widgets\tournament_card.dart:5:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\widgets\tournament_card.dart:6:8 - prefer_single_quotes
+   info - Parameter 'key' could be a super parameter - lib\features\tournament\presentation\widgets\tournament_card.dart:11:9 - use_super_parameters
+warning - Dead code - lib\features\tournament\presentation\widgets\tournament_card.dart:18:66 - dead_code
+warning - The left operand can't be null, so the right operand is never executed - lib\features\tournament\presentation\widgets\tournament_card.dart:18:69 - dead_null_aware_expression
+warning - Dead code - lib\features\tournament\presentation\widgets\tournament_card.dart:19:65 - dead_code
+warning - The left operand can't be null, so the right operand is never executed - lib\features\tournament\presentation\widgets\tournament_card.dart:19:68 - dead_null_aware_expression
+warning - Dead code - lib\features\tournament\presentation\widgets\tournament_card.dart:20:70 - dead_code
+warning - The left operand can't be null, so the right operand is never executed - lib\features\tournament\presentation\widgets\tournament_card.dart:20:73 - dead_null_aware_expression
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\widgets\tournament_card.dart:28:22 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\widgets\tournament_card.dart:32:22 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\widgets\tournament_card.dart:36:22 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\widgets\tournament_card.dart:40:22 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\widgets\tournament_card.dart:44:22 - prefer_single_quotes
+warning - Dead code - lib\features\tournament\presentation\widgets\tournament_card.dart:63:51 - dead_code
+warning - The left operand can't be null, so the right operand is never executed - lib\features\tournament\presentation\widgets\tournament_card.dart:63:54 - dead_null_aware_expression
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\tournament\presentation\widgets\tournament_card.dart:68:35 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\tournament\presentation\widgets\tournament_card.dart:85:46 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\tournament\presentation\widgets\tournament_card.dart:87:109 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\features\tournament\presentation\widgets\tournament_card.dart:114:43 - deprecated_member_use
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\widgets\tournament_card.dart:123:27 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\widgets\tournament_card.dart:156:40 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\widgets\tournament_card.dart:157:29 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\widgets\tournament_card.dart:164:44 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\widgets\tournament_card.dart:178:31 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\widgets\tournament_card.dart:182:51 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\features\tournament\presentation\widgets\tournament_card.dart:202:27 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\main.dart:1:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\main.dart:2:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\main.dart:3:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\main.dart:8:14 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\main.dart:9:14 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\main.dart:10:14 - prefer_single_quotes
+  error - Expected a method, getter, setter or operator declaration - lib\screens\dashboard_screen.dart:426:11 - expected_executable
+  error - Expected a method, getter, setter or operator declaration - lib\screens\dashboard_screen.dart:426:12 - expected_executable
+  error - Expected a method, getter, setter or operator declaration - lib\screens\dashboard_screen.dart:427:9 - expected_executable
+  error - Expected a method, getter, setter or operator declaration - lib\screens\dashboard_screen.dart:427:10 - expected_executable
+  error - Expected a method, getter, setter or operator declaration - lib\screens\dashboard_screen.dart:428:7 - expected_executable
+  error - Expected a method, getter, setter or operator declaration - lib\screens\dashboard_screen.dart:428:8 - expected_executable
+  error - Expected a method, getter, setter or operator declaration - lib\screens\dashboard_screen.dart:429:5 - expected_executable
+  error - Unexpected text ';' - lib\screens\dashboard_screen.dart:429:6 - unexpected_token
+  error - Expected a method, getter, setter or operator declaration - lib\screens\dashboard_screen.dart:430:3 - expected_executable
+  error - Expected a method, getter, setter or operator declaration - lib\screens\dashboard_screen.dart:431:1 - expected_executable
+   info - Unnecessary use of double quotes - lib\screens\splash_screen.dart:1:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\screens\splash_screen.dart:2:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\screens\splash_screen.dart:3:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\screens\splash_screen.dart:4:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\screens\splash_screen.dart:5:8 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\screens\splash_screen.dart:6:8 - prefer_single_quotes
+warning - Unused import: '../features/dashboard/presentation/pages/dashboard_page.dart' - lib\screens\splash_screen.dart:6:8 - unused_import
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\splash_screen.dart:78:50 - deprecated_member_use
+   info - Unnecessary use of double quotes - lib\screens\splash_screen.dart:89:23 - prefer_single_quotes
+   info - Unnecessary use of double quotes - lib\screens\splash_screen.dart:99:23 - prefer_single_quotes
+
+468 issues found. (ran in 17.8s)

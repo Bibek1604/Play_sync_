@@ -7,6 +7,7 @@ import '../widgets/xp_bar.dart';
 import '../widgets/stats_ring_chart.dart';
 import '../../../../core/widgets/app_drawer.dart';
 import '../../../../core/widgets/back_button_widget.dart';
+import '../../../../core/constants/app_spacing.dart';
 
 class ScorecardPage extends ConsumerWidget {
   const ScorecardPage({super.key});

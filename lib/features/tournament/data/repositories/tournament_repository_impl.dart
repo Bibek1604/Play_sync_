@@ -42,7 +42,7 @@ class TournamentRepositoryImpl implements ITournamentRepository {
       return Right(tournaments);
     } on DioException catch (e) {
       // Fallback to cache
-      final cached = _local.getCachedTournaments('all_${status ?? 'any'}_${type ?? 'any'}');
+      final cached = await _local.getCachedTournaments('all_${status ?? 'any'}_${type ?? 'any'}');
       if (cached != null && cached.isNotEmpty) {
         debugPrint('[TournamentRepo] Serving from cache (network failed)');
         return Right(cached);
@@ -60,7 +60,7 @@ class TournamentRepositoryImpl implements ITournamentRepository {
       _local.cacheTournament(tournament);
       return Right(tournament);
     } on DioException catch (e) {
-      final cached = _local.getCachedTournament(id);
+      final cached = await _local.getCachedTournament(id);
       if (cached != null) return Right(cached);
       return Left(_mapDioError(e));
     } catch (e) {
@@ -115,7 +115,7 @@ class TournamentRepositoryImpl implements ITournamentRepository {
       _local.cacheTournaments(list, 'my_tournaments');
       return Right(list);
     } on DioException catch (e) {
-      final cached = _local.getCachedTournaments('my_tournaments');
+      final cached = await _local.getCachedTournaments('my_tournaments');
       if (cached != null && cached.isNotEmpty) return Right(cached);
       return Left(_mapDioError(e));
     } catch (e) {
@@ -144,6 +144,7 @@ class TournamentRepositoryImpl implements ITournamentRepository {
       final raw = await _remote.verifyPaymentRaw(transactionUuid);
       final statusCode = raw['statusCode'] as int?;
       final responseData = raw['data'];
+      final callbackData = raw['callbackData'] as Map<String, dynamic>?;
 
       if (statusCode == 202) {
         // PENDING — caller should retry
@@ -153,11 +154,23 @@ class TournamentRepositoryImpl implements ITournamentRepository {
         ));
       }
 
-      final data = responseData is Map<String, dynamic>
+        final data = responseData is Map<String, dynamic>
           ? (responseData['data'] ?? responseData)
           : responseData;
-      final payment =
-          TournamentPaymentEntity.fromJson(data as Map<String, dynamic>);
+
+        // Backend verify currently responds with message-only payload.
+        // In that case, derive minimal payment details from eSewa callback data.
+        final paymentMap = data is Map<String, dynamic> && data.containsKey('status')
+          ? data
+          : <String, dynamic>{
+            '_id': callbackData?['transaction_uuid']?.toString() ?? '',
+            'amount': _parseAmount(callbackData?['total_amount']),
+            'transactionId': callbackData?['transaction_uuid']?.toString(),
+            'status': 'success',
+            'paidAt': DateTime.now().toIso8601String(),
+          };
+
+        final payment = TournamentPaymentEntity.fromJson(paymentMap);
       return Right(payment);
     } on DioException catch (e) {
       if (e.response?.statusCode == 202) {
@@ -170,6 +183,12 @@ class TournamentRepositoryImpl implements ITournamentRepository {
     } catch (e) {
       return Left(GeneralFailure(message: e.toString()));
     }
+  }
+
+  double _parseAmount(dynamic value) {
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0;
+    return 0;
   }
 
   @override
@@ -205,7 +224,7 @@ class TournamentRepositoryImpl implements ITournamentRepository {
       _local.cachePayments('dashboard_transactions', payments);
       return Right(payments);
     } on DioException catch (e) {
-      final cached = _local.getCachedPayments('dashboard_transactions');
+      final cached = await _local.getCachedPayments('dashboard_transactions');
       if (cached != null) return Right(cached);
       return Left(_mapDioError(e));
     } catch (e) {
@@ -221,7 +240,7 @@ class TournamentRepositoryImpl implements ITournamentRepository {
       _local.cachePayments('payments_$id', payments);
       return Right(payments);
     } on DioException catch (e) {
-      final cached = _local.getCachedPayments('payments_$id');
+      final cached = await _local.getCachedPayments('payments_$id');
       if (cached != null) return Right(cached);
       return Left(_mapDioError(e));
     } catch (e) {

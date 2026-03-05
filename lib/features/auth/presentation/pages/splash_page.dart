@@ -74,35 +74,15 @@ class _SplashPageState extends ConsumerState<SplashPage>
                     const Spacer(flex: 3),
 
                     // ── Logo ──────────────────────────────────────────
-                    Container(
-                      width: 84,
-                      height: 84,
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryLight,
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(
-                            color: AppColors.primary.withValues(alpha: 0.2),
-                            width: 1.5),
-                      ),
-                      child: const Icon(
-                        Icons.sports_esports_rounded,
-                        color: AppColors.primary,
-                        size: 44,
+                    Center(
+                      child: Image.asset(
+                        'assets/images/final.png',
+                        height: 160,
+                        width: 160,
+                        fit: BoxFit.contain,
                       ),
                     ),
                     const SizedBox(height: 24),
-
-                    // ── Word-mark ─────────────────────────────────────
-                    const Text(
-                      'PlaySync',
-                      style: TextStyle(
-                        fontSize: 34,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.primary,
-                        letterSpacing: -1.0,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
                     const Text(
                       'Find Teammates • Online & Offline • Play Together',
                       textAlign: TextAlign.center,

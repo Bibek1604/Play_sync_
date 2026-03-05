@@ -2,8 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:play_sync_new/core/database/hive_init.dart';
 import 'package:play_sync_new/core/services/app_logger.dart';
 import 'package:play_sync_new/core/services/connectivity_service.dart';
+import 'package:play_sync_new/core/services/payment_service.dart';
 // import 'package:play_sync_new/core/services/location_service.dart'; // REMOVED: Geolocator causing issues
 import 'package:play_sync_new/core/services/performance_monitor.dart';
+import 'package:play_sync_new/app/theme/theme_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Helper class to coordinate all async initializations during app startup.
 class ServiceInitializer {
@@ -12,7 +15,7 @@ class ServiceInitializer {
   /// Initialize all required services.
   /// 
   /// This is called after the first frame renders to avoid blocking the UI.
-  static Future<void> initialize() async {
+  static Future<void> initialize(WidgetRef ref) async {
     final stopwatch = Stopwatch()..start();
     
     // Start monitoring frames for performance drops
@@ -28,7 +31,17 @@ class ServiceInitializer {
       debugPrint('[INIT] ✓ Hive initialized successfully');
       AppLogger.info('Hive initialized');
 
-      // 2. Connectivity Check (Optional, but good to know at startup)
+      // 1.5. Initialize Theme Mode (Depends on Hive)
+      debugPrint('[INIT] 🎨 Initializing Theme mode...');
+      await ref.read(themeModeProvider.notifier).init();
+      debugPrint('[INIT] ✓ Theme mode initialized');
+
+      // 2. Initialize Payment Service
+      debugPrint('[INIT] 💳 Initializing Payment Service...');
+      await PaymentService.initialize();
+      debugPrint('[INIT] ✓ Payment Service initialized');
+
+      // 3. Connectivity Check (Optional, but good to know at startup)
       debugPrint('[INIT] 🌐 Checking backend connectivity...');
       final connectivity = ConnectivityService();
       final isOnline = await connectivity.isBackendAvailable();

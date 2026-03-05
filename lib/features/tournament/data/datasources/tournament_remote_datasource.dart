@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:play_sync_new/core/api/api_client.dart';
 import 'package:play_sync_new/core/api/api_endpoints.dart';
 import '../../domain/entities/tournament_entity.dart';
@@ -99,22 +101,25 @@ class TournamentRemoteDataSource {
   // ── Payments ──────────────────────────────────────────────────────────────
 
   Future<PaymentInitiation> initiatePayment(String id) async {
-    final response = await _apiClient.post(ApiEndpoints.initiatePayment(id));
+    final response = await _apiClient.post(
+      ApiEndpoints.initiatePayment,
+      data: {'tournamentId': id},
+    );
     final data = _extractData(response.data);
     return PaymentInitiation.fromJson(data as Map<String, dynamic>);
   }
 
   /// Verify payment — returns entity or throws.
   /// Backend returns 202 for PENDING (caller should retry).
-  Future<Map<String, dynamic>> verifyPaymentRaw(
-      String transactionUuid) async {
-    final response = await _apiClient.post(
+  Future<Map<String, dynamic>> verifyPaymentRaw(String base64Data) async {
+    final response = await _apiClient.get(
       ApiEndpoints.verifyPayment,
-      data: {'transactionUuid': transactionUuid},
+      queryParameters: {'data': base64Data},
     );
     return {
       'statusCode': response.statusCode,
       'data': response.data,
+      'callbackData': _decodeEsewaData(base64Data),
     };
   }
 
@@ -173,5 +178,18 @@ class TournamentRemoteDataSource {
       return responseData['data'] ?? responseData;
     }
     return responseData;
+  }
+
+  /// eSewa verify endpoint only returns message in current backend,
+  /// so decode the callback payload to preserve transaction details.
+  Map<String, dynamic>? _decodeEsewaData(String base64Data) {
+    try {
+      final decoded = utf8.decode(base64Decode(base64Data));
+      final json = jsonDecode(decoded);
+      if (json is Map<String, dynamic>) return json;
+      return null;
+    } catch (_) {
+      return null;
+    }
   }
 }

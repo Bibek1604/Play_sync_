@@ -57,6 +57,7 @@ dependencies:
   
   # HTTP Client
   dio: ^5.3.3
+  http: ^1.1.0
   
   # Secure Storage
   flutter_secure_storage: ^9.0.0
@@ -77,6 +78,7 @@ dependencies:
   # Location / GPS
   geolocator: ^13.0.2
   geocoding: ^3.0.0
+  permission_handler: ^11.3.1
 
 
 
@@ -94,6 +96,9 @@ dependencies:
 
   # WebView for in-app eSewa payment
   webview_flutter: ^4.10.0
+
+  # Confetti animation for success celebrations
+  confetti: ^0.7.0
 
 
 dev_dependencies:
@@ -123,8 +128,8 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/images/playsync.svg
-    - assets/images/home_illustration.svg
+    - assets/images/
+    - assets/font/
   fonts:
     - family: OpenSans
       fonts:

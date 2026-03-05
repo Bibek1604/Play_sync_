@@ -23,4 +23,7 @@ export 'presentation/pages/tournament_detail_page.dart';
 export 'presentation/pages/create_tournament_page.dart';
 export 'presentation/pages/tournament_chat_page.dart';
 export 'presentation/pages/tournament_payments_page.dart';
+export 'presentation/pages/tournament_payment_screen.dart';
 export 'presentation/pages/esewa_payment_page.dart';
+export 'presentation/pages/payment_success_screen.dart';
+export 'presentation/pages/payment_failed_screen.dart';

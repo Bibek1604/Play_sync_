@@ -15,13 +15,22 @@ import '../../domain/entities/game_invitation_entity.dart';
 /// Cache is automatically invalidated after mutations (join/leave/cancel).
 class GameRepository {
   final ApiClient _api;
-  late final Box<dynamic> _gamesBox;
+  Box<dynamic>? _gamesBox;
 
   /// Cache TTL — games older than this are refetched from API
   static const _cacheTTL = Duration(minutes: 5);
 
-  GameRepository(this._api) {
-    _gamesBox = Hive.box(HiveTableConstant.gamesBox);
+  GameRepository(this._api);
+
+  /// Safely get the games box, opening it if necessary
+  Future<Box<dynamic>> get _box async {
+    if (_gamesBox != null && _gamesBox!.isOpen) return _gamesBox!;
+    if (!Hive.isBoxOpen(HiveTableConstant.gamesBox)) {
+      _gamesBox = await Hive.openBox(HiveTableConstant.gamesBox);
+    } else {
+      _gamesBox = Hive.box(HiveTableConstant.gamesBox);
+    }
+    return _gamesBox!;
   }
 
   // ─── Single Game Operations ─────────────────────────────────────────────
@@ -31,9 +40,10 @@ class GameRepository {
   /// [forceRefresh] bypasses cache and always fetches from API.
   /// Always fetches with full participant details (`?details=true`).
   Future<GameEntity> getGame(String id, {bool forceRefresh = false}) async {
+    final box = await _box;
     // 1. Check cache if not forcing refresh
     if (!forceRefresh) {
-      final cached = _gamesBox.get(id);
+      final cached = box.get(id);
       if (cached != null && cached is Map) {
         try {
           final cacheMap = Map<String, dynamic>.from(cached);
@@ -342,7 +352,8 @@ class GameRepository {
       await _api.delete(ApiEndpoints.deleteGame(id));
 
       // Remove from cache
-      await _gamesBox.delete(id);
+      final box = await _box;
+      await box.delete(id);
       debugPrint('[GameRepository] ✓ Deleted game $id, removed from cache');
     } catch (e) {
       debugPrint('[GameRepository] ❌ Delete failed for game $id: $e');
@@ -489,7 +500,8 @@ class GameRepository {
   /// Loads all cached games on app startup.
   Future<List<GameEntity>> loadCachedGames() async {
     try {
-      final rawValues = _gamesBox.values
+      final box = await _box;
+      final rawValues = box.values
           .where((v) => v is Map)
           .map((v) => Map<String, dynamic>.from(v as Map))
           .where((m) => _isCacheFresh(m))
@@ -514,9 +526,10 @@ class GameRepository {
   /// Updates cache with timestamp for a game.
   Future<void> _updateCache(String id, GameEntity game) async {
     try {
+      final box = await _box;
       final json = game.toJson();
       json['_cachedAt'] = DateTime.now().toIso8601String();
-      await _gamesBox.put(id, json);
+      await box.put(id, json);
     } catch (e) {
       debugPrint('[GameRepository] ⚠️ Cache update failed for $id: $e');
     }
@@ -535,13 +548,15 @@ class GameRepository {
 
   /// Clears all cached games (useful for logout/debugging).
   Future<void> clearCache() async {
-    await _gamesBox.clear();
+    final box = await _box;
+    await box.clear();
     debugPrint('[GameRepository] ✓ Cache cleared');
   }
 
   /// Invalidates cache for a specific game (forces refetch next time).
   Future<void> invalidateGame(String id) async {
-    await _gamesBox.delete(id);
+    final box = await _box;
+    await box.delete(id);
     debugPrint('[GameRepository] ✓ Cache invalidated for game $id');
   }
 }

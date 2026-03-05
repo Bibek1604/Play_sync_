@@ -10,7 +10,7 @@ import 'package:intl/intl.dart';
 import '../providers/game_notifier.dart';
 import 'package:play_sync_new/features/game_chat/game_chat.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_theme.dart';
+import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_theme.dart';
 
 /// Multi-step game creation wizard.
@@ -350,23 +350,25 @@ class _CreateGameSheetState extends ConsumerState<CreateGameSheet> {
 
               // ── Header with step indicator ───────────────────────
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 child: Row(children: [
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: AppColors.primaryLight,
                       borderRadius: BorderRadius.circular(AppRadius.md)),
                     child: Icon(
                       widget.isOnlineMode ? Icons.wifi_rounded : Icons.sports_rounded,
-                      color: AppColors.primary, size: 22),
+                      color: AppColors.primary, size: 20),
                   ),
                   SizedBox(width: AppSpacing.md),
                   Expanded(child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Create $mode Session',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               color: AppColors.textPrimary, fontWeight: FontWeight.w800)),
                       Text('Step ${_currentStep + 1} of $_totalSteps',
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -374,7 +376,7 @@ class _CreateGameSheetState extends ConsumerState<CreateGameSheet> {
                     ],
                   )),
                   IconButton(
-                    icon: const Icon(Icons.close, color: AppColors.textTertiary),
+                    icon: const Icon(Icons.close, color: AppColors.textTertiary, size: 20),
                     onPressed: () => Navigator.pop(context)),
                 ]),
               ),
@@ -383,19 +385,19 @@ class _CreateGameSheetState extends ConsumerState<CreateGameSheet> {
 
               // ── Step progress bar ────────────────────────────────
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 child: _StepProgressBar(
                   totalSteps: _totalSteps,
                   currentStep: _currentStep,
                 ),
               ),
 
-              SizedBox(height: AppSpacing.lg),
+              SizedBox(height: AppSpacing.md),
 
               // ── Step content ─────────────────────────────────────
               Flexible(
                 child: SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 200),
                     child: _buildStepContent(),
@@ -405,7 +407,7 @@ class _CreateGameSheetState extends ConsumerState<CreateGameSheet> {
 
               // ── Bottom navigation ────────────────────────────────
               Container(
-                padding: EdgeInsets.all(AppSpacing.lg),
+                padding: EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
                   border: Border(top: BorderSide(color: AppColors.border.withValues(alpha: 0.5))),

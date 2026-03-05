@@ -10,10 +10,7 @@ import '../../../../features/auth/presentation/providers/auth_notifier.dart';
 import '../../../chat/presentation/providers/chat_notifier.dart';
 
 const _sportIcons = <String, IconData>{
-  'Football': Icons.sports_soccer,
-  'Basketball': Icons.sports_basketball,
   'Cricket': Icons.sports_cricket,
-  'Chess': Icons.casino_outlined,
   'Tennis': Icons.sports_tennis,
   'Badminton': Icons.sports_tennis,
   'Other': Icons.sports,

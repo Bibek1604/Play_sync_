@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../auth/presentation/providers/auth_notifier.dart';
 import '../../../profile/presentation/viewmodel/profile_notifier.dart';

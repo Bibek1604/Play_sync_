@@ -1,13 +1,10 @@
-import 'dart:ui';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import "package:flutter/material.dart";
+import "package:flutter_riverpod/flutter_riverpod.dart";
+import "../../app/routes/app_routes.dart";
+import "../constants/app_colors.dart";
+import "../../features/auth/presentation/providers/auth_notifier.dart";
+import "../../features/profile/presentation/viewmodel/profile_notifier.dart";
 
-import '../../app/routes/app_routes.dart';
-import '../../core/constants/app_colors.dart';
-import '../../features/auth/presentation/providers/auth_notifier.dart';
-import '../../features/profile/presentation/viewmodel/profile_notifier.dart';
-
-/// Side drawer widget shown on demand from any authenticated screen.
 class AppDrawer extends ConsumerWidget {
   const AppDrawer({super.key});
 
@@ -17,218 +14,210 @@ class AppDrawer extends ConsumerWidget {
     final profileState = ref.watch(profileNotifierProvider);
     final user = authState.user;
 
-    // Prefer latest profile data; fall back to auth cache
-    final fullName = profileState.profile?.fullName
-        ?? user?.fullName
-        ?? '';
-    final email = profileState.profile?.email
-        ?? user?.email
-        ?? '';
+    final fullName = profileState.profile?.fullName ?? user?.fullName ?? "Gamer";
+    final email = profileState.profile?.email ?? user?.email ?? "";
     final avatarUrl = profileState.profile?.avatar;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentRoute = ModalRoute.of(context)?.settings.name ?? "";
 
-    // Determine the current route for active highlight
-    final currentRoute = ModalRoute.of(context)?.settings.name ?? '';
+    final Color drawerBg = isDark ? const Color(0xFF1E293B) : const Color(0xFFE0E7FF);
+    final Color headerBgStart = isDark ? const Color(0xFF3B82F6) : const Color(0xFF93C5FD);
+    final Color headerBgEnd = isDark ? const Color(0xFF1E3A8A) : const Color(0xFF60A5FA);
 
     return Drawer(
       backgroundColor: Colors.transparent,
-      elevation: 8,
-      child: ClipRRect(
-        borderRadius: const BorderRadius.only(
-          topRight: Radius.circular(20),
-          bottomRight: Radius.circular(20),
+      elevation: 0,
+      width: MediaQuery.of(context).size.width * 0.85,
+      child: Container(
+        decoration: BoxDecoration(
+          color: drawerBg,
+          borderRadius: const BorderRadius.only(topRight: Radius.circular(32), bottomRight: Radius.circular(32)),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(isDark ? 0.5 : 0.08), blurRadius: 40, offset: const Offset(10, 0))],
         ),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            decoration: BoxDecoration(
-              color: (isDark ? AppColors.backgroundDark : AppColors.background).withValues(alpha: 0.95),
-              border: Border(
-                right: BorderSide(
-                  color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
-                  width: 1,
-                ),
+        child: Column(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 24, bottom: 24, left: 24, right: 24),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [headerBgStart, headerBgEnd]),
+                borderRadius: const BorderRadius.only(topRight: Radius.circular(32)),
               ),
-            ),
-            child: Column(
-        children: [
-          // ── Header — blue gradient ──────────────────────────────────────
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(20, 52, 20, 24),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: AppColors.sidebarGradient,
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.white.withValues(alpha: 0.2),
-                  backgroundImage: avatarUrl != null && avatarUrl.isNotEmpty
-                      ? NetworkImage(avatarUrl)
-                      : null,
-                  child: avatarUrl == null || avatarUrl.isEmpty
-                      ? Text(
-                          fullName.isNotEmpty ? fullName[0].toUpperCase() : '?',
-                          style: const TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        )
-                      : null,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  fullName.isNotEmpty ? fullName : 'Player',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 64, height: 64,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white.withOpacity(0.3), width: 2.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(32),
+                          child: avatarUrl != null
+                              ? Image.network(avatarUrl, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _buildAvatarPlaceholder(fullName))
+                              : _buildAvatarPlaceholder(fullName),
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close_rounded, color: Colors.white),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white.withOpacity(0.1),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                if (email.isNotEmpty)
+                  const SizedBox(height: 20),
+                  Text(
+                    fullName,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.5,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
                   Text(
                     email,
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.75),
-                      fontSize: 13,
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-              ],
+                ],
+              ),
             ),
-          ),
-
-          // ── Nav Items ───────────────────────────────────────────────────
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-              children: [
-                _DrawerItem(
-                  icon: Icons.home_rounded,
-                  label: 'Home',
-                  isDark: isDark,
-                  isActive: currentRoute == AppRoutes.dashboard,
-                  onTap: () => _navigate(context, AppRoutes.dashboard),
-                ),
-                _DrawerItem(
-                  icon: Icons.wifi_off_rounded,
-                  label: 'Offline Games',
-                  isDark: isDark,
-                  isActive: currentRoute == AppRoutes.offlineGames,
-                  onTap: () => _navigate(context, AppRoutes.offlineGames),
-                ),
-                _DrawerItem(
-                  icon: Icons.wifi_rounded,
-                  label: 'Online Games',
-                  isDark: isDark,
-                  isActive: currentRoute == AppRoutes.onlineGames,
-                  onTap: () => _navigate(context, AppRoutes.onlineGames),
-                ),
-                _DrawerItem(
-                  icon: Icons.notifications_rounded,
-                  label: 'Notifications',
-                  isDark: isDark,
-                  isActive: currentRoute == AppRoutes.notifications,
-                  onTap: () => _navigate(context, AppRoutes.notifications),
-                ),
-                _DrawerItem(
-                  icon: Icons.person_rounded,
-                  label: 'Profile',
-                  isDark: isDark,
-                  isActive: currentRoute == AppRoutes.profile,
-                  onTap: () => _navigate(context, AppRoutes.profile),
-                ),
-
-                Divider(
-                  color: isDark ? AppColors.borderDark : AppColors.border,
-                  height: 24,
-                ),
-
-                // ── Logout ────────────────────────────────────────────────
-                _DrawerItem(
-                  icon: Icons.logout_rounded,
-                  label: 'Logout',
-                  color: AppColors.error,
-                  isDark: isDark,
-                  onTap: () async {
-                    Navigator.pop(context);
-                    await ref.read(authNotifierProvider.notifier).logout();
-                    if (context.mounted) {
-                      Navigator.pushNamedAndRemoveUntil(
-                        context,
-                        AppRoutes.login,
-                        (r) => false,
-                      );
-                    }
-                  },
-                ),
-              ],
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                physics: const BouncingScrollPhysics(),
+                children: [
+                  _MenuLabel(title: "GAMEPLAY", isDark: isDark),
+                  _DrawerItem(icon: Icons.dashboard_customize_rounded, label: "Dashboard", isActive: currentRoute == AppRoutes.dashboard, onTap: () => _navigate(context, AppRoutes.dashboard)),
+                  _DrawerItem(icon: Icons.sports_esports_rounded, label: "Active Arenas", isActive: currentRoute == AppRoutes.game, onTap: () => _navigate(context, AppRoutes.game)),
+                  _DrawerItem(icon: Icons.military_tech_rounded, label: "Tournaments", isActive: currentRoute == AppRoutes.tournaments, onTap: () => _navigate(context, AppRoutes.tournaments)),
+                  const SizedBox(height: 24),
+                  _MenuLabel(title: "MANAGEMENT", isDark: isDark),
+                  _DrawerItem(icon: Icons.wifi_off_rounded, label: "Create Offline Game", isActive: currentRoute == AppRoutes.offlineGames, onTap: () => _navigate(context, AppRoutes.offlineGames)),
+                  _DrawerItem(icon: Icons.public_rounded, label: "Create Online Game", isActive: currentRoute == AppRoutes.onlineGames, onTap: () => _navigate(context, AppRoutes.onlineGames)),
+                  _DrawerItem(icon: Icons.emoji_events_rounded, label: "Create Tournament", isActive: currentRoute == AppRoutes.tournamentCreate, onTap: () => _navigate(context, AppRoutes.tournamentCreate)),
+                  _DrawerItem(icon: Icons.notifications_active_rounded, label: "Notifications", isActive: currentRoute == AppRoutes.notifications, onTap: () => _navigate(context, AppRoutes.notifications)),
+                  const SizedBox(height: 24),
+                  _MenuLabel(title: "ACCOUNT", isDark: isDark),
+                  _DrawerItem(icon: Icons.person_rounded, label: "Profile Info", isActive: currentRoute == AppRoutes.profile, onTap: () => _navigate(context, AppRoutes.profile)),
+                  _DrawerItem(icon: Icons.settings_rounded, label: "Preferences", isActive: currentRoute == AppRoutes.settings, onTap: () => _navigate(context, AppRoutes.settings)),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
-          ),
+            Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: _LogoutButton(onTap: () async {
+                Navigator.pop(context);
+                await ref.read(authNotifierProvider.notifier).logout();
+                if (context.mounted) Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (r) => false);
+              }),
+            ),
+          ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildAvatarPlaceholder(String name) {
+    return Container(
+      color: Colors.white24,
+      child: Center(
+        child: Text(name.isNotEmpty ? name[0].toUpperCase() : "G", style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
       ),
     );
   }
 
   void _navigate(BuildContext context, String route) {
     Navigator.pop(context);
-    Navigator.pushNamed(context, route);
+    if (ModalRoute.of(context)?.settings.name != route) Navigator.pushNamed(context, route);
+  }
+}
+
+class _MenuLabel extends StatelessWidget {
+  final String title;
+  final bool isDark;
+  const _MenuLabel({required this.title, required this.isDark});
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 12, bottom: 8),
+      child: Text(title, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1.5, color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary)),
+    );
   }
 }
 
 class _DrawerItem extends StatelessWidget {
   final IconData icon;
   final String label;
-  final Color? color;
-  final bool isDark;
   final bool isActive;
   final VoidCallback onTap;
-
-  const _DrawerItem({
-    required this.icon,
-    required this.label,
-    required this.isDark,
-    required this.onTap,
-    this.color,
-    this.isActive = false,
-  });
-
+  const _DrawerItem({required this.icon, required this.label, required this.isActive, required this.onTap});
   @override
   Widget build(BuildContext context) {
-    final activeColor = AppColors.primary;
-    final defaultColor = color ?? (isDark ? Colors.white70 : AppColors.textPrimary);
-    final itemColor = isActive ? activeColor : defaultColor;
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 1),
-      decoration: BoxDecoration(
-        color: isActive
-            ? AppColors.primaryLight.withValues(alpha: isDark ? 0.15 : 1.0)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: ListTile(
-        leading: Icon(icon, color: itemColor, size: 22),
-        title: Text(
-          label,
-          style: TextStyle(
-            color: itemColor,
-            fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-            fontSize: 15,
+      margin: const EdgeInsets.only(bottom: 8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: isActive ? const Color(0xFF3B82F6).withOpacity(isDark ? 0.2 : 0.1) : Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
+            border: isActive ? Border.all(color: const Color(0xFF3B82F6).withOpacity(0.3), width: 1) : Border.all(color: Colors.transparent, width: 1),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, size: 22, color: isActive ? const Color(0xFF3B82F6) : (isDark ? AppColors.textSecondaryDark : AppColors.textSecondary)),
+              const SizedBox(width: 16),
+              Text(label, style: TextStyle(fontSize: 15, fontWeight: isActive ? FontWeight.w800 : FontWeight.w600, color: isActive ? (isDark ? Colors.white : AppColors.primary) : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimary))),
+              if (isActive) ...[const Spacer(), Container(width: 6, height: 6, decoration: const BoxDecoration(color: Color(0xFF3B82F6), shape: BoxShape.circle))],
+            ],
           ),
         ),
-        onTap: onTap,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+}
+
+class _LogoutButton extends StatelessWidget {
+  final VoidCallback onTap;
+  const _LogoutButton({required this.onTap});
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(border: Border.all(color: AppColors.error.withOpacity(0.2)), borderRadius: BorderRadius.circular(16)),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [Icon(Icons.logout_rounded, color: AppColors.error, size: 20), SizedBox(width: 12), Text("Sign Out Account", style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w700, fontSize: 15))],
+        ),
       ),
     );
   }

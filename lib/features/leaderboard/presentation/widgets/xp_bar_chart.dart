@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../domain/entities/leaderboard_entry.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_theme.dart';
+import '../../../../../core/constants/app_spacing.dart';
 
 /// Horizontal bar chart showing XP distribution across top-N leaderboard entries.
 /// Built with CustomPainter — no external chart library.

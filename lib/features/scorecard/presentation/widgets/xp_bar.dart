@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_theme.dart';
+import '../../../../core/constants/app_spacing.dart';
 
 /// Animated XP progress bar with level badges.
 class XpProgressBar extends StatefulWidget {

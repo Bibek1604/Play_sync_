@@ -77,21 +77,13 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> with SingleTickerPr
                   children: [
                     const SizedBox(height: 50),
                     // App Logo or Header
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.sports_esports, color: AppColors.primary, size: 32),
-                        const SizedBox(width: 12),
-                        Text(
-                          'PlaySync',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -0.5,
-                            color: isDark ? Colors.white : AppColors.textPrimary,
-                          ),
-                        ),
-                      ],
+                    Center(
+                      child: Image.asset(
+                        'images/final.png',
+                        height: 56,
+                        width: 56,
+                        fit: BoxFit.contain,
+                      ),
                     ),
                     const SizedBox(height: 50),
                     // Navigation Items

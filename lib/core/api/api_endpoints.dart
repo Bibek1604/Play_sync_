@@ -24,7 +24,7 @@ class ApiEndpoints {
     // For emulator, use --dart-define=DEV_BACKEND_URL=http://10.0.2.2:5000/api/v1
     try {
       if (Platform.isAndroid) {
-        return 'http://192.168.1.70:5000/api/v1';
+        return 'http://192.168.18.57:5000/api/v1';
       }
     } catch (_) {
       // Platform check may fail on some web environments if not handled by kIsWeb
@@ -41,7 +41,7 @@ class ApiEndpoints {
     
     try {
       if (Platform.isAndroid) {
-        return 'http://192.168.1.70:5000';
+        return 'http://192.168.18.57:5000';
       }
     } catch (_) {
       // Platform check may fail
@@ -143,11 +143,11 @@ class ApiEndpoints {
   static String deleteTournament(String id) => '/tournaments/$id';
 
   // ========== TOURNAMENT PAYMENT (eSewa) ==========
-  static String initiatePayment(String id) => '/tournaments/$id/pay';
-  static const String verifyPayment = '/tournaments/payment/verify';
-  static String getPaymentStatus(String id) => '/tournaments/$id/payment-status';
-  static String checkChatAccess(String id) => '/tournaments/$id/chat-access';
-  static const String getDashboardTransactions = '/tournaments/dashboard/transactions';
+  static const String initiatePayment = '/payments/initiate';
+  static const String verifyPayment = '/payments/verify';
+  static String getPaymentStatus(String id) => '/tournaments/$id/payment/status';
+  static String checkChatAccess(String id) => '/tournaments/$id/chat/access';
+  static const String getDashboardTransactions = '/payments/admin/transactions';
   static String getTournamentPayments(String id) => '/tournaments/$id/payments';
 
   // ========== ADMIN ENDPOINTS ==========

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../domain/entities/game_entity.dart';
 import 'package:play_sync_new/features/game_chat/game_chat.dart';
@@ -64,14 +65,17 @@ class GameCard extends StatelessWidget {
       debugPrint('[GameCard] Detected CREATOR for ${game.title}: currentUserId=$currentUserId, game.creatorId=${game.creatorId}, isAlreadyCreator=$isAlreadyCreator');
     }
     
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Card(
       margin: EdgeInsets.zero,
-      elevation: 0,
+      elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        side: const BorderSide(color: AppColors.border, width: 1),
+        side: BorderSide(color: theme.dividerColor, width: 1),
       ),
-      color: AppColors.surface,
+      color: theme.cardColor,
       child: Stack(
         children: [
           InkWell(
@@ -81,9 +85,9 @@ class GameCard extends StatelessWidget {
                 return;
               }
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Join game first to view game details.'),
-                  backgroundColor: AppColors.warning,
+                SnackBar(
+                  content: const Text('Join game first to view game details.'),
+                  backgroundColor: theme.colorScheme.error,
                 ),
               );
             },
@@ -93,31 +97,33 @@ class GameCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Game Image ──────────────────────────────────────
-                  if (game.imageUrl != null && game.imageUrl!.isNotEmpty) ...[
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      child: CachedNetworkImage(
-                        imageUrl: game.imageUrl!,
-                        height: 180,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(
-                          height: 180,
-                          color: AppColors.border,
-                          child: const Center(
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        ),
-                        errorWidget: (context, url, error) => Container(
-                          height: 180,
-                          color: AppColors.border,
-                          child: const Icon(Icons.image_not_supported_outlined),
-                        ),
-                      ),
+                  // ── Game Image / Placeholder ──────────────────────────
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    child: SizedBox(
+                      height: 180,
+                      width: double.infinity,
+                      child: game.imageUrl != null && game.imageUrl!.isNotEmpty
+                          ? CachedNetworkImage(
+                              imageUrl: game.imageUrl!,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => Container(
+                                color: theme.dividerColor,
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                              ),
+                              errorWidget: (context, url, error) => _GameImagePlaceholder(
+                                sport: game.sport,
+                              ),
+                            )
+                          : _GameImagePlaceholder(sport: game.sport),
                     ),
-                    SizedBox(height: AppSpacing.md),
-                  ],
+                  ),
+                  SizedBox(height: AppSpacing.md),
 
                   // ── Header ──────────────────────────────────────────
                   Row(
@@ -130,9 +136,9 @@ class GameCard extends StatelessWidget {
                           children: [
                             Text(
                               game.title,
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              style: theme.textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.w700,
-                                    color: AppColors.textPrimary,
+                                    color: theme.colorScheme.onSurface,
                                   ),
                               overflow: TextOverflow.ellipsis,
                               maxLines: 1,
@@ -142,21 +148,21 @@ class GameCard extends StatelessWidget {
                                 children: [
                                   Text(
                                     'by ${game.creatorName}',
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                          color: AppColors.textTertiary),
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                          color: theme.colorScheme.onSurfaceVariant),
                                   ),
                                   if (_isCreator) ...[
                                     const SizedBox(width: 6),
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                                       decoration: BoxDecoration(
-                                        color: AppColors.primary.withValues(alpha: 0.1),
+                                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(4),
                                       ),
-                                      child: const Text('YOU', style: TextStyle(
+                                      child: Text('YOU', style: TextStyle(
                                         fontSize: 9, 
                                         fontWeight: FontWeight.bold, 
-                                        color: AppColors.primary
+                                        color: theme.colorScheme.primary
                                       )),
                                     ),
                                   ],
@@ -166,7 +172,7 @@ class GameCard extends StatelessWidget {
                         ),
                       ),
                       // Leave space for the delete icon when creator
-                      if (_isCreator) SizedBox(width: 38),
+                      if (_isCreator) const SizedBox(width: 38),
                       const SizedBox(width: 8),
                       _CategoryChip(category: game.category),
                       const SizedBox(width: 6),
@@ -179,8 +185,8 @@ class GameCard extends StatelessWidget {
                     SizedBox(height: AppSpacing.sm),
                     Text(
                       game.description,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textSecondary, height: 1.4),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant, height: 1.4),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -189,21 +195,26 @@ class GameCard extends StatelessWidget {
                   SizedBox(height: AppSpacing.md),
 
                   // ── Info row ─────────────────────────────────────────
-                  Wrap(
-                    spacing: AppSpacing.lg,
-                    runSpacing: AppSpacing.sm,
-                    children: [
-                      _InfoItem(
-                        icon: game.isOnline ? Icons.wifi_rounded : Icons.location_on_outlined,
-                        text: game.isOnline ? 'Online' : (game.location?.address ?? 'Local'),
-                        color: AppColors.primary,
-                      ),
-                      _InfoItem(
-                        icon: Icons.group_outlined,
-                        text: '${game.currentPlayers}/${game.maxPlayers} players',
-                        color: game.isFull ? AppColors.error : AppColors.textSecondary,
-                      ),
-                    ],
+                  SizedBox(
+                    width: double.infinity,
+                    child: Wrap(
+                      spacing: AppSpacing.md,
+                      runSpacing: AppSpacing.xs,
+                      alignment: WrapAlignment.start,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        _InfoItem(
+                          icon: game.isOnline ? Icons.wifi_rounded : Icons.location_on_outlined,
+                          text: game.isOnline ? 'Online' : (game.location?.address ?? 'Local'),
+                          color: theme.colorScheme.primary,
+                        ),
+                        _InfoItem(
+                          icon: Icons.group_outlined,
+                          text: '${game.currentPlayers}/${game.maxPlayers} players',
+                          color: game.isFull ? theme.colorScheme.error : theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ],
+                    ),
                   ),
 
                   // ── Action buttons (state-driven) ──────────────────────
@@ -239,14 +250,14 @@ class GameCard extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: AppColors.error.withValues(alpha: 0.15),
+                        color: theme.colorScheme.error.withValues(alpha: 0.15),
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.error.withValues(alpha: 0.3), width: 1),
+                        border: Border.all(color: theme.colorScheme.error.withValues(alpha: 0.3), width: 1),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.delete_rounded,
                         size: 22,
-                        color: AppColors.error,
+                        color: theme.colorScheme.error,
                       ),
                     ),
                   ),
@@ -323,16 +334,24 @@ class _ActionButtons extends StatelessWidget {
                 isCreator
                     ? Icons.chat_bubble_outline_rounded
                     : Icons.visibility_outlined,
-                size: 18,
+                size: 16,
               ),
               label: Text(
                 isCreator ? 'Go to Chat' : 'View Details',
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.2,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.fade,
+                softWrap: false,
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.md)),
               ),
@@ -344,6 +363,7 @@ class _ActionButtons extends StatelessWidget {
             // Creator: Cancel Game only (delete is the top-right icon)
             SizedBox(
               width: double.infinity,
+              height: 40,
               child: OutlinedButton.icon(
                 onPressed: onCancel,
                 icon: const Icon(Icons.cancel_outlined, size: 16),
@@ -361,7 +381,7 @@ class _ActionButtons extends StatelessWidget {
             // Participant: Leave button
             SizedBox(
               width: double.infinity,
-              height: 36,
+              height: 40,
               child: OutlinedButton.icon(
                 onPressed: onLeave,
                 icon: const Icon(Icons.exit_to_app_rounded, size: 16),
@@ -432,15 +452,26 @@ class _InfoItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 15, color: color),
-        SizedBox(width: AppSpacing.xs),
-        Text(text,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: color, fontWeight: FontWeight.w500)),
-      ],
+    return Container(
+      constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          SizedBox(width: AppSpacing.xs),
+          Flexible(
+            child: Text(
+              text,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w500,
+                  ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -451,13 +482,10 @@ class _SportIcon extends StatelessWidget {
 
   IconData get _icon {
     final s = sport.toLowerCase();
-    if (s.contains('football') || s.contains('soccer')) return Icons.sports_soccer;
-    if (s.contains('basketball')) return Icons.sports_basketball;
     if (s.contains('cricket')) return Icons.sports_cricket;
     if (s.contains('tennis')) return Icons.sports_tennis;
     if (s.contains('volleyball')) return Icons.sports_volleyball;
     if (s.contains('baseball')) return Icons.sports_baseball;
-    if (s.contains('chess')) return Icons.extension;
     return Icons.sports_esports;
   }
 
@@ -520,11 +548,12 @@ class _StatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final (label, bgColor, textColor) = switch (status) {
-      GameStatus.OPEN     => ('Open',      AppColors.primary.withValues(alpha: 0.12), AppColors.primary),
-      GameStatus.FULL     => ('Full',      AppColors.warning.withValues(alpha: 0.12), AppColors.warning),
-      GameStatus.ENDED    => ('Ended',     AppColors.textTertiary.withValues(alpha: 0.12), AppColors.textSecondary),
-      GameStatus.CANCELLED=> ('Cancelled', AppColors.error.withValues(alpha: 0.12),   AppColors.error),
+      GameStatus.OPEN     => ('Open',      theme.colorScheme.primary.withValues(alpha: 0.12), theme.colorScheme.primary),
+      GameStatus.FULL     => ('Full',      theme.colorScheme.tertiary.withValues(alpha: 0.12), theme.colorScheme.tertiary),
+      GameStatus.ENDED    => ('Ended',     theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.12), theme.colorScheme.onSurfaceVariant),
+      GameStatus.CANCELLED=> ('Cancelled', theme.colorScheme.error.withValues(alpha: 0.12),   theme.colorScheme.error),
     };
     return Container(
       padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
@@ -535,6 +564,48 @@ class _StatusChip extends StatelessWidget {
       child: Text(label,
           style: TextStyle(
               fontSize: 11, fontWeight: FontWeight.w700, color: textColor, letterSpacing: 0.4)),
+    );
+  }
+}
+
+class _GameImagePlaceholder extends StatelessWidget {
+  final String sport;
+  const _GameImagePlaceholder({required this.sport});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            theme.colorScheme.primary.withValues(alpha: 0.12),
+            theme.colorScheme.secondary.withValues(alpha: 0.08),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.image_outlined,
+              size: 42,
+              color: AppColors.textSecondary.withValues(alpha: 0.8),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              sport.isEmpty ? 'Game Image' : '$sport Image',
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

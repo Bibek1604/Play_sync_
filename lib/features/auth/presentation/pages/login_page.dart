@@ -147,39 +147,16 @@ class _LoginPageState extends ConsumerState<LoginPage>
 
                       // ── Logo ──────────────────────────────────────
                       Center(
-                        child: Container(
-                          width: 76,
-                          height: 76,
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryLight,
-                            borderRadius: BorderRadius.circular(22),
-                            border: Border.all(
-                              color: AppColors.primary.withValues(alpha: 0.2),
-                              width: 1.5,
-                            ),
-                          ),
-                          child: const Icon(
-                            Icons.sports_esports_rounded,
-                            size: 40,
-                            color: AppColors.primary,
-                          ),
+                        child: Image.asset(
+                          'assets/images/final.png',
+                          height: 180,
+                          width: 180,
+                          fit: BoxFit.contain,
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 32),
 
                       // ── Heading ───────────────────────────────────
-                      const Center(
-                        child: Text(
-                          'PlaySync',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.primary,
-                            letterSpacing: -0.8,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
                       const Center(
                         child: Text(
                           'Welcome back — sign in to continue',

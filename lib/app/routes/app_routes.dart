@@ -21,6 +21,7 @@ class AppRoutes {
   static const String profile = '/profile';
   static const String settings = '/settings';
   static const String theme = '/theme';
+  static const String location = '/location';
 
   // Game Routes
   static const String game = '/game';
@@ -55,5 +56,8 @@ class AppRoutes {
   static const String tournamentCreate = '/tournament-create';
   static const String tournamentChat = '/tournament-chat';
   static const String tournamentPayments = '/tournament-payments';
+  static const String tournamentPayment = '/tournament-payment';
   static const String esewaPayment = '/esewa-payment';
+  static const String paymentSuccess = '/payment-success';
+  static const String paymentFailed = '/payment-failed';
 }

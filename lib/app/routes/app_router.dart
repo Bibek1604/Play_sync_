@@ -12,6 +12,7 @@ import '../../features/auth/presentation/widgets/auth_guard.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/settings/presentation/pages/theme_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
+import '../../features/profile/location/presentation/pages/location_page.dart';
 import '../../features/game/presentation/pages/game_page.dart';
 import '../../features/game/presentation/pages/game_detail_page.dart';
 import '../../features/game/presentation/pages/available_games_page.dart';
@@ -29,8 +30,12 @@ import '../../features/tournament/presentation/pages/tournament_detail_page.dart
 import '../../features/tournament/presentation/pages/create_tournament_page.dart';
 import '../../features/tournament/presentation/pages/tournament_chat_page.dart';
 import '../../features/tournament/presentation/pages/tournament_payments_page.dart';
+import '../../features/tournament/presentation/pages/tournament_payment_screen.dart';
 import '../../features/tournament/presentation/pages/esewa_payment_page.dart';
+import '../../features/tournament/presentation/pages/payment_success_screen.dart';
+import '../../features/tournament/presentation/pages/payment_failed_screen.dart';
 import '../../features/tournament/domain/entities/tournament_entity.dart';
+import '../../features/tournament/domain/entities/tournament_payment_entity.dart';
 import '../../core/widgets/app_shell.dart';
 
 /// Application Router
@@ -100,6 +105,12 @@ class AppRouter {
       case AppRoutes.theme:
         return _buildRoute(
           const AuthGuard(child: ThemePage()),
+          settings,
+        );
+
+      case AppRoutes.location:
+        return _buildRoute(
+          const AuthGuard(child: LocationPage()),
           settings,
         );
 
@@ -198,9 +209,20 @@ class AppRouter {
 
       case AppRoutes.tournamentDetail:
         final args = settings.arguments as Map<String, dynamic>? ?? {};
-        final tournamentId = args['tournamentId'] as String? ?? '';
+        final tournament = args['tournament'] as TournamentEntity?;
+        
+        if (tournament == null) {
+          return MaterialPageRoute(
+            builder: (_) => const Scaffold(
+              body: Center(
+                child: Text('Error: Tournament details not found.'),
+              ),
+            ),
+          );
+        }
+
         return _buildRoute(
-          AuthGuard(child: TournamentDetailPage(tournamentId: tournamentId)),
+          AuthGuard(child: TournamentDetailPage(tournament: tournament)),
           settings,
         );
 
@@ -243,6 +265,68 @@ class AppRouter {
               paymentUrl: args['paymentUrl'] as String? ?? '',
               params: args['params'] as Map<String, dynamic>? ?? {},
               tournamentId: args['tournamentId'] as String? ?? '',
+            ),
+          ),
+          settings,
+        );
+
+      case AppRoutes.tournamentPayment:
+        final tournament = settings.arguments as TournamentEntity?;
+        if (tournament == null) {
+          return MaterialPageRoute(
+            builder: (_) => const Scaffold(
+              body: Center(
+                child: Text('Error: Tournament not found.'),
+              ),
+            ),
+          );
+        }
+        return _buildRoute(
+          AuthGuard(child: TournamentPaymentScreen(tournament: tournament)),
+          settings,
+        );
+
+      case AppRoutes.paymentSuccess:
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        final tournament = args['tournament'] as TournamentEntity?;
+        final payment = args['payment'] as TournamentPaymentEntity?;
+        if (tournament == null || payment == null) {
+          return MaterialPageRoute(
+            builder: (_) => const Scaffold(
+              body: Center(
+                child: Text('Error: Payment details not found.'),
+              ),
+            ),
+          );
+        }
+        return _buildRoute(
+          AuthGuard(
+            child: PaymentSuccessScreen(
+              tournament: tournament,
+              payment: payment,
+            ),
+          ),
+          settings,
+        );
+
+      case AppRoutes.paymentFailed:
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        final tournament = args['tournament'] as TournamentEntity?;
+        final error = args['error'] as String? ?? 'Payment failed';
+        if (tournament == null) {
+          return MaterialPageRoute(
+            builder: (_) => const Scaffold(
+              body: Center(
+                child: Text('Error: Tournament not found.'),
+              ),
+            ),
+          );
+        }
+        return _buildRoute(
+          AuthGuard(
+            child: PaymentFailedScreen(
+              tournament: tournament,
+              error: error,
             ),
           ),
           settings,

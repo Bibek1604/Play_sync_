@@ -6,7 +6,7 @@ class SportPicker extends StatelessWidget {
   final String? selectedSport;
   final void Function(String?) onChanged;
 
-  static const _sports = ['All', 'Football', 'Basketball', 'Cricket', 'Tennis', 'Badminton', 'Volleyball'];
+  static const _sports = ['All'];
 
   const SportPicker({super.key, this.selectedSport, required this.onChanged});
 
