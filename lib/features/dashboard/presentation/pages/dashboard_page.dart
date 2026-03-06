@@ -153,8 +153,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                             Expanded(child: _ActionCard(icon: Icons.wifi_off_rounded, title: "Offline", color: AppColors.primary, onTap: () => Navigator.pushNamed(context, AppRoutes.offlineGames), isDark: isDark)),
                             const SizedBox(width: 12),
                             Expanded(child: _ActionCard(icon: Icons.public_rounded, title: "Online", color: AppColors.secondary, onTap: () => Navigator.pushNamed(context, AppRoutes.onlineGames), isDark: isDark)),
-                            const SizedBox(width: 12),
-                            Expanded(child: _ActionCard(icon: Icons.emoji_events_rounded, title: "Tourneys", color: AppColors.accent, onTap: () => Navigator.pushNamed(context, AppRoutes.tournaments), isDark: isDark)),
                           ],
                         ),
                         

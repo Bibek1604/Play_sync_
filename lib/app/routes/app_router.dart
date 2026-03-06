@@ -208,6 +208,7 @@ class AppRouter {
         );
 
       // ── Tournament routes ─────────────────────────────────────────────────
+      /*
       case AppRoutes.tournaments:
         return _buildRoute(
           const AuthGuard(child: TournamentListPage()),
@@ -338,6 +339,7 @@ class AppRouter {
           ),
           settings,
         );
+      */
 
       // ── Fallback ──────────────────────────────────────────────────────────
       default:

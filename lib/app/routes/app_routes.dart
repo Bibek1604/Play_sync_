@@ -52,6 +52,7 @@ class AppRoutes {
   static const String events = '/events';
 
   // Tournament Routes
+  /*
   static const String tournaments = '/tournaments';
   static const String tournamentDetail = '/tournament-detail';
   static const String tournamentCreate = '/tournament-create';
@@ -61,4 +62,5 @@ class AppRoutes {
   static const String esewaPayment = '/esewa-payment';
   static const String paymentSuccess = '/payment-success';
   static const String paymentFailed = '/payment-failed';
+  */
 }

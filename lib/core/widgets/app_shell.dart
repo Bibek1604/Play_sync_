@@ -44,11 +44,6 @@ const _destinations = [
     label: 'Chats',
   ),
   _NavDest(
-    icon: Icons.emoji_events_outlined,
-    activeIcon: Icons.emoji_events_rounded,
-    label: 'Events',
-  ),
-  _NavDest(
     icon: Icons.person_outline_rounded,
     activeIcon: Icons.person_rounded,
     label: 'Profile',
@@ -79,7 +74,6 @@ class AppShell extends ConsumerWidget {
       const DashboardPage(),
       const LeaderboardPage(),
       ChatPage(),
-      const TournamentListPage(),
       const ProfilePage(),
     ];
 
