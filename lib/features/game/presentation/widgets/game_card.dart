@@ -504,7 +504,7 @@ class _Buttons extends StatelessWidget {
                     outlined: true,
                   )
                 : _Btn(
-                    label: 'Leave',
+                    label: 'Leave Game', // Updated from 'Leave'
                     icon: Icons.exit_to_app_rounded,
                     color: _kClrLeave,
                     busy: busy,
@@ -523,7 +523,7 @@ class _Buttons extends StatelessWidget {
 
     // Not joined + open
     return _Btn(
-      label: 'Join Game  ·  ${game.spotsLeft} ${game.spotsLeft == 1 ? 'spot' : 'spots'} left',
+      label: 'Join Game', // Simplified from 'Join Game · X spots left'
       icon: Icons.login_rounded,
       color: _kClrJoin,
       busy: busy,

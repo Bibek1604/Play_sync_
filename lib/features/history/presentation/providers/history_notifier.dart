@@ -82,9 +82,12 @@ class HistoryNotifier extends StateNotifier<HistoryState> {
       final body = resp.data as Map<String, dynamic>;
       // Backend wraps: { success, message, data: { history: [], pagination: {} } }
       final data = (body['data'] as Map<String, dynamic>?) ?? body;
-      final list = (data['history'] as List? ?? [])
+      final rawList = (data['history'] as List? ?? [])
           .map((j) => GameHistory.fromJson(j as Map<String, dynamic>))
           .toList();
+
+      // Filter: only show games where the current user actually participated
+      final list = rawList.where((h) => h.myParticipation.joinedAt != null).toList();
 
       final pagination = data['pagination'] as Map<String, dynamic>? ?? {};
       final hasNext = pagination['hasNext'] as bool? ?? false;
@@ -142,9 +145,12 @@ class HistoryNotifier extends StateNotifier<HistoryState> {
       );
       final body = resp.data as Map<String, dynamic>;
       final data = (body['data'] as Map<String, dynamic>?) ?? body;
-      final list = (data['history'] as List? ?? [])
+      final rawList = (data['history'] as List? ?? [])
           .map((j) => GameHistory.fromJson(j as Map<String, dynamic>))
           .toList();
+
+      // Filter
+      final list = rawList.where((h) => h.myParticipation.joinedAt != null).toList();
 
       final pagination = data['pagination'] as Map<String, dynamic>? ?? {};
       final hasNext = pagination['hasNext'] as bool? ?? false;

@@ -76,13 +76,6 @@ class QuickActionWidget extends StatelessWidget {
                   baseColor: AppColors.info,
                   onTap: () => Navigator.pushNamed(context, AppRoutes.onlineGames),
                 ),
-                _AnimatedActionCard(
-                  icon: Icons.add_circle_outline_rounded,
-                  title: 'Create',
-                  subtitle: 'New Game',
-                  baseColor: AppColors.success,
-                  onTap: () => Navigator.pushNamed(context, AppRoutes.game),
-                ),
               ],
             );
           },

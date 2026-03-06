@@ -77,7 +77,6 @@ class _GameTileWidgetState extends State<GameTileWidget> with SingleTickerProvid
       onTapUp: _onTapUp,
       onTapCancel: _onTapCancel,
       onTap: () {
-        // If not joined, they should only see the detail page to join, not "view game" depth
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -88,20 +87,18 @@ class _GameTileWidgetState extends State<GameTileWidget> with SingleTickerProvid
       child: ScaleTransition(
         scale: _scale,
         child: Container(
-          width: MediaQuery.sizeOf(context).width * 0.45, // Keep width decreased, not length
-          margin: const EdgeInsets.only(bottom: AppSpacing.space16, right: AppSpacing.space12),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppSpacing.radius20),
+            borderRadius: BorderRadius.circular(24),
             border: Border.all(color: AppColors.borderSubtle, width: 1.2),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
+                color: Colors.black.withOpacity(0.06),
+                blurRadius: 24,
+                offset: const Offset(0, 12),
               ),
               BoxShadow(
-                color: statusColor.withValues(alpha: 0.05),
+                color: statusColor.withOpacity(0.05),
                 blurRadius: 10,
                 spreadRadius: -2,
               ),
@@ -109,42 +106,89 @@ class _GameTileWidgetState extends State<GameTileWidget> with SingleTickerProvid
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min, // Ensure it only takes needed height
+            mainAxisSize: MainAxisSize.min,
             children: [
               AspectRatio(
-                aspectRatio: 16 / 9,
+                aspectRatio: 2.1 / 1, // Shorter height
                 child: Stack(
+                  fit: StackFit.expand,
                   children: [
                     _GamePreviewImage(game: widget.game),
-                    if (isJoined)
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: const BoxDecoration(
-                            color: AppColors.success,
-                            shape: BoxShape.circle,
+                    // Elegant Gradient Overlay
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.transparent,
+                              Colors.black.withOpacity(0.5),
+                            ],
                           ),
-                          child: const Icon(Icons.check, color: Colors.white, size: 10),
                         ),
                       ),
-                    // Show a little icon to indicate if game is offline or online
+                    ),
+                    if (isJoined)
+                      Positioned(
+                        top: 12,
+                        right: 12,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppColors.success,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.success.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.check_circle_rounded, color: Colors.white, size: 14),
+                              SizedBox(width: 4),
+                              Text('Joined', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    // Premium Floating Badge
                     Positioned(
-                      bottom: 8,
-                      right: 8,
+                      bottom: 12,
+                      left: 12,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.6),
-                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                            ),
+                          ],
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(widget.game.isOffline ? Icons.location_on_rounded : Icons.public_rounded, color: Colors.white, size: 10),
-                            const SizedBox(width: 4),
-                            Text(widget.game.isOffline ? 'Offline' : 'Online', style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)),
+                            Icon(
+                              widget.game.isOffline ? Icons.location_on_rounded : Icons.public_rounded,
+                              color: widget.game.isOffline ? AppColors.primary : AppColors.secondary,
+                              size: 14,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              widget.game.isOffline ? 'Local' : 'Remote',
+                              style: const TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -153,169 +197,107 @@ class _GameTileWidgetState extends State<GameTileWidget> with SingleTickerProvid
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6), // Compressed vertical padding slightly
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0), // Tightened vertical padding
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min, // Keep this min, but let row content not break into multiple lines
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Row(
                       children: [
-                        Icon(
-                          widget.game.sport.toLowerCase().contains('football') ? Icons.sports_soccer_rounded :
-                          widget.game.sport.toLowerCase().contains('basketball') ? Icons.sports_basketball_rounded :
-                          widget.game.sport.toLowerCase().contains('tennis') ? Icons.sports_tennis_rounded :
-                          Icons.sports_esports_rounded, 
-                          size: 14, 
-                          color: AppColors.primary,
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            widget.game.title,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 13,
-                              color: AppColors.textPrimary,
-                              letterSpacing: -0.4,
-                              height: 1.1,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            widget.game.sport.toLowerCase().contains('football') ? Icons.sports_soccer_rounded :
+                            widget.game.sport.toLowerCase().contains('basketball') ? Icons.sports_basketball_rounded :
+                            widget.game.sport.toLowerCase().contains('tennis') ? Icons.sports_tennis_rounded :
+                            Icons.sports_esports_rounded, 
+                            size: 20, 
+                            color: AppColors.primary,
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    // Use a Wrap or Flexible row to prevent any text scaling overflows
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Flexible(
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: statusColor.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  widget.game.status.name,
-                                  style: TextStyle(
-                                    color: statusColor,
-                                    fontSize: 8,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Icon(Icons.group_rounded, size: 12, color: AppColors.textTertiary),
-                              const SizedBox(width: 2),
                               Text(
-                                '${widget.game.currentPlayers}/${widget.game.maxPlayers}',
-                                style: const TextStyle(fontSize: 9, color: AppColors.textSecondary, fontWeight: FontWeight.bold),
+                                widget.game.title,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 14, // Slightly smaller title
+                                  color: AppColors.textPrimary,
+                                  letterSpacing: -0.5,
+                                  height: 1.1,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                widget.game.sport,
+                                style: const TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ],
                           ),
                         ),
-                        if (widget.game.startTime != null)
-                          Flexible(
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.event_rounded, size: 10, color: AppColors.textTertiary),
-                                const SizedBox(width: 3),
-                                Text(
-                                  DateFormat('MMM d').format(widget.game.startTime!),
-                                  style: const TextStyle(
-                                    fontSize: 10, // Larger text
-                                    color: AppColors.textTertiary,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
-                          ),
                       ],
                     ),
-                    // Action Button inside Tile
-                    const SizedBox(height: 12), // Decreased gap Above button to push it down slightly less
-                    if (isJoined)
-                      Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10), // Slimmer border radius for rectangular look
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.primary.withOpacity(0.15),
-                              blurRadius: 6,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
+                    const SizedBox(height: 8), // Tightened gap
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _DetailLabel(
+                          icon: Icons.group_rounded,
+                          label: '${widget.game.currentPlayers}/${widget.game.maxPlayers} Players',
                         ),
-                        child: ElevatedButton.icon(
-                          onPressed: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => GameDetailPage(
-                                gameId: widget.game.id,
-                                preloadedGame: widget.game,
-                              ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: statusColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: statusColor.withOpacity(0.2)),
+                          ),
+                          child: Text(
+                            widget.game.status.name,
+                            style: TextStyle(
+                              color: statusColor,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.5,
                             ),
                           ),
-                          icon: const Icon(Icons.visibility_rounded, size: 16), // Bigger icon fit for thick button
-                          label: const Text('View Match', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800), maxLines: 1, overflow: TextOverflow.ellipsis), // Bump font size
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            padding: const EdgeInsets.symmetric(vertical: 14), // Thicker button
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            elevation: 0,
-                          ),
                         ),
-                      )
-                    else
-                      Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.secondary.withOpacity(0.15),
-                              blurRadius: 6,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: ElevatedButton.icon(
-                          onPressed: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => GameDetailPage(
-                                gameId: widget.game.id,
-                                preloadedGame: widget.game,
-                              ),
-                            ),
-                          ),
-                          icon: const Icon(Icons.login_rounded, size: 16),
-                          label: const Text('Join Match', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800), maxLines: 1, overflow: TextOverflow.ellipsis),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.secondary,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            padding: const EdgeInsets.symmetric(vertical: 14), // Thicker button
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            elevation: 0,
+                      ],
+                    ),
+                    const SizedBox(height: 6), // Tightened gap
+                    if (widget.game.startTime != null)
+                      _DetailLabel(
+                        icon: Icons.calendar_today_rounded,
+                        label: DateFormat('EEEE, MMM d · hh:mm a').format(widget.game.startTime!),
+                      ),
+                    const SizedBox(height: 2), // Tightest possible gap
+                    PrimaryButton(
+                      label: isJoined ? 'View Match' : 'Join Match',
+                      icon: isJoined ? Icons.visibility_rounded : Icons.login_rounded,
+                      height: 40, // More compact button height
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => GameDetailPage(
+                            gameId: widget.game.id,
+                            preloadedGame: widget.game,
                           ),
                         ),
                       ),
+                    ),
                   ],
                 ),
               ),
@@ -327,6 +309,32 @@ class _GameTileWidgetState extends State<GameTileWidget> with SingleTickerProvid
   }
 }
 
+class _DetailLabel extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _DetailLabel({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: AppColors.textTertiary),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _GamePreviewImage extends StatelessWidget {
   final GameEntity game;
   const _GamePreviewImage({required this.game});
@@ -334,9 +342,9 @@ class _GamePreviewImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSpacing.radius20)),
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       child: AspectRatio(
-        aspectRatio: 16 / 9,
+        aspectRatio: 16 / 10,
         child: SizedBox(
           width: double.infinity,
           child: game.imageUrl != null && game.imageUrl!.isNotEmpty
@@ -366,8 +374,8 @@ class _TileImagePlaceholder extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.primary.withValues(alpha: 0.14),
-            AppColors.info.withValues(alpha: 0.08),
+            AppColors.primary.withOpacity(0.14),
+            AppColors.info.withOpacity(0.08),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
