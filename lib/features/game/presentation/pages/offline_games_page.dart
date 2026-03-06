@@ -151,7 +151,29 @@ class _OfflineGamesPageState extends ConsumerState<OfflineGamesPage> {
     final profileState = ref.watch(profileNotifierProvider);
     final currentUserId = authState.user?.userId;
     final profile = profileState.profile;
-    final allOfflineGames = state.filteredGames;
+    final allOfflineGames = () {
+      final Set<String> allIds = {};
+      final list = <GameEntity>[];
+      for (final g in state.filteredGames) {
+        if (!allIds.contains(g.id)) {
+          list.add(g);
+          allIds.add(g.id);
+        }
+      }
+      for (final g in state.myCreatedGames) {
+        if (g.category == 'OFFLINE' && !allIds.contains(g.id)) {
+          list.add(g);
+          allIds.add(g.id);
+        }
+      }
+      for (final g in state.myJoinedGames) {
+        if (g.category == 'OFFLINE' && !allIds.contains(g.id)) {
+          list.add(g);
+          allIds.add(g.id);
+        }
+      }
+      return list;
+    }();
     final filteredGames = _locationEnabled
       ? _getFilteredGames(allOfflineGames, currentUserId)
       : <GameEntity>[];

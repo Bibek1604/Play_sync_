@@ -15,42 +15,61 @@ class LeaderboardPage extends ConsumerWidget {
     final state    = ref.watch(leaderboardProvider);
     final notifier = ref.read(leaderboardProvider.notifier);
     final canPop   = Navigator.of(context).canPop();
+    final isDark   = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        leading: canPop ? IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, size: 20),
-          onPressed: () => Navigator.of(context).pop(),
-        ) : null,
-        title: const Text(
-          'Champions',
-          style: TextStyle(
-            fontWeight: FontWeight.w900,
-            fontSize: 22,
-            letterSpacing: -1.0,
+      backgroundColor: Colors.white,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: isDark 
+              ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+              : [const Color(0xFFBAE6FD), Colors.white], // Sky blue matching bottom bar
+            stops: const [0.0, 0.3],
           ),
         ),
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        centerTitle: false,
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
+        child: NestedScrollView(
+          headerSliverBuilder: (context, innerBoxIsScrolled) => [
+            SliverAppBar(
+              pinned: true,
+              floating: false,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              centerTitle: false,
+              leading: canPop ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_rounded, size: 20, color: AppColors.textPrimary),
+                onPressed: () => Navigator.of(context).pop(),
+              ) : null,
+              title: const Text(
+                'Champions',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 22,
+                  letterSpacing: -1.0,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              actions: [
+                Container(
+                  margin: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.tune_rounded, size: 18, color: AppColors.primary),
+                    onPressed: () => _showFilterSheet(context, ref, state.filter),
+                  ),
+                ),
+              ],
             ),
-            child: IconButton(
-              icon: const Icon(Icons.tune_rounded, size: 20, color: AppColors.primary),
-              tooltip: 'Filter',
-              onPressed: () => _showFilterSheet(context, ref, state.filter),
-            ),
-          ),
-        ],
+          ],
+          body: _buildBody(context, state, notifier),
+        ),
       ),
-      body: _buildBody(context, state, notifier),
     );
   }
 

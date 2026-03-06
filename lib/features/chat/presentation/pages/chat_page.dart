@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/chat_notifier.dart';
-import '../../domain/entities/chat_message.dart';
-import 'chat_room_page.dart';
 import '../../../game/presentation/providers/game_notifier.dart';
 import '../../../game/domain/entities/game_entity.dart';
 import 'package:play_sync_new/features/game_chat/game_chat.dart';
+import 'package:play_sync_new/core/constants/app_colors.dart';
+import '../../../auth/presentation/providers/auth_notifier.dart';
 import '../../../../core/widgets/app_drawer.dart';
 
-/// Chat rooms list page — shows joined game chats + regular DMs/group rooms.
+/// Chat page — shows game chats where the user is an active participant or creator.
+/// Leaving a game or deleting a game automatically removes it from this list.
 class ChatPage extends ConsumerStatefulWidget {
   const ChatPage({super.key});
 
@@ -20,7 +21,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   @override
   void initState() {
     super.initState();
-    // Load joined games so their chats appear automatically.
+    // Load joined & created games so their chats appear.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(gameProvider.notifier).fetchMyJoinedGames();
       ref.read(gameProvider.notifier).fetchMyCreatedGames();
@@ -39,116 +40,108 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   Widget build(BuildContext context) {
     final chatState = ref.watch(chatProvider);
     final gameState = ref.watch(gameProvider);
-    final cs = Theme.of(context).colorScheme;
+    final authState = ref.watch(authNotifierProvider);
+    final currentUserId = authState.user?.userId;
 
-    // Combine joined + created games, deduplicated by id.
-    // Filter to only show OPEN or FULL games (active games only)
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Build the filtered game chat list:
+    //  • Deduplicated by id
+    //  • Only OPEN or FULL games (active games)
+    //  • User must be logged in
+    //  • User must be the CREATOR or an ACTIVE participant
+    //  • If user left, isParticipant returns false (checks status == ACTIVE)
+    //  • If game is deleted/ended/cancelled, it is excluded by status check
     final seen = <String>{};
     final gameChats = [
       ...gameState.myJoinedGames,
       ...gameState.myCreatedGames,
-    ].where((g) => 
-      seen.add(g.id) && 
-      (g.status == GameStatus.OPEN || g.status == GameStatus.FULL)
-    ).toList();
+    ].where((g) {
+      if (!seen.add(g.id)) return false;
+      if (g.status != GameStatus.OPEN && g.status != GameStatus.FULL) return false;
+      if (currentUserId == null) return false;
+      return g.isCreator(currentUserId) || g.isParticipant(currentUserId);
+    }).toList();
 
     final hasGameChats = gameChats.isNotEmpty;
-    final hasRooms = chatState.rooms.isNotEmpty;
     final isLoading = chatState.isLoadingRooms;
+
+    final bgColor1 = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+    final bgColor2 = isDark ? const Color(0xFF1E293B) : const Color(0xFFE0E7FF);
 
     return Scaffold(
       drawer: const AppDrawer(),
+      backgroundColor: bgColor1,
       appBar: AppBar(
-        title: const Text('Messages'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit_outlined),
-            tooltip: 'New message',
-            onPressed: () {},
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        title: Text(
+          'Messages',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -0.5,
+            color: isDark ? Colors.white : AppColors.textPrimary,
           ),
-          Builder(
-            builder: (ctx) => IconButton(
-              icon: const Icon(Icons.menu_rounded),
-              tooltip: 'Menu',
-              onPressed: () => Scaffold.of(ctx).openDrawer(),
-            ),
-          ),
-        ],
+        ),
+        actions: const [],
       ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : (!hasGameChats && !hasRooms)
-              ? _EmptyState(onRefresh: _refresh)
-              : RefreshIndicator(
-                  onRefresh: _refresh,
-                  child: CustomScrollView(
-                    slivers: [
-                      // ── Game Chats section ────────────────────────────
-                      if (hasGameChats) ...[
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [bgColor2, bgColor1],
+            stops: const [0.0, 0.2],
+          ),
+        ),
+        child: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : !hasGameChats
+                ? _EmptyState(onRefresh: _refresh)
+                : RefreshIndicator(
+                    onRefresh: _refresh,
+                    child: CustomScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      slivers: [
                         _SectionHeader(
                           icon: Icons.sports_esports_rounded,
-                          label: 'Game Chats',
-                          color: cs.primary,
+                          label: 'Active Arenas',
+                          color: const Color(0xFF0284C7),
+                          isDark: isDark,
                         ),
-                        SliverList.separated(
-                          itemCount: gameChats.length,
-                          separatorBuilder: (_, _) => Divider(
-                              height: 1, indent: 72, color: cs.outlineVariant),
-                          itemBuilder: (_, i) {
-                            final game = gameChats[i];
-                            return _GameChatTile(
-                              game: game,
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => GameChatRoomPage(
-                                    gameId: game.id,
-                                    gameTitle: game.title,
-                                    gameImageUrl: game.imageUrl,
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-
-                      // ── Regular rooms section ─────────────────────────
-                      if (hasRooms) ...[
-                        _SectionHeader(
-                          icon: Icons.chat_bubble_outline_rounded,
-                          label: 'Messages',
-                          color: cs.secondary,
-                        ),
-                        SliverList.separated(
-                          itemCount: chatState.rooms.length,
-                          separatorBuilder: (_, _) => Divider(
-                              height: 1, indent: 72, color: cs.outlineVariant),
-                          itemBuilder: (_, i) {
-                            final room = chatState.rooms[i];
-                            return _RoomTile(
-                              room: room,
-                              onTap: () {
-                                ref
-                                    .read(chatProvider.notifier)
-                                    .openRoom(room.id);
-                                Navigator.push(
+                        SliverPadding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                          sliver: SliverList.separated(
+                            itemCount: gameChats.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 12),
+                            itemBuilder: (_, i) {
+                              final game = gameChats[i];
+                              return _GameChatTile(
+                                game: game,
+                                isDark: isDark,
+                                onTap: () => Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) =>
-                                        ChatRoomPage(roomId: room.id),
+                                    builder: (_) => GameChatRoomPage(
+                                      gameId: game.id,
+                                      gameTitle: game.title,
+                                      gameImageUrl: game.image,
+                                    ),
                                   ),
-                                );
-                              },
-                            );
-                          },
+                                ),
+                              );
+                            },
+                          ),
                         ),
+                        const SliverToBoxAdapter(child: SizedBox(height: 32)),
                       ],
-
-                      const SliverToBoxAdapter(child: SizedBox(height: 16)),
-                    ],
+                    ),
                   ),
-                ),
+      ),
     );
   }
 }
@@ -161,28 +154,57 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.chat_bubble_outline,
-              size: 64, color: cs.outline.withValues(alpha: 0.4)),
-          const SizedBox(height: 12),
-          Text('No conversations yet',
-              style: Theme.of(context).textTheme.bodyLarge),
-          const SizedBox(height: 4),
-          Text('Join a game to start chatting',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: cs.onSurfaceVariant)),
-          const SizedBox(height: 16),
-          FilledButton.tonal(
-            onPressed: onRefresh,
-            child: const Text('Refresh'),
-          ),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.08),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.chat_bubble_outline_rounded,
+                size: 52,
+                color: AppColors.primary.withOpacity(0.6),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'No Active Chats',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: isDark ? Colors.white : AppColors.textPrimary,
+                letterSpacing: -0.3,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Join or create a game to start\nchatting with other players.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark ? Colors.white54 : AppColors.textSecondary,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            FilledButton.tonal(
+              onPressed: onRefresh,
+              style: FilledButton.styleFrom(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+              ),
+              child: const Text('Refresh',
+                  style: TextStyle(fontWeight: FontWeight.w700)),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -194,25 +216,38 @@ class _SectionHeader extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color color;
-  const _SectionHeader(
-      {required this.icon, required this.label, required this.color});
+  final bool isDark;
+  const _SectionHeader({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.isDark,
+  });
 
   @override
   Widget build(BuildContext context) {
     return SliverToBoxAdapter(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
+        padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
         child: Row(
           children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, size: 16, color: color),
+            ),
+            const SizedBox(width: 10),
             Text(
-              label,
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
-                  ),
+              label.toUpperCase(),
+              style: TextStyle(
+                color: isDark ? Colors.white70 : color,
+                fontWeight: FontWeight.w800,
+                fontSize: 12,
+                letterSpacing: 1.2,
+              ),
             ),
           ],
         ),
@@ -222,170 +257,150 @@ class _SectionHeader extends StatelessWidget {
 }
 
 // ─── Game Chat Tile ───────────────────────────────────────────────────────────
+// Pure chat-entry tile — tapping goes directly to the game chat room.
+// There is NO "View Details" button here.
 
 class _GameChatTile extends StatelessWidget {
   final GameEntity game;
   final VoidCallback onTap;
-  const _GameChatTile({required this.game, required this.onTap});
+  final bool isDark;
+  const _GameChatTile(
+      {required this.game, required this.onTap, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-
     final statusColor = switch (game.status) {
       GameStatus.OPEN => const Color(0xFF10B981),
       GameStatus.FULL => const Color(0xFFF97316),
-      GameStatus.ENDED => cs.outline,
+      GameStatus.ENDED => const Color(0xFF94A3B8),
       GameStatus.CANCELLED => const Color(0xFFEF4444),
     };
 
     final subtitle = '${game.currentPlayers}/${game.maxPlayers} players'
         '${game.sport.isNotEmpty ? ' · ${game.sport}' : ''}';
 
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      leading: Stack(
-        children: [
-          CircleAvatar(
-            radius: 24,
-            backgroundImage:
-                (game.image != null && game.image!.isNotEmpty)
-                    ? NetworkImage(game.image!)
-                    : null,
-            backgroundColor: cs.primaryContainer,
-            child: (game.image == null || game.image!.isEmpty)
-                ? Icon(Icons.sports_esports_rounded,
-                    color: cs.onPrimaryContainer)
-                : null,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.surfaceDark : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isDark ? AppColors.borderDark : const Color(0xFFF1F5F9),
           ),
-          Positioned(
-            right: 0,
-            bottom: 0,
-            child: Container(
-              width: 12,
-              height: 12,
+          boxShadow: isDark
+              ? []
+              : [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.04),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+        ),
+        child: Row(
+          children: [
+            // ── Avatar with live status dot ──────────────────────────
+            Stack(
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.primary.withOpacity(0.1),
+                    border: Border.all(
+                        color: AppColors.primary.withOpacity(0.2), width: 2),
+                    image: (game.image != null && game.image!.isNotEmpty)
+                        ? DecorationImage(
+                            image: NetworkImage(game.image!),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
+                  ),
+                  child: (game.image == null || game.image!.isEmpty)
+                      ? const Icon(Icons.sports_esports_rounded,
+                          color: AppColors.primary, size: 24)
+                      : null,
+                ),
+                Positioned(
+                  right: -2,
+                  bottom: -2,
+                  child: Container(
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: statusColor,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isDark ? AppColors.surfaceDark : Colors.white,
+                        width: 2.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(width: 16),
+            // ── Game title & player count ────────────────────────────
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    game.title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: isDark ? Colors.white : AppColors.textPrimary,
+                      letterSpacing: -0.3,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(Icons.people_alt_rounded,
+                          size: 12,
+                          color: isDark
+                              ? Colors.white54
+                              : const Color(0xFF64748B)),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          subtitle,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: isDark
+                                ? Colors.white54
+                                : const Color(0xFF64748B),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            // ── Arrow — takes you straight to chat ──────────────────
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: statusColor,
-                shape: BoxShape.circle,
-                border: Border.all(
-                    color: cs.surface, width: 1.5),
+                color: AppColors.primary.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
               ),
+              child: const Icon(Icons.arrow_forward_ios_rounded,
+                  size: 14, color: AppColors.primary),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-      title: Text(
-        game.title,
-        style: tt.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      subtitle: Text(
-        subtitle,
-        style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      trailing: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(99),
-            ),
-            child: Text(
-              game.status.name,
-              style: TextStyle(
-                  fontSize: 10,
-                  color: statusColor,
-                  fontWeight: FontWeight.w600),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Icon(Icons.chevron_right_rounded,
-              size: 18, color: cs.outline),
-        ],
-      ),
-      onTap: onTap,
     );
-  }
-}
-
-class _RoomTile extends StatelessWidget {
-  final ChatRoom room;
-  final VoidCallback onTap;
-  const _RoomTile({required this.room, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      leading: Stack(
-        children: [
-          CircleAvatar(
-            radius: 24,
-            backgroundImage:
-                room.avatarUrl != null ? NetworkImage(room.avatarUrl!) : null,
-            backgroundColor: cs.primaryContainer,
-            child: room.avatarUrl == null
-                ? Icon(
-                    room.isGroupChat ? Icons.group : Icons.person,
-                    color: cs.onPrimaryContainer,
-                  )
-                : null,
-          ),
-          if (room.unreadCount > 0)
-            Positioned(
-              right: 0,
-              top: 0,
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: cs.error,
-                  shape: BoxShape.circle,
-                ),
-                child: Text(
-                  '${room.unreadCount > 99 ? "99+" : room.unreadCount}',
-                  style: TextStyle(
-                      fontSize: 10,
-                      color: cs.onError,
-                      fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-        ],
-      ),
-      title: Text(room.name,
-          style: tt.bodyLarge?.copyWith(
-              fontWeight: room.unreadCount > 0 ? FontWeight.bold : FontWeight.normal)),
-      subtitle: room.lastMessage != null
-          ? Text(room.lastMessage!,
-              style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1)
-          : null,
-      trailing: room.lastMessageAt != null
-          ? Text(
-              _timeAgo(room.lastMessageAt!),
-              style: tt.labelSmall?.copyWith(
-                  color: room.unreadCount > 0 ? cs.primary : cs.outline),
-            )
-          : null,
-      onTap: onTap,
-    );
-  }
-
-  String _timeAgo(DateTime t) {
-    final diff = DateTime.now().difference(t);
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m';
-    if (diff.inHours < 24) return '${diff.inHours}h';
-    return '${diff.inDays}d';
   }
 }

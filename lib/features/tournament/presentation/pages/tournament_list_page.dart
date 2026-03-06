@@ -13,156 +13,222 @@ class TournamentListPage extends ConsumerStatefulWidget {
 }
 
 class _TournamentListPageState extends ConsumerState<TournamentListPage> {
-  String _activeTab = "All";
-
   @override
   void initState() {
     super.initState();
     Future.microtask(() {
-      final notifier = ref.read(tournamentProvider.notifier);
-      notifier.fetchTournaments(refresh: true);
-      notifier.fetchMyTournaments();
+      final n = ref.read(tournamentProvider.notifier);
+      n.fetchTournaments(refresh: true);
+      n.fetchMyTournaments();
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(tournamentProvider);
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color textColor = isDark ? AppColors.textPrimaryDark : AppColors.textPrimary;
-
-    final List<TournamentEntity> tournaments = _filteredTournaments(state);
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.background,
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 120,
-            floating: true,
-            pinned: true,
-            elevation: 0,
-            backgroundColor: isDark ? AppColors.backgroundDark : AppColors.background,
-            flexibleSpace: FlexibleSpaceBar(
-              title: Text(
-                "Tournaments",
-                style: TextStyle(
-                  color: textColor,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 20,
-                ),
-              ),
-              centerTitle: false,
-              titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
-            ),
-            actions: [
-              IconButton(
-                icon: Icon(Icons.search, color: AppColors.primary),
-                onPressed: () {},
-              ),
-              IconButton(
-                icon: Icon(Icons.filter_list, color: AppColors.primary),
-                onPressed: () {},
-              ),
-              const SizedBox(width: 8),
+      // Light blue → white gradient background (matches user request)
+      backgroundColor: Colors.white,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFEFF6FF), // very soft sky-blue top
+              Colors.white,      // pure white bottom
             ],
+            stops: [0.0, 0.35],
           ),
-          
-          // Tabs for Categories
-          SliverToBoxAdapter(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              child: Row(
-                children: [
-                  _buildTab("All", _activeTab == "All", isDark),
-                  _buildTab("Ongoing", _activeTab == "Ongoing", isDark),
-                  _buildTab("Upcoming", _activeTab == "Upcoming", isDark),
-                  _buildTab("My Tournaments", _activeTab == "My Tournaments", isDark),
-                ],
-              ),
-            ),
-          ),
+        ),
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // ── App Bar ────────────────────────────────────────────────────
+            SliverAppBar(
+              pinned: true,
+              floating: false,
+              expandedHeight: 130,
+              backgroundColor: Colors.transparent,
+              surfaceTintColor: Colors.transparent,
+              elevation: 0,
+              scrolledUnderElevation: 0.5,
+              shadowColor: Colors.black12,
+              leading: const SizedBox.shrink(),
+              flexibleSpace: FlexibleSpaceBar(
+                collapseMode: CollapseMode.pin,
+                background: Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFFEFF6FF), Color(0xFFDBEAFE)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  child: SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(
+                                  Icons.emoji_events_rounded,
+                                  color: AppColors.primary,
+                                  size: 18,
+                                ),
+                              ),
+                              const Spacer(),
+                              _RefreshBtn(onTap: () {
+                                ref
+                                    .read(tournamentProvider.notifier)
+                                    .fetchTournaments(refresh: true);
+                                ref
+                                    .read(tournamentProvider.notifier)
+                                    .fetchMyTournaments();
+                              }),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            "",
+                            style: TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -0.6,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
 
-          // Tournament List
-          if (state.isLoading && tournaments.isEmpty)
-            const SliverFillRemaining(
-              hasScrollBody: false,
-              child: Center(child: CircularProgressIndicator()),
-            )
-          else if (state.error != null && tournaments.isEmpty)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Text(
-                    state.error!,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            )
-          else if (tournaments.isEmpty)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Center(
-                child: Text(
-                  "No tournaments found",
-                  style: TextStyle(color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary),
+                title: const Text(
+                  "Tournaments",
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 17,
+                    letterSpacing: -0.4,
+                  ),
                 ),
-              ),
-            )
-          else
-            SliverPadding(
-              padding: const EdgeInsets.all(20),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => TournamentCard(tournament: tournaments[index]),
-                  childCount: tournaments.length,
-                ),
+                titlePadding: const EdgeInsets.only(left: 20, bottom: 14),
               ),
             ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildTab(String label, bool isActive, bool isDark) {
-    return GestureDetector(
-      onTap: () => setState(() => _activeTab = label),
-      child: Container(
-      margin: const EdgeInsets.only(right: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      decoration: BoxDecoration(
-        color: isActive
-          ? AppColors.primary
-          : (isDark ? AppColors.surfaceVariantDark : AppColors.surfaceVariant),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: isActive ? Colors.white : (isDark ? AppColors.textSecondaryDark : AppColors.textSecondary),
-          fontWeight: FontWeight.w700,
-          fontSize: 13,
+            // ── Content ────────────────────────────────────────────────────
+            if (state.isLoading && state.tournaments.isEmpty)
+              const SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: AppColors.primary,
+                    strokeWidth: 2.5,
+                  ),
+                ),
+              )
+            else if (state.tournaments.isEmpty)
+              const SliverFillRemaining(
+                hasScrollBody: false,
+                child: _EmptyState(),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+                sliver: SliverList.separated(
+                  itemCount: state.tournaments.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (_, i) =>
+                      TournamentCard(tournament: state.tournaments[i]),
+                ),
+              ),
+          ],
         ),
       ),
+    );
+  }
+}
+
+class _RefreshBtn extends StatelessWidget {
+  final VoidCallback onTap;
+  const _RefreshBtn({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: AppColors.primary.withOpacity(0.06),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.primary.withOpacity(0.12)),
+        ),
+        child: const Icon(Icons.refresh_rounded,
+            color: AppColors.primary, size: 18),
       ),
     );
   }
+}
 
-  List<TournamentEntity> _filteredTournaments(TournamentState state) {
-    switch (_activeTab) {
-      case "Ongoing":
-        return state.tournaments.where((t) => t.status == TournamentStatus.ongoing).toList();
-      case "Upcoming":
-        return state.tournaments.where((t) => t.status == TournamentStatus.open).toList();
-      case "My Tournaments":
-        return state.myTournaments;
-      default:
-        return state.tournaments;
-    }
+class _EmptyState extends StatelessWidget {
+  const _EmptyState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.06),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.emoji_events_outlined,
+                size: 48,
+                color: AppColors.primary.withOpacity(0.4),
+              ),
+            ),
+            const SizedBox(height: 18),
+            const Text(
+              "No Tournaments Yet",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+                letterSpacing: -0.3,
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              "Check back later for upcoming competitions.",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

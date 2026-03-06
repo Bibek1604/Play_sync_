@@ -7,6 +7,7 @@ import '../../../auth/presentation/providers/auth_notifier.dart';
 import '../providers/game_notifier.dart';
 import '../widgets/game_card.dart';
 import '../widgets/create_game_sheet.dart';
+import '../../domain/entities/game_entity.dart';
 import 'game_detail_page.dart';
 import '../../../chat/presentation/providers/chat_notifier.dart';
 
@@ -43,7 +44,29 @@ class _OnlineGamesPageState extends ConsumerState<OnlineGamesPage> {
     final state = ref.watch(gameProvider);
     final authState = ref.watch(authNotifierProvider);
     final currentUserId = authState.user?.userId;
-    final onlineGames = state.filteredGames;
+    final onlineGames = () {
+      final Set<String> allIds = {};
+      final list = <GameEntity>[];
+      for (final g in state.filteredGames) {
+        if (!allIds.contains(g.id)) {
+          list.add(g);
+          allIds.add(g.id);
+        }
+      }
+      for (final g in state.myCreatedGames) {
+        if (g.category == 'ONLINE' && !allIds.contains(g.id)) {
+          list.add(g);
+          allIds.add(g.id);
+        }
+      }
+      for (final g in state.myJoinedGames) {
+        if (g.category == 'ONLINE' && !allIds.contains(g.id)) {
+          list.add(g);
+          allIds.add(g.id);
+        }
+      }
+      return list;
+    }();
 
     // Build a set of joined + created game IDs for quick lookup
     final joinedGameIds = <String>{

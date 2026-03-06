@@ -61,6 +61,8 @@ class _GameChatRoomPageState extends ConsumerState<GameChatRoomPage> {
     // 4. Load history on open — called exactly once
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(gameChatNotifierProvider(widget.gameId).notifier).loadMessages();
+      // Also fetch game details to ensure participant list is up to date for access check
+      ref.read(gameProvider.notifier).fetchGameById(widget.gameId);
     });
   }
 
@@ -231,8 +233,15 @@ class _GameChatRoomPageState extends ConsumerState<GameChatRoomPage> {
     final bool hasAccess = currentGame != null && bestId.isNotEmpty && 
         (currentGame.isCreator(bestId) || currentGame.isParticipant(bestId));
 
-    // If no access, show access denied screen
-    if (!hasAccess && bestId.isNotEmpty) {
+    // If game is missing from local lists, try to fetch it once to verify access
+    if (currentGame == null && !chatState.isLoading && bestId.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+         ref.read(gameProvider.notifier).fetchGameById(widget.gameId);
+      });
+    }
+
+    // If we have the game data and the user is NOT a participant, show access denied
+    if (currentGame != null && !hasAccess && bestId.isNotEmpty) {
       return Scaffold(
         backgroundColor: isDark ? AppColors.backgroundDark : AppColors.background,
         appBar: AppBar(

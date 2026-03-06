@@ -157,37 +157,18 @@ class GameChatPreviewCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 // Action Buttons
-                Row(
-                  children: [
-                    // View Details Button
-                    Expanded(
-                      child: SecondaryButton(
-                        label: 'View Details',
-                        icon: Icons.info_outline_rounded,
-                        onPressed: () => Navigator.pushNamed(
-                          context,
-                          '/game-detail',
-                          arguments: {'game': game},
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    // Open Chat Button
-                    Expanded(
-                      child: PrimaryButton(
-                        label: 'Open Chat',
-                        icon: Icons.chat_rounded,
-                        height: 48,
-                        onPressed: () => Navigator.pushNamed(
-                          context,
-                          '/game-chat',
-                          arguments: {
-                            'game': game,
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
+                // Open Chat Button
+                PrimaryButton(
+                  label: 'Open Chat',
+                  icon: Icons.chat_rounded,
+                  height: 48,
+                  onPressed: () => Navigator.pushNamed(
+                    context,
+                    '/game-chat',
+                    arguments: {
+                      'game': game,
+                    },
+                  ),
                 ),
               ],
             ),
