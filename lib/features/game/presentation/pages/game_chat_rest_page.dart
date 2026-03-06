@@ -7,6 +7,7 @@ import '../../../../core/api/secure_storage_provider.dart';
 import '../../../auth/presentation/providers/auth_notifier.dart';
 import '../../domain/entities/game_entity.dart';
 import '../../../../core/widgets/back_button_widget.dart';
+import '../providers/game_notifier.dart';
 
 /// Simple REST-based chat page for a game.
 /// 
@@ -91,12 +92,20 @@ class _GameChatRestPageState extends ConsumerState<GameChatRestPage> {
       setState(() {
         _messages = messagesList
             .map((m) => _Message.fromJson(m as Map<String, dynamic>))
-            .toList();
+            .where((msg) {
+              // Filter out system messages by type field
+              final isSystemMessage = msg.type == 'system';
+              // Filter out messages with no actual text content
+              final hasContent = msg.text.trim().isNotEmpty;
+              return hasContent && !isSystemMessage;
+            })
+            .toList()
+          ..sort((a, b) => a.createdAt.compareTo(b.createdAt)); // Sort oldest first
         _isLoadingHistory = false;
       });
 
       _scrollToBottom();
-      debugPrint('[CHAT REST] ✓ Loaded ${_messages.length} messages');
+      debugPrint('[CHAT REST] ✓ Loaded ${_messages.length} chat messages (system messages filtered)');
     } catch (e) {
       if (!mounted) return;
 
@@ -142,24 +151,54 @@ class _GameChatRestPageState extends ConsumerState<GameChatRestPage> {
       );
 
       final body = resp.data as Map<String, dynamic>;
-      final messageData = body['data'] as Map<String, dynamic>?;
+      
+      // Try multiple paths for message data
+      var messageData = body['data'] as Map<String, dynamic>? ?? 
+                        body['message'] as Map<String, dynamic>?;
 
       if (messageData == null) {
-        throw Exception('Invalid response');
+        throw Exception('Invalid response - no message data returned');
       }
 
       if (!mounted) return;
 
-      // Add the returned message to the list (only server response)
+      // Ensure senderId is populated with current user's ID if missing
+      if ((messageData['senderId'] == null || messageData['senderId'].toString().isEmpty) &&
+          _myUserId.isNotEmpty) {
+        messageData['senderId'] = _myUserId;
+        debugPrint('[CHAT REST] Added senderId: $_myUserId');
+      }
+      
+      // Ensure we have the user's info even if server doesn't return it
+      if (messageData['senderName'] == null || messageData['senderName'].toString().isEmpty) {
+        final auth = ref.read(authNotifierProvider);
+        final userName = auth.user?.fullName ?? auth.user?.email ?? 'You';
+        messageData['senderName'] = userName;
+        debugPrint('[CHAT REST] Added senderName: $userName');
+      }
+      
+      // Ensure type is set to 'text' for normal messages
+      if (messageData['type'] == null) {
+        messageData['type'] = 'text';
+      }
+      
       final message = _Message.fromJson(messageData);
+      
+      debugPrint('[CHAT REST] Created message - ID: ${message.id}, SenderID: ${message.senderId}, SenderName: ${message.senderName}');
 
       setState(() {
-        _messages.add(message);
+        // Check if message already exists to prevent duplicates
+        final exists = _messages.any((m) => m.id == message.id && message.id.isNotEmpty);
+        if (!exists) {
+          _messages.add(message);
+          // Keep messages sorted by time (oldest first)
+          _messages.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+        }
         _isSending = false;
       });
 
       _scrollToBottom();
-      debugPrint('[CHAT REST] ✓ Message sent');
+      debugPrint('[CHAT REST] ✓ Message sent and displayed');
     } catch (e) {
       if (!mounted) return;
 
@@ -187,6 +226,75 @@ class _GameChatRestPageState extends ConsumerState<GameChatRestPage> {
     });
   }
 
+  /// Handle leaving the game
+  Future<void> _handleLeaveGame(BuildContext context) async {
+    // Show confirmation dialog
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Leave Game?'),
+        content: const Text(
+          'Are you sure you want to leave this game? You won\'t be able to access it or send messages.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Leave'),
+          ),
+        ],
+      ),
+    ) ?? false;
+
+    if (!confirm || !mounted) return;
+
+    try {
+      // Leave the game via game provider
+      final result = await ref.read(gameProvider.notifier).leaveGame(widget.game.id);
+      
+      if (!mounted) return;
+
+      if (result != null) {
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('You left the game. It has been removed from your chats.'),
+            backgroundColor: AppColors.success,
+            duration: Duration(seconds: 2),
+          ),
+        );
+
+        // Pop back to navigate away from this chat
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (mounted) {
+            Navigator.of(context).pop();
+          }
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to leave game. Please try again.'),
+            backgroundColor: AppColors.error,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error leaving game: ${e.toString()}'),
+          backgroundColor: AppColors.error,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -197,6 +305,28 @@ class _GameChatRestPageState extends ConsumerState<GameChatRestPage> {
         title: Text(widget.game.title),
         centerTitle: false,
         leading: const BackButtonWidget(),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'leave') {
+                _handleLeaveGame(context);
+              }
+            },
+            itemBuilder: (BuildContext context) => [
+              const PopupMenuItem<String>(
+                value: 'leave',
+                child: Row(
+                  children: [
+                    Icon(Icons.logout, size: 20, color: AppColors.error),
+                    SizedBox(width: 8),
+                    Text('Leave Game', style: TextStyle(color: AppColors.error)),
+                  ],
+                ),
+              ),
+            ],
+            icon: const Icon(Icons.more_vert, color: AppColors.textSecondary),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -222,6 +352,11 @@ class _GameChatRestPageState extends ConsumerState<GameChatRestPage> {
                           // Robust comparison: normalize both IDs
                           final isMe = _myUserId.isNotEmpty && 
                               message.senderId.trim() == _myUserId.trim();
+                          
+                          // Skip messages with no valid sender name UNLESS it's from current user
+                          if (message.senderName.isEmpty && !isMe) {
+                            return const SizedBox.shrink();
+                          }
 
                           return _MessageBubble(
                             message: message,
@@ -311,17 +446,19 @@ class _MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         mainAxisAlignment: isMe
             ? MainAxisAlignment.end
             : MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!isMe) ...[
             CircleAvatar(
-              radius: 16,
-              backgroundColor: AppColors.primary.withValues(alpha: 0.2),
+              radius: 18,
+              backgroundColor: AppColors.primary.withOpacity(0.2),
               backgroundImage: message.senderAvatar != null &&
                       message.senderAvatar!.isNotEmpty
                   ? NetworkImage(message.senderAvatar!)
@@ -335,54 +472,77 @@ class _MessageBubble extends StatelessWidget {
                       style: const TextStyle(
                         color: AppColors.primary,
                         fontWeight: FontWeight.bold,
-                        fontSize: 12,
+                        fontSize: 13,
                       ),
                     )
                   : null,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
           ],
           Flexible(
             child: Container(
+              constraints: const BoxConstraints(maxWidth: 280),
               padding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 10,
+                horizontal: 16,
+                vertical: 12,
               ),
               decoration: BoxDecoration(
-                color: isMe ? AppColors.primary : AppColors.surface,
-                borderRadius: BorderRadius.circular(12),
+                color: isMe ? AppColors.primary : (isDark ? AppColors.surfaceDark : const Color(0xFFF5F5F5)),
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(16),
+                  topRight: const Radius.circular(16),
+                  bottomLeft: Radius.circular(isMe ? 16 : 4),
+                  bottomRight: Radius.circular(isMe ? 4 : 16),
+                ),
                 border: isMe
                     ? null
-                    : Border.all(color: AppColors.border),
+                    : Border.all(
+                        color: isDark ? AppColors.borderDark : AppColors.border,
+                        width: 0.5,
+                      ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDark ? 0.15 : 0.08),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   if (!isMe)
                     Text(
                       message.senderName,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  if (!isMe) const SizedBox(height: 4),
+                  if (!isMe) const SizedBox(height: 6),
                   Text(
                     message.text,
                     style: TextStyle(
-                      color: isMe ? Colors.white : AppColors.textPrimary,
-                      fontSize: 14,
+                      color: isMe ? Colors.white : (isDark ? Colors.white : const Color(0xFF1F1F1F)),
+                      fontSize: 15,
+                      height: 1.4,
+                      fontWeight: FontWeight.w500,
                     ),
+                    maxLines: null,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Text(
                     _formatTime(message.createdAt),
                     style: TextStyle(
                       fontSize: 11,
                       color: isMe
-                          ? Colors.white.withValues(alpha: 0.7)
-                          : AppColors.textTertiary,
+                          ? Colors.white.withOpacity(0.6)
+                          : (isDark ? AppColors.textTertiary : AppColors.textSecondary),
+                      fontWeight: FontWeight.w400,
                     ),
                   ),
                 ],
@@ -418,6 +578,7 @@ class _Message {
   final String senderName;
   final String? senderAvatar;
   final String text;
+  final String type; // 'text' or 'system'
   final DateTime createdAt;
 
   const _Message({
@@ -426,60 +587,77 @@ class _Message {
     required this.senderName,
     this.senderAvatar,
     required this.text,
+    this.type = 'text',
     required this.createdAt,
   });
 
   factory _Message.fromJson(Map<String, dynamic> json) {
-    // Try new format first (senderId field)
+    // Try new format first (senderId field) - PRIORITIZE THIS
     final newFormatSenderId = json['senderId'] as String?;
+    final newFormatSenderName = (json['senderName'] as String?)?.trim();
+    final messageType = (json['type'] as String?) ?? 'text';
     
     if (newFormatSenderId != null && newFormatSenderId.isNotEmpty) {
-      // New REST API format
-      final senderName = (json['senderName'] as String?)?.trim() ?? 'Unknown';
+      // New REST API format with direct fields
+      // Keep empty sender name if not provided (for current user's messages)
+      final senderName = newFormatSenderName ?? '';
       return _Message(
-        id: json['_id'] as String? ?? '',
-        senderId: (newFormatSenderId).trim(),
-        senderName: senderName.isNotEmpty ? senderName : 'Unknown',
+        id: json['_id'] as String? ?? json['id'] as String? ?? '',
+        senderId: newFormatSenderId.trim(),
+        senderName: senderName,
         senderAvatar: (json['senderAvatar'] as String?)?.trim(),
-        text: json['text'] as String? ?? '',
-        createdAt: DateTime.parse(
-          json['createdAt'] as String? ?? DateTime.now().toIso8601String(),
-        ),
+        text: json['text'] as String? ?? json['content'] as String? ?? '',
+        type: messageType,
+        createdAt: _parseDateTime(json['createdAt']),
       );
     }
     
     // Fallback: Old backend format with nested user object
     final userObj = (json['user'] as Map<String, dynamic>?);
     
-    // If user is null (system message), use default
-    if (userObj == null) {
+    if (userObj != null) {
+      // Extract sender name with proper trimming
+      final fullName = (userObj['fullName'] as String?)?.trim() ?? '';
+      final username = (userObj['username'] as String?)?.trim() ?? '';
+      final displayName = userObj['displayName'] as String?;
+      final senderName = displayName?.trim().isNotEmpty == true
+          ? displayName!.trim()
+          : (fullName.isNotEmpty ? fullName : (username.isNotEmpty ? username : ''));
+      final senderId = (userObj['_id'] as String?) ?? (userObj['id'] as String?) ?? '';
+      
       return _Message(
-        id: json['_id'] as String? ?? '',
-        senderId: '',
-        senderName: 'System',
-        senderAvatar: null,
-        text: json['content'] as String? ?? '',
-        createdAt: DateTime.parse(
-          json['createdAt'] as String? ?? DateTime.now().toIso8601String(),
-        ),
+        id: json['_id'] as String? ?? json['id'] as String? ?? '',
+        senderId: senderId,
+        senderName: senderName,
+        senderAvatar: userObj['profilePicture'] as String? ?? userObj['avatar'] as String?,
+        text: json['content'] as String? ?? json['text'] as String? ?? '',
+        type: messageType,
+        createdAt: _parseDateTime(json['createdAt']),
       );
     }
     
-    // Extract sender name with proper trimming
-    final fullName = (userObj['fullName'] as String?)?.trim() ?? '';
-    final username = (userObj['username'] as String?)?.trim() ?? '';
-    final senderName = fullName.isNotEmpty ? fullName : (username.isNotEmpty ? username : 'Unknown');
-    final senderId = (userObj['_id'] as String?) ?? (userObj['id'] as String?) ?? '';
-    
+    // Fallback: If sender info is completely missing, but we have content
+    // Return empty sender name to filter this message out in UI
     return _Message(
-      id: json['_id'] as String? ?? '',
-      senderId: senderId,
-      senderName: senderName,
-      senderAvatar: userObj['profilePicture'] as String?,
-      text: json['content'] as String? ?? '',
-      createdAt: DateTime.parse(
-        json['createdAt'] as String? ?? DateTime.now().toIso8601String(),
-      ),
+      id: json['_id'] as String? ?? json['id'] as String? ?? '',
+      senderId: '',
+      senderName: '',
+      senderAvatar: null,
+      text: json['content'] as String? ?? json['text'] as String? ?? '',
+      type: messageType,
+      createdAt: _parseDateTime(json['createdAt']),
     );
+  }
+  
+  /// Parse datetime safely
+  static DateTime _parseDateTime(dynamic dateValue) {
+    try {
+      if (dateValue is String) {
+        return DateTime.parse(dateValue);
+      }
+      return DateTime.now();
+    } catch (e) {
+      return DateTime.now();
+    }
   }
 }

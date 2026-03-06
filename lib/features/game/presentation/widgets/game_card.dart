@@ -224,35 +224,34 @@ class _GameCardState extends ConsumerState<GameCard> {
                               overflow: TextOverflow.ellipsis,
                               maxLines: 1,
                             ),
-                            if (widget.game.creatorName.isNotEmpty)
-                              Row(
-                                children: [
-                                  Flexible(
-                                    child: Text(
-                                      'by ${widget.game.creatorName}',
-                                      style: theme.textTheme.bodySmall?.copyWith(
-                                            color: theme.colorScheme.onSurfaceVariant),
-                                      overflow: TextOverflow.ellipsis,
-                                      maxLines: 1,
-                                    ),
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    'by ${widget.game.creatorName.isNotEmpty ? widget.game.creatorName : 'Unknown'}',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                          color: theme.colorScheme.onSurfaceVariant),
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
                                   ),
-                                  if (_isCreator) ...[
-                                    const SizedBox(width: 6),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                                      decoration: BoxDecoration(
-                                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text('YOU', style: TextStyle(
-                                        fontSize: 9, 
-                                        fontWeight: FontWeight.bold, 
-                                        color: theme.colorScheme.primary
-                                      )),
+                                ),
+                                if (_isCreator) ...[
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                    decoration: BoxDecoration(
+                                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(4),
                                     ),
-                                  ],
+                                    child: Text('YOU', style: TextStyle(
+                                      fontSize: 9, 
+                                      fontWeight: FontWeight.bold, 
+                                      color: theme.colorScheme.primary
+                                    )),
+                                  ),
                                 ],
-                              ),
+                              ],
+                            ),
                           ],
                         ),
                       ),

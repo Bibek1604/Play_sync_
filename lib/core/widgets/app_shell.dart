@@ -5,6 +5,7 @@ import '../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../../features/leaderboard/presentation/pages/leaderboard_page.dart';
 import '../../features/tournament/presentation/pages/tournament_list_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
+import '../../features/game/presentation/pages/game_chats_page.dart';
 import '../../app/routes/app_routes.dart';
 import '../../core/api/api_client.dart';
 import '../../features/auth/presentation/providers/auth_notifier.dart';
@@ -31,6 +32,11 @@ class AppShell extends ConsumerWidget {
       icon: Icon(Icons.leaderboard_outlined),
       selectedIcon: Icon(Icons.leaderboard_rounded),
       label: 'Leaderboard',
+    ),
+    NavigationDestination(
+      icon: Icon(Icons.chat_outlined),
+      selectedIcon: Icon(Icons.chat_rounded),
+      label: 'Chats',
     ),
     NavigationDestination(
       icon: Icon(Icons.emoji_events_outlined),
@@ -66,6 +72,7 @@ class AppShell extends ConsumerWidget {
     final tabs = [
       const DashboardPage(),
       const LeaderboardPage(),
+      const GameChatsPage(),
       const TournamentListPage(),
       const ProfilePage(),
     ];

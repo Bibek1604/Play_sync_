@@ -280,6 +280,27 @@ class _TournamentChatPageState extends ConsumerState<TournamentChatPage> {
       itemCount: state.messages.length,
       itemBuilder: (context, index) {
         final msg = state.messages[index];
+        
+        // Filter out system messages (join/leave/payment events)
+        final isSystemMessage = msg.content.toLowerCase().contains('joined') ||
+                               msg.content.toLowerCase().contains('left') ||
+                               msg.content.toLowerCase().contains('payment') ||
+                               msg.content.toLowerCase().contains('paid');
+        
+        if (isSystemMessage) {
+          return const SizedBox.shrink();
+        }
+        
+        // Extract sender name
+        final senderName = msg.userId is TournamentChatUser
+            ? ((msg.userId as TournamentChatUser).fullName ?? '').trim()
+            : '';
+        
+        // Skip messages without valid sender name
+        if (senderName.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        
         final isMe = _isMyMessage(msg);
         return _MessageBubble(message: msg, isMe: isMe, isDark: isDark);
       },
@@ -398,9 +419,16 @@ class _MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Extract real sender name only
     final senderName = message.userId is TournamentChatUser
-        ? (message.userId as TournamentChatUser).fullName ?? 'User'
-        : 'User';
+        ? ((message.userId as TournamentChatUser).fullName ?? '').trim()
+        : '';
+    
+    // Only show message if we have a valid sender name
+    if (senderName.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    
     final time = _formatTime(message.createdAt);
 
     return Padding(

@@ -439,16 +439,15 @@ class _TournamentDetailPageState extends ConsumerState<TournamentDetailPage>
 
     try {
       final esewaService = ref.read(esewaServiceProvider);
-      final amount = tournament.entryFee.toString();
+      final amount = tournament.entryFee.toDouble();
 
       // Initiate eSewa payment
       await esewaService.initiatePayment(
         tournamentId: tournament.id,
-        tournamentName: tournament.name,
         amount: amount,
         onSuccess: (result) async {
           // Handle both real and demo payment results
-          final refId = result?['refId'] ?? result?.refId ?? 'DEMO-${DateTime.now().millisecondsSinceEpoch}';
+          final refId = result?['refId'] ?? 'DEMO-${DateTime.now().millisecondsSinceEpoch}';
           debugPrint('[Tournament] Payment success: $refId');
           
           // Close loading dialog

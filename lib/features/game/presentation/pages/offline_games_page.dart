@@ -53,6 +53,7 @@ class _OfflineGamesPageState extends ConsumerState<OfflineGamesPage> {
   Future<void> _enableLocationBasedGames() async {
     if (_enablingLocation) return;
 
+    if (!mounted) return;
     setState(() {
       _enablingLocation = true;
       _locationError = null;

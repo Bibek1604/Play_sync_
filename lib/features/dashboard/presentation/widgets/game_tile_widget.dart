@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/widgets/primary_button.dart';
 import '../../../game/domain/entities/game_entity.dart';
 import '../../../game/presentation/pages/game_detail_page.dart';
 
@@ -180,30 +181,42 @@ class _GameTileWidgetState extends State<GameTileWidget> with SingleTickerProvid
                     ),
                     const SizedBox(height: 4),
                     // Action Button inside Tile
-                    SizedBox(
-                      width: double.infinity,
-                      height: 24,
-                      child: ElevatedButton(
-                        onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => GameDetailPage(gameId: widget.game.id, preloadedGame: widget.game),
+                    if (isJoined)
+                      SizedBox(
+                        width: double.infinity,
+                        height: 36,
+                        child: PrimaryButton(
+                          label: 'View Details',
+                          icon: Icons.info_outline_rounded,
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => GameDetailPage(
+                                gameId: widget.game.id,
+                                preloadedGame: widget.game,
+                              ),
+                            ),
                           ),
                         ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: isJoined ? AppColors.surfaceMuted.withOpacity(0.1) : AppColors.primary,
-                          foregroundColor: isJoined ? AppColors.primary : Colors.white,
-                          elevation: 0,
-                          padding: EdgeInsets.zero,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          side: isJoined ? BorderSide(color: AppColors.primary.withValues(alpha: 0.2)) : null,
-                        ),
-                        child: Text(
-                          isJoined ? 'View Details' : 'Join Match',
-                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900),
+                      )
+                    else
+                      SizedBox(
+                        width: double.infinity,
+                        height: 36,
+                        child: PrimaryButton(
+                          label: 'Join Match',
+                          icon: Icons.login_rounded,
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => GameDetailPage(
+                                gameId: widget.game.id,
+                                preloadedGame: widget.game,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
                   ],
                 ),
               ),
