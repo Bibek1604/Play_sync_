@@ -125,33 +125,100 @@ class _GamePageState extends ConsumerState<GamePage>
     }
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF121417) : const Color(0xFFF8F9FA),
+      backgroundColor: isDark ? AppColors.backgroundDark : Colors.white,
       drawer: const AppDrawer(),
-      body: NestedScrollView(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: isDark 
+              ? [const Color(0xFF1E293B), AppColors.backgroundDark]
+              : [const Color(0xFFF0F9FF), Colors.white],
+            stops: const [0.0, 0.4],
+          ),
+        ),
+        child: NestedScrollView(
         headerSliverBuilder: (context, _) => [
           SliverAppBar(
-            centerTitle: true,
-            backgroundColor: Colors.transparent,
+            pinned: true,
+            floating: false,
+            expandedHeight: 200,
+            backgroundColor: const Color(0xFF0284C7),
+            surfaceTintColor: Colors.transparent,
             elevation: 0,
-            floating: true,
+            scrolledUnderElevation: 0,
             leading: Builder(
               builder: (context) => IconButton(
-                icon: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.menu_rounded, size: 20),
-                ),
+                icon: const Icon(Icons.menu_rounded, size: 22, color: Colors.white),
                 onPressed: () => Scaffold.of(context).openDrawer(),
               ),
             ),
-            title: Text(
-              'My Sessions',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w900,
-                letterSpacing: -0.5,
+            flexibleSpace: FlexibleSpaceBar(
+              collapseMode: CollapseMode.pin,
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Layer 1: Signature Sky-Blue Gradient
+                  Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFF0EA5E9), Color(0xFF0284C7)],
+                      ),
+                    ),
+                  ),
+                  // Layer 2: Signature Mixture Overlay
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withOpacity(0.1),
+                          Colors.black.withOpacity(0.6),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // Layer 3: Texture
+                  Opacity(
+                    opacity: 0.1,
+                    child: Image.asset(
+                      'assets/images/pattern_bg.png',
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const SizedBox(),
+                    ),
+                  ),
+                  // Layer 4: Themed Icon
+                  Positioned(
+                    top: 55,
+                    left: 20,
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.stars_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              titlePadding: const EdgeInsets.only(left: 20, bottom: 20),
+              title: const Text(
+                'My Sessions',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 26,
+                  letterSpacing: -1.0,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),
@@ -332,7 +399,8 @@ class _GamePageState extends ConsumerState<GamePage>
                       },
                     ),
                   ),
-      ),
+                ),
+              ),
     );
   }
 }

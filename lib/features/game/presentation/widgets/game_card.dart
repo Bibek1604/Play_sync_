@@ -97,19 +97,21 @@ class _GameCardState extends ConsumerState<GameCard> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
+      margin: const EdgeInsets.only(bottom: 2), // small lift
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(_kCardRadius),
+        borderRadius: BorderRadius.circular(_kCardRadius + 4),
         border: Border.all(
           color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          width: 1,
         ),
         boxShadow: isDark
             ? []
             : [
                 BoxShadow(
-                  color: AppColors.primary.withOpacity(0.05),
-                  blurRadius: 14,
-                  offset: const Offset(0, 4),
+                  color: const Color(0xFF0284C7).withOpacity(0.08),
+                  blurRadius: 24,
+                  offset: const Offset(0, 8),
                 ),
               ],
       ),
@@ -130,7 +132,7 @@ class _GameCardState extends ConsumerState<GameCard> {
 
           // ── Body ────────────────────────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -139,7 +141,7 @@ class _GameCardState extends ConsumerState<GameCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _SportBadge(sport: widget.game.sport, isDark: isDark),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -147,9 +149,9 @@ class _GameCardState extends ConsumerState<GameCard> {
                           Text(
                             widget.game.title,
                             style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -0.3,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -0.4,
                               color: isDark
                                   ? Colors.white
                                   : AppColors.textPrimary,
@@ -168,14 +170,14 @@ class _GameCardState extends ConsumerState<GameCard> {
                                     color: isDark
                                         ? Colors.white54
                                         : AppColors.textSecondary,
-                                    fontWeight: FontWeight.w500,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                               if (_isCreator) ...[
-                                const SizedBox(width: 5),
+                                const SizedBox(width: 6),
                                 _YouBadge(),
                               ],
                             ],
@@ -188,58 +190,61 @@ class _GameCardState extends ConsumerState<GameCard> {
 
                 // Description
                 if (widget.game.description.isNotEmpty) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   Text(
                     widget.game.description,
                     style: TextStyle(
-                      fontSize: 12.5,
-                      color: isDark ? Colors.white38 : AppColors.textSecondary,
-                      height: 1.45,
+                      fontSize: 13,
+                      color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                      height: 1.5,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
 
-                const SizedBox(height: 10),
+                const SizedBox(height: 14),
 
-                // Meta row — consistent icon+label style
-                Row(
-                  children: [
-                    _MetaTag(
-                      icon: widget.game.isOnline
-                          ? Icons.wifi_rounded
-                          : Icons.location_on_rounded,
-                      label: widget.game.isOnline
-                          ? 'Online'
-                          : (widget.game.location?.address ?? 'Local'),
-                      color: AppColors.primary,
-                      isDark: isDark,
-                    ),
-                    const SizedBox(width: 8),
-                    _MetaTag(
-                      icon: Icons.group_rounded,
-                      label:
-                          '${widget.game.currentPlayers}/${widget.game.maxPlayers}',
-                      color: widget.game.isFull
-                          ? const Color(0xFFEF4444)
-                          : (isDark ? Colors.white54 : AppColors.textSecondary),
-                      isDark: isDark,
-                    ),
-                    if (widget.game.startTime != null) ...[
-                      const SizedBox(width: 8),
+                // Meta Tag Row
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
                       _MetaTag(
-                        icon: Icons.schedule_rounded,
-                        label: _fmtTime(widget.game.startTime!),
-                        color:
-                            isDark ? Colors.white38 : AppColors.textTertiary,
+                        icon: widget.game.isOnline
+                            ? Icons.wifi_rounded
+                            : Icons.location_on_rounded,
+                        label: widget.game.isOnline
+                            ? 'Online'
+                            : (widget.game.location?.address ?? 'Local'),
+                        color: const Color(0xFF0284C7),
                         isDark: isDark,
                       ),
+                      const SizedBox(width: 10),
+                      _MetaTag(
+                        icon: Icons.group_rounded,
+                        label:
+                            '${widget.game.currentPlayers}/${widget.game.maxPlayers}',
+                        color: widget.game.isFull
+                            ? const Color(0xFFEF4444)
+                            : (isDark ? Colors.white54 : AppColors.textSecondary),
+                        isDark: isDark,
+                      ),
+                      if (widget.game.startTime != null) ...[
+                        const SizedBox(width: 10),
+                        _MetaTag(
+                          icon: Icons.schedule_rounded,
+                          label: _fmtTime(widget.game.startTime!),
+                          color:
+                              isDark ? Colors.white38 : AppColors.textTertiary,
+                          isDark: isDark,
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
 
                 // ── Action buttons ─────────────────────────────────────────
                 _Buttons(
@@ -290,42 +295,68 @@ class _Banner extends StatelessWidget {
     final (statusLabel, statusColor) = _statusStyle(game.status);
 
     return SizedBox(
-      height: _kBannerH,
+      height: 200, // increased area
       width: double.infinity,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // Image or placeholder
-          if (game.imageUrl != null && game.imageUrl!.isNotEmpty)
-            CachedNetworkImage(
-              imageUrl: game.imageUrl!,
-              fit: BoxFit.cover,
-              placeholder: (_, __) => _PlaceholderBg(
-                  sport: game.sport, isDark: isDark),
-              errorWidget: (_, __, ___) =>
-                  _PlaceholderBg(sport: game.sport, isDark: isDark),
-            )
-          else
-            _PlaceholderBg(sport: game.sport, isDark: isDark),
-
-          // Bottom gradient scrim so badges read well
-          const Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Color(0x55000000)],
-                  stops: [0.5, 1.0],
-                ),
+          // Background soft tint / fill
+          Container(
+            color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+          ),
+          
+          // Image Container with Gap
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  if (game.imageUrl != null && game.imageUrl!.isNotEmpty) ...[
+                    // LAYER 1: Blurred background to fill gaps (Premium look)
+                    CachedNetworkImage(
+                      imageUrl: game.imageUrl!,
+                      fit: BoxFit.cover,
+                      color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
+                      colorBlendMode: BlendMode.darken,
+                    ),
+                    const Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(color: Colors.black26),
+                      ),
+                    ),
+                    // LAYER 2: Non-zoomed foreground image
+                    CachedNetworkImage(
+                      imageUrl: game.imageUrl!,
+                      fit: BoxFit.contain,
+                      placeholder: (_, __) => _PlaceholderBg(
+                          sport: game.sport, isDark: isDark),
+                      errorWidget: (_, __, ___) =>
+                          _PlaceholderBg(sport: game.sport, isDark: isDark),
+                    ),
+                  ] else
+                    _PlaceholderBg(sport: game.sport, isDark: isDark),
+                  
+                  // Scrim 
+                  const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.transparent, Color(0x44000000)],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
 
           // Status chip — top left
           Positioned(
-            top: 10,
-            left: 10,
+            top: 20,
+            left: 20,
             child: _Chip(
               label: statusLabel,
               color: statusColor,
@@ -335,19 +366,19 @@ class _Banner extends StatelessWidget {
           // Join indicator — top right (when joined)
           if (isJoined)
             Positioned(
-              top: 10,
-              right: onDelete != null ? 48 : 10,
+              top: 20,
+              right: onDelete != null ? 62 : 20,
               child: const _Chip(
                 label: 'Joined',
-                color: Color(0xFF22C55E),
+                color: Color(0xFF10B981),
               ),
             ),
 
           // Delete button — top right (creator only)
           if (isCreator && onDelete != null)
             Positioned(
-              top: 8,
-              right: 8,
+              top: 18,
+              right: 18,
               child: _IconBtn(
                 icon: Icons.delete_outline_rounded,
                 color: const Color(0xFFEF4444),
@@ -360,7 +391,7 @@ class _Banner extends StatelessWidget {
   }
 
   static (String, Color) _statusStyle(GameStatus s) => switch (s) {
-        GameStatus.OPEN      => ('Open',      const Color(0xFF22C55E)),
+        GameStatus.OPEN      => ('Open',      const Color(0xFF10B981)),
         GameStatus.FULL      => ('Full',      const Color(0xFFF97316)),
         GameStatus.ENDED     => ('Ended',     const Color(0xFF94A3B8)),
         GameStatus.CANCELLED => ('Cancelled', const Color(0xFFEF4444)),
@@ -387,12 +418,13 @@ class _PlaceholderBg extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFE0F2FE),
         gradient: LinearGradient(
           colors: isDark
               ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
               : [
-                  AppColors.primary.withOpacity(0.07),
-                  AppColors.primaryLight,
+                  const Color(0xFFE0F2FE),
+                  const Color(0xFFBAE6FD).withOpacity(0.5),
                 ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -401,8 +433,8 @@ class _PlaceholderBg extends StatelessWidget {
       child: Center(
         child: Icon(
           _icon(sport),
-          size: 40,
-          color: AppColors.primary.withOpacity(isDark ? 0.3 : 0.2),
+          size: 44,
+          color: const Color(0xFF0284C7).withOpacity(isDark ? 0.3 : 0.2),
         ),
       ),
     );

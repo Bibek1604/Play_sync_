@@ -71,30 +71,9 @@ class _ChatPageState extends ConsumerState<ChatPage> {
 
     return Scaffold(
       drawer: const AppDrawer(),
-      backgroundColor: bgColor1,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        title: Text(
-          'Messages',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w900,
-            letterSpacing: -0.5,
-            color: isDark ? Colors.white : AppColors.textPrimary,
-          ),
-        ),
-        actions: const [],
-      ),
       body: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [bgColor2, bgColor1],
-            stops: const [0.0, 0.2],
-          ),
+          color: isDark ? AppColors.backgroundDark : Colors.white,
         ),
         child: isLoading
             ? const Center(child: CircularProgressIndicator())
@@ -105,6 +84,84 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                     child: CustomScrollView(
                       physics: const BouncingScrollPhysics(),
                       slivers: [
+                        // ── Signature Header ────────────────────────────────
+                        SliverAppBar(
+                          pinned: true,
+                          floating: false,
+                          expandedHeight: 140,
+                          backgroundColor: const Color(0xFF0284C7),
+                          surfaceTintColor: Colors.transparent,
+                          elevation: 0,
+                          automaticallyImplyLeading: false,
+                          flexibleSpace: FlexibleSpaceBar(
+                            collapseMode: CollapseMode.pin,
+                            background: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                // Layer 1: Gradient
+                                Container(
+                                  decoration: const BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [Color(0xFF0EA5E9), Color(0xFF0284C7)],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                  ),
+                                ),
+                                // Layer 2: Mixture Overlay
+                                Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Colors.black.withOpacity(0.1),
+                                        Colors.black.withOpacity(0.6),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                // Layer 3: Texture
+                                Opacity(
+                                  opacity: 0.1,
+                                  child: Image.asset(
+                                    'assets/images/pattern_bg.png',
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => const SizedBox(),
+                                  ),
+                                ),
+                                // Layer 4: Themed Icon
+                                Positioned(
+                                  top: 50,
+                                  left: 20,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: const Icon(
+                                      Icons.forum_rounded,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            title: const Text(
+                              'Messages',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                letterSpacing: -0.8,
+                              ),
+                            ),
+                            titlePadding: const EdgeInsets.only(left: 20, bottom: 20),
+                          ),
+                        ),
+                        // ── Content ─────────────────────────────────────────
                         _SectionHeader(
                           icon: Icons.sports_esports_rounded,
                           label: 'Active Arenas',

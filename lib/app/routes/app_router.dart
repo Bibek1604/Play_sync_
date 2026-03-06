@@ -18,6 +18,7 @@ import '../../features/game/presentation/pages/game_detail_page.dart';
 import '../../features/game/presentation/pages/available_games_page.dart';
 import '../../features/game/presentation/pages/online_games_page.dart';
 import '../../features/game/presentation/pages/offline_games_page.dart';
+import '../../features/game/presentation/pages/ended_games_page.dart';
 import '../../features/game/domain/entities/game_entity.dart';
 import '../../features/chat/presentation/pages/chat_page.dart';
 import '../../features/game/presentation/pages/game_chat_rest_page.dart';
@@ -136,6 +137,12 @@ class AppRouter {
       case AppRoutes.offlineGames:
         return _buildRoute(
           const AuthGuard(child: OfflineGamesPage()),
+          settings,
+        );
+
+      case AppRoutes.endedGames:
+        return _buildRoute(
+          const AuthGuard(child: EndedGamesPage()),
           settings,
         );
 

@@ -26,20 +26,19 @@ class _TournamentListPageState extends ConsumerState<TournamentListPage> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(tournamentProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      // Light blue → white gradient background (matches user request)
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? AppColors.backgroundDark : Colors.white,
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFEFF6FF), // very soft sky-blue top
-              Colors.white,      // pure white bottom
-            ],
-            stops: [0.0, 0.35],
+            colors: isDark 
+              ? [const Color(0xFF1E293B), AppColors.backgroundDark]
+              : [const Color(0xFFEFF6FF), Colors.white],
+            stops: const [0.0, 0.35],
           ),
         ),
         child: CustomScrollView(
@@ -49,81 +48,93 @@ class _TournamentListPageState extends ConsumerState<TournamentListPage> {
             SliverAppBar(
               pinned: true,
               floating: false,
-              expandedHeight: 130,
-              backgroundColor: Colors.transparent,
+              expandedHeight: 160,
+              backgroundColor: const Color(0xFF0284C7),
               surfaceTintColor: Colors.transparent,
               elevation: 0,
-              scrolledUnderElevation: 0.5,
-              shadowColor: Colors.black12,
+              scrolledUnderElevation: 0,
               leading: const SizedBox.shrink(),
               flexibleSpace: FlexibleSpaceBar(
                 collapseMode: CollapseMode.pin,
-                background: Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFFEFF6FF), Color(0xFFDBEAFE)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                  child: SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: const Icon(
-                                  Icons.emoji_events_rounded,
-                                  color: AppColors.primary,
-                                  size: 18,
-                                ),
-                              ),
-                              const Spacer(),
-                              _RefreshBtn(onTap: () {
-                                ref
-                                    .read(tournamentProvider.notifier)
-                                    .fetchTournaments(refresh: true);
-                                ref
-                                    .read(tournamentProvider.notifier)
-                                    .fetchMyTournaments();
-                              }),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            "",
-                            style: TextStyle(
-                              color: AppColors.textPrimary,
-                              fontSize: 24,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: -0.6,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-
-                        ],
+                background: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // Layer 1: Signature Sky-Blue Gradient
+                    Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF0EA5E9), Color(0xFF0284C7)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
                       ),
                     ),
-                  ),
+                    // Layer 2: Signature Mixture Overlay (matches Profile/Sidebar)
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withOpacity(0.1),
+                            Colors.black.withOpacity(0.6),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // Layer 3: Dynamic Texture (matches Profile)
+                    Opacity(
+                      opacity: 0.1,
+                      child: Image.asset(
+                        'assets/images/pattern_bg.png',
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const SizedBox(),
+                      ),
+                    ),
+                    // Content
+                    SafeArea(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(
+                                    Icons.emoji_events_rounded,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
+                                const Spacer(),
+                                _RefreshBtn(onTap: () {
+                                  ref.read(tournamentProvider.notifier).fetchTournaments(refresh: true);
+                                  ref.read(tournamentProvider.notifier).fetchMyTournaments();
+                                }),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 title: const Text(
                   "Tournaments",
                   style: TextStyle(
-                    color: AppColors.textPrimary,
+                    color: Colors.white,
                     fontWeight: FontWeight.w900,
-                    fontSize: 17,
-                    letterSpacing: -0.4,
+                    fontSize: 26,
+                    letterSpacing: -0.8,
                   ),
                 ),
-                titlePadding: const EdgeInsets.only(left: 20, bottom: 14),
+                titlePadding: const EdgeInsets.only(left: 20, bottom: 20),
               ),
             ),
 

@@ -21,50 +21,147 @@ class LeaderboardPage extends ConsumerWidget {
       backgroundColor: Colors.white,
       body: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: isDark 
-              ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
-              : [const Color(0xFFBAE6FD), Colors.white], // Sky blue matching bottom bar
-            stops: const [0.0, 0.3],
-          ),
+          color: isDark ? const Color(0xFF0F172A) : Colors.white,
         ),
         child: NestedScrollView(
           headerSliverBuilder: (context, innerBoxIsScrolled) => [
             SliverAppBar(
               pinned: true,
               floating: false,
-              backgroundColor: Colors.transparent,
+              expandedHeight: 200,
+              backgroundColor: const Color(0xFF0284C7),
+              surfaceTintColor: Colors.transparent,
               elevation: 0,
+              scrolledUnderElevation: 0,
               centerTitle: false,
               leading: canPop ? IconButton(
-                icon: const Icon(Icons.arrow_back_ios_rounded, size: 20, color: AppColors.textPrimary),
+                icon: const Icon(Icons.arrow_back_ios_rounded, size: 20, color: Colors.white),
                 onPressed: () => Navigator.of(context).pop(),
               ) : null,
-              title: const Text(
-                'Champions',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 22,
-                  letterSpacing: -1.0,
-                  color: AppColors.textPrimary,
+              flexibleSpace: FlexibleSpaceBar(
+                collapseMode: CollapseMode.pin,
+                background: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // Layer 1: Signature Sky-Blue Gradient
+                    Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFF0EA5E9), Color(0xFF0284C7)],
+                        ),
+                      ),
+                    ),
+                    // Layer 2: Signature Mixture Overlay
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withOpacity(0.1),
+                            Colors.black.withOpacity(0.6),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // Layer 3: Dynamic Texture
+                    Opacity(
+                      opacity: 0.1,
+                      child: Image.asset(
+                        'assets/images/pattern_bg.png',
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const SizedBox(),
+                      ),
+                    ),
+                    // Layer 4: Themed Icon
+                    Positioned(
+                      top: 50,
+                      left: 20,
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.military_tech_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                titlePadding: const EdgeInsets.only(left: 20, bottom: 20),
+                title: const Text(
+                  'Champions',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 26,
+                    letterSpacing: -1.0,
+                    color: Colors.white,
+                  ),
                 ),
               ),
               actions: [
                 Container(
                   margin: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.5),
+                    color: Colors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.primary.withOpacity(0.1)),
                   ),
                   child: IconButton(
-                    icon: const Icon(Icons.tune_rounded, size: 18, color: AppColors.primary),
+                    icon: const Icon(Icons.tune_rounded, size: 20, color: Colors.white),
                     onPressed: () => _showFilterSheet(context, ref, state.filter),
                   ),
                 ),
               ],
+            ),
+            // Sub-header area with lighter bluish tone (managed properly)
+            SliverToBoxAdapter(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: isDark 
+                      ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+                      : [const Color(0xFFE0F2FE).withOpacity(0.5), Colors.white],
+                    stops: const [0.0, 1.0],
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Hall of Fame'.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                        color: isDark ? Colors.white70 : AppColors.textTertiary.withValues(alpha: 0.6),
+                        letterSpacing: 2.0,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        _FilterPill(
+                          label: state.filter.scope.name.toUpperCase(),
+                          icon: Icons.public_rounded,
+                        ),
+                        const SizedBox(width: 8),
+                        _FilterPill(
+                          label: state.filter.period.name.toUpperCase(),
+                          icon: Icons.calendar_today_rounded,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
           body: _buildBody(context, state, notifier),
@@ -105,50 +202,16 @@ class LeaderboardPage extends ConsumerWidget {
 
     final top3 = state.entries.take(3).toList();
     final rest = state.entries.skip(3).toList();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return RefreshIndicator(
       color: AppColors.primary,
-      backgroundColor: AppColors.surface,
+      backgroundColor: isDark ? const Color(0xFF1E293B) : AppColors.surface,
       strokeWidth: 3,
       onRefresh: notifier.load,
       child: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          // ── Header Section ─────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Hall of Fame'.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.textTertiary.withValues(alpha: 0.6),
-                      letterSpacing: 2.0,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      _FilterPill(
-                        label: state.filter.scope.name.toUpperCase(),
-                        icon: Icons.public_rounded,
-                      ),
-                      const SizedBox(width: 8),
-                      _FilterPill(
-                        label: state.filter.period.name.toUpperCase(),
-                        icon: Icons.calendar_today_rounded,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-
           // ── Podium ────────────────────────────────────────────────
           if (top3.length == 3)
             SliverToBoxAdapter(

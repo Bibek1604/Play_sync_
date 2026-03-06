@@ -50,7 +50,7 @@ class AppColors {
   static const Color rankBronze = Color(0xFFB45309);
 
   // ── Chat ────────────────────────────────────────────────────────────────
-  static const Color chatBubbleOwn = Color(0xFF1E3A8A);
+  static const Color chatBubbleOwn = Color(0xFF0284C7); // Signature Blue
 
   static Color primaryWithOpacity(double o) => primary.withOpacity(o);
   static Color withOpacity(Color c, double o) => c.withOpacity(o);

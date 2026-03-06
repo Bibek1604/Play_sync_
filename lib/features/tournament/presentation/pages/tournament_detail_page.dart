@@ -10,6 +10,7 @@ import "../../domain/entities/tournament_payment_entity.dart";
 import "../../../auth/presentation/providers/auth_notifier.dart";
 import "tournament_chat_page.dart";
 import "package:play_sync_new/core/providers/esewa_provider.dart";
+import "../controllers/tournament_join_controller.dart";
 
 class TournamentDetailPage extends ConsumerStatefulWidget {
   final TournamentEntity tournament;
@@ -313,64 +314,83 @@ class _TournamentDetailPageState extends ConsumerState<TournamentDetailPage>
       );
     }
 
-    // User needs to pay → Show "Pay Now" button
+    // User needs to pay → Show "Join" button (payment handled by controller)
     if (tournament.requiresPayment && tournament.entryFee > 0) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ElevatedButton.icon(
-            onPressed: _isProcessing ? null : () => _initiatePayment(context, tournament),
-            icon: _isProcessing
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
-                  )
-                : const Icon(Icons.payment_rounded, size: 20),
-            label: Text(
-              "PAY NPR ${tournament.entryFee.toStringAsFixed(0)} WITH ESEWA",
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: 1.1),
-            ),
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 56),
-              elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              backgroundColor: const Color(0xFF60BB46), // eSewa green
-              foregroundColor: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            "After payment, you'll be able to join the tournament and access chat",
-            style: TextStyle(
-              fontSize: 12,
-              color: isDark ? (AppColors.textSecondaryDark ?? Colors.grey) : AppColors.textSecondary,
-              fontStyle: FontStyle.italic,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+      return Consumer(
+        builder: (context, ref, _) {
+          final joinState = ref.watch(tournamentJoinControllerProvider);
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ElevatedButton.icon(
+                onPressed: joinState.isLoading 
+                  ? null 
+                  : () => ref.read(tournamentJoinControllerProvider.notifier).joinTournament(context, tournament),
+                icon: joinState.isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
+                      )
+                    : const Icon(Icons.payment_rounded, size: 20),
+                label: Text(
+                  "PAY NPR ${tournament.entryFee.toStringAsFixed(0)} TO JOIN",
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: 1.1),
+                ),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 56),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  backgroundColor: const Color(0xFF60BB46), // eSewa green
+                  foregroundColor: Colors.white,
+                ),
+              ),
+              if (joinState.error != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(joinState.error!, style: const TextStyle(color: AppColors.error, fontSize: 12)),
+                ),
+              const SizedBox(height: 12),
+              Text(
+                "After payment, you'll be able to join the tournament and access chat",
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark ? (AppColors.textSecondaryDark ?? Colors.grey) : AppColors.textSecondary,
+                  fontStyle: FontStyle.italic,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          );
+        }
       );
     }
 
     // Free tournament → Show "Join Tournament"
-    return ElevatedButton.icon(
-      onPressed: _isProcessing ? null : () => _joinFreeTournament(context, tournament),
-      icon: _isProcessing
-          ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
-            )
-          : const Icon(Icons.login_rounded, size: 20),
-      label: const Text("JOIN TOURNAMENT", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: 1.1)),
-      style: ElevatedButton.styleFrom(
-        minimumSize: const Size(double.infinity, 56),
-        elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-      ),
+    return Consumer(
+      builder: (context, ref, _) {
+        final joinState = ref.watch(tournamentJoinControllerProvider);
+        return ElevatedButton.icon(
+          onPressed: joinState.isLoading 
+            ? null 
+            : () => ref.read(tournamentJoinControllerProvider.notifier).joinTournament(context, tournament),
+          icon: joinState.isLoading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
+                )
+              : const Icon(Icons.login_rounded, size: 20),
+          label: const Text("JOIN TOURNAMENT", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: 1.1)),
+          style: ElevatedButton.styleFrom(
+            minimumSize: const Size(double.infinity, 56),
+            elevation: 0,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+          ),
+        );
+      }
     );
   }
 
@@ -384,217 +404,6 @@ class _TournamentDetailPageState extends ConsumerState<TournamentDetailPage>
         ),
       ),
     );
-  }
-
-  /// Initiate eSewa payment using native Mobile SDK
-  Future<void> _initiatePayment(BuildContext context, TournamentEntity tournament) async {
-    if (_isProcessing) return;
-    
-    setState(() => _isProcessing = true);
-
-    // Show loading dialog
-    if (mounted) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext dialogContext) {
-          return WillPopScope(
-            onWillPop: () async => false,
-            child: AlertDialog(
-              backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-                    strokeWidth: 3,
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Opening eSewa Payment...',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Amount: ${tournament.entryFee} NPR',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      );
-    }
-
-    try {
-      final esewaService = ref.read(esewaServiceProvider);
-      final amount = tournament.entryFee.toDouble();
-
-      // Initiate eSewa payment
-      await esewaService.initiatePayment(
-        tournamentId: tournament.id,
-        amount: amount,
-        onSuccess: (result) async {
-          // Handle both real and demo payment results
-          final refId = result?['refId'] ?? 'DEMO-${DateTime.now().millisecondsSinceEpoch}';
-          debugPrint('[Tournament] Payment success: $refId');
-          
-          // Close loading dialog
-          if (mounted) {
-            Navigator.of(context).pop();
-          }
-          
-          // Set flag to wait for payment verification
-          _awaitingPaymentReturn = true;
-
-          // Verify transaction via backend (using refId)
-          if (mounted) {
-            try {
-              // Call backend to verify transaction
-              await ref.read(tournamentPaymentProvider.notifier).verifyPayment();
-              
-              // Refresh tournament data
-              await _refreshTournamentData();
-
-              if (!mounted) return;
-              
-              // Show success and navigate to chat
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('✓ Payment verified! Redirecting to tournament chat...'),
-                  backgroundColor: AppColors.success,
-                  duration: Duration(seconds: 2),
-                ),
-              );
-
-              // Auto-navigate to chat
-              Future.delayed(const Duration(milliseconds: 500), () {
-                if (mounted) {
-                  _openChat(context, tournament);
-                }
-              });
-            } catch (e) {
-              debugPrint('[Tournament] Payment verification failed: $e');
-              if (!mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Payment received. Verifying... ${e.toString()}'),
-                  backgroundColor: AppColors.success,
-                  duration: const Duration(seconds: 3),
-                ),
-              );
-              // Still refresh in case verification happens in background
-              await _refreshTournamentData();
-            }
-          }
-          
-          setState(() => _isProcessing = false);
-        },
-        onFailure: (message) {
-          debugPrint('[Tournament] Payment failure: $message');
-          
-          // Close loading dialog
-          if (mounted) {
-            Navigator.of(context).pop();
-          }
-          
-          setState(() => _isProcessing = false);
-          
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(message ?? 'Payment failed. Please try again.'),
-              backgroundColor: AppColors.error,
-              duration: const Duration(seconds: 3),
-            ),
-          );
-        },
-        onCancellation: (message) {
-          debugPrint('[Tournament] Payment cancelled: $message');
-          
-          // Close loading dialog
-          if (mounted) {
-            Navigator.of(context).pop();
-          }
-          
-          setState(() => _isProcessing = false);
-          
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(message ?? 'Payment cancelled by user'),
-              backgroundColor: Colors.orange,
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        },
-      );
-
-    } catch (e) {
-      // Close loading dialog
-      if (mounted) {
-        Navigator.of(context).pop();
-      }
-      
-      setState(() => _isProcessing = false);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Error initiating payment: ${e.toString()}"),
-          backgroundColor: AppColors.error,
-        ),
-      );
-    }
-  }
-
-  /// Join free tournament (no payment required)
-  Future<void> _joinFreeTournament(BuildContext context, TournamentEntity tournament) async {
-    if (_isProcessing) return;
-    
-    setState(() => _isProcessing = true);
-
-    try {
-      // Refresh tournament data to get updated participant list after joining
-      await Future.delayed(const Duration(milliseconds: 500));
-      await _refreshTournamentData();
-      
-      setState(() => _isProcessing = false);
-      
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('✓ Successfully joined tournament! You can now access the chat.'),
-          backgroundColor: AppColors.success,
-          duration: Duration(seconds: 2),
-        ),
-      );
-
-      // Trigger rebuild to show chat button
-      if (mounted) {
-        setState(() {});
-      }
-
-    } catch (e) {
-      setState(() => _isProcessing = false);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Error joining tournament: ${e.toString()}"),
-          backgroundColor: AppColors.error,
-        ),
-      );
-    }
   }
 
   Widget _buildStatItem(String label, String value, IconData icon, bool isDark) {

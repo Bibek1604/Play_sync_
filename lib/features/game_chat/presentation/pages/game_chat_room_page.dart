@@ -302,42 +302,122 @@ class _GameChatRoomPageState extends ConsumerState<GameChatRoomPage> {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: isDark ? AppColors.backgroundDark : AppColors.background,
-      appBar: _buildAppBar(isDark),
-      body: Column(
-        children: [
-          // ── Error banner ─────────────────────────────────────────────────
-          if (chatState.error != null)
-            _ErrorBanner(
-              message: chatState.error!,
-              onDismiss: () => ref
-                  .read(gameChatNotifierProvider(widget.gameId).notifier)
-                  .clearError(),
+      body: NestedScrollView(
+        headerSliverBuilder: (context, innerBoxIsScrolled) => [
+          SliverAppBar(
+            pinned: true,
+            expandedHeight: 120,
+            backgroundColor: const Color(0xFF0284C7),
+            surfaceTintColor: Colors.transparent,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: Colors.white),
+              onPressed: () => Navigator.maybePop(context),
             ),
-
-          // ── Message list ─────────────────────────────────────────────────
-          Expanded(
-            child: chatState.isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : chatState.messages.isEmpty
-                    ? _EmptyState(isDark: isDark)
-                    : _MessageList(
-                        messages: chatState.messages,
-                        currentUserId: bestId,
-                        currentUserName: userInfo.name,
-                        scrollCtrl: _scrollCtrl,
-                        isDark: isDark,
+            flexibleSpace: FlexibleSpaceBar(
+              collapseMode: CollapseMode.pin,
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Layer 1: Gradient
+                  Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF0EA5E9), Color(0xFF0284C7)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
-          ),
-
-          // ── Input bar ────────────────────────────────────────────────────
-          _InputBar(
-            controller: _inputCtrl,
-            focusNode: _focusNode,
-            isSending: chatState.isSending,
-            onSend: _sendMessage,
-            isDark: isDark,
+                    ),
+                  ),
+                  // Layer 2: Mixture Overlay
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withOpacity(0.1),
+                          Colors.black.withOpacity(0.6),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
+              title: Row(
+                children: [
+                  _Avatar(imageUrl: widget.gameImageUrl, title: widget.gameTitle),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.gameTitle,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: -0.5,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          'Active Arena',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white.withOpacity(0.7),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
+        body: Column(
+          children: [
+            // ── Error banner ─────────────────────────────────────────────────
+            if (chatState.error != null)
+              _ErrorBanner(
+                message: chatState.error!,
+                onDismiss: () => ref
+                    .read(gameChatNotifierProvider(widget.gameId).notifier)
+                    .clearError(),
+              ),
+
+            // ── Message list ─────────────────────────────────────────────────
+            Expanded(
+              child: chatState.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : chatState.messages.isEmpty
+                      ? _EmptyState(isDark: isDark)
+                      : _MessageList(
+                          messages: chatState.messages,
+                          currentUserId: bestId,
+                          currentUserName: userInfo.name,
+                          scrollCtrl: _scrollCtrl,
+                          isDark: isDark,
+                        ),
+            ),
+
+            // ── Input bar ────────────────────────────────────────────────────
+            _InputBar(
+              controller: _inputCtrl,
+              focusNode: _focusNode,
+              isSending: chatState.isSending,
+              onSend: _sendMessage,
+              isDark: isDark,
+            ),
+          ],
+        ),
       ),
     );
   }

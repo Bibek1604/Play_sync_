@@ -144,29 +144,29 @@ class _BottomBar extends StatelessWidget {
                 end: Alignment.bottomCenter,
               )
             : const LinearGradient(
-                // Same sky-blue used in the profile header image area → white
-                colors: [Color(0xFFBAE6FD), Colors.white],
+                // Lighter Sky-blue tint matching sidebar/profile
+                colors: [Color(0xFFF0F9FF), Colors.white],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
         borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(28),
-          topRight: Radius.circular(28),
+          topLeft: Radius.circular(32),
+          topRight: Radius.circular(32),
         ),
         boxShadow: [
           BoxShadow(
             color: isDark
                 ? Colors.black.withOpacity(0.4)
-                : const Color(0xFF6366F1).withOpacity(0.08),
-            blurRadius: 24,
-            offset: const Offset(0, -6),
+                : const Color(0xFF0284C7).withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, -4),
           ),
         ],
         border: Border(
           top: BorderSide(
             color: isDark
                 ? Colors.white.withOpacity(0.06)
-                : const Color(0xFF7DD3FC).withOpacity(0.6),
+                : const Color(0xFFBAE6FD).withOpacity(0.4),
             width: 1,
           ),
         ),
@@ -174,7 +174,7 @@ class _BottomBar extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(8, 10, 8, 8),
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(
@@ -208,74 +208,56 @@ class _NavItem extends StatelessWidget {
     required this.onTap,
   });
 
-  // Active colour matches primary nav blue (#1E3A8A) / lighter in dark
-  // Sky-blue family — matches profile header gradient
-  static const _activeColor = Color(0xFF0284C7); // sky-700 (same as profile header end)
-  static final _activeDark  = const Color(0xFF38BDF8); // sky-400 for dark mode
+  // Active colour matches primary nav blue (#0284C7) from profile/sidebar
+  static const _activeColor = Color(0xFF0284C7); 
+  static final _activeDark  = const Color(0xFF38BDF8); 
 
   @override
   Widget build(BuildContext context) {
     final active  = isDark ? _activeDark : _activeColor;
     final inactive = isDark
-        ? Colors.white.withOpacity(0.35)
+        ? Colors.white.withOpacity(0.3)
         : const Color(0xFF94A3B8);
 
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOutCubic,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOutBack, // Smoother, less "snappy" feeling
         padding: EdgeInsets.symmetric(
-          horizontal: isActive ? 18 : 12,
+          horizontal: isActive ? 16 : 12,
           vertical: 8,
         ),
         decoration: BoxDecoration(
-          // Active: pill with sky-blue tinted background (profile header palette)
+          // Soft sky-blue active background
           color: isActive
               ? (isDark
-                  ? const Color(0xFF0EA5E9).withOpacity(0.2)
-                  : const Color(0xFFE0F2FE))   // sky-100
+                  ? const Color(0xFF0EA5E9).withOpacity(0.15)
+                  : const Color(0xFFE0F2FE))
               : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
-          // Subtle sky-blue glow on active
-          boxShadow: isActive && !isDark
-              ? [
-                  BoxShadow(
-                    color: const Color(0xFF0EA5E9).withOpacity(0.18),
-                    blurRadius: 12,
-                    offset: const Offset(0, 3),
-                  ),
-                ]
-              : [],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               isActive ? dest.activeIcon : dest.icon,
-              size: 22,
+              size: 24,
               color: isActive ? active : inactive,
             ),
-            // Label slides in when active
-            AnimatedSize(
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeOutCubic,
-              child: isActive
-                  ? Padding(
-                      padding: const EdgeInsets.only(left: 6),
-                      child: Text(
-                        dest.label,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          color: active,
-                          letterSpacing: -0.2,
-                        ),
-                      ),
-                    )
-                  : const SizedBox.shrink(),
-            ),
+            if (isActive) ...[
+              const SizedBox(width: 8),
+              Text(
+                dest.label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: active,
+                  letterSpacing: -0.2,
+                ),
+              ),
+            ],
           ],
         ),
       ),

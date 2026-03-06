@@ -5,6 +5,7 @@ import "package:play_sync_new/core/constants/app_colors.dart";
 import "../../domain/entities/tournament_entity.dart";
 import "../pages/tournament_detail_page.dart";
 import "../../../auth/presentation/providers/auth_notifier.dart";
+import "../controllers/tournament_join_controller.dart";
 
 /// Compact tournament card styled like the profile page tiles —
 /// white bg, rounded corners, left icon badge, label+value rows,
@@ -141,12 +142,35 @@ class TournamentCard extends ConsumerWidget {
 
               const SizedBox(width: 10),
 
-              // ── Right: Chevron (profile-style) ─────────────────────────
-              const Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 14,
-                color: Color(0xFFCBD5E1),
-              ),
+              // ── Right: Action Button or Chevron ─────────────────────────
+              if (!isParticipant && tournament.status == TournamentStatus.open)
+                Consumer(
+                  builder: (context, ref, _) {
+                    final joinState = ref.watch(tournamentJoinControllerProvider);
+                    return SizedBox(
+                      height: 32,
+                      child: FilledButton(
+                        onPressed: joinState.isLoading 
+                          ? null 
+                          : () => ref.read(tournamentJoinControllerProvider.notifier).joinTournament(context, tournament),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: joinState.isLoading 
+                          ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          : const Text("Join", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      ),
+                    );
+                  }
+                )
+              else
+                const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: Color(0xFFCBD5E1),
+                ),
             ],
           ),
         ),

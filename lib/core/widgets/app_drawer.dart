@@ -84,6 +84,13 @@ class AppDrawer extends ConsumerWidget {
                     isActive: currentRoute == AppRoutes.offlineGames,
                     onTap: () => _go(context, AppRoutes.offlineGames),
                   ),
+                  _NavItem(
+                    icon: Icons.event_available_rounded,
+                    label: "Ended Games",
+                    accent: const Color(0xFF0284C7), // Unified Sky Blue theme
+                    isActive: currentRoute == AppRoutes.endedGames,
+                    onTap: () => _go(context, AppRoutes.endedGames),
+                  ),
                   const SizedBox(height: 20),
 
                   _SectionLabel("ACCOUNT"),
