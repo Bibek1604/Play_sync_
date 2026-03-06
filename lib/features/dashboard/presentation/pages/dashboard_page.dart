@@ -26,6 +26,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       await ref.read(profileNotifierProvider.notifier).getProfile();
       await ref.read(gameProvider.notifier).fetchMyCreatedGames();
       await ref.read(gameProvider.notifier).fetchMyJoinedGames();
+      // Fetch available games (exclude games user created/joined)
+      await ref.read(gameProvider.notifier).fetchGames(refresh: true, excludeMe: true);
     });
   }
 
@@ -33,6 +35,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     await ref.read(profileNotifierProvider.notifier).getProfile();
     await ref.read(gameProvider.notifier).fetchMyCreatedGames();
     await ref.read(gameProvider.notifier).fetchMyJoinedGames();
+    // Fetch available games
+    await ref.read(gameProvider.notifier).fetchGames(refresh: true, excludeMe: true);
   }
 
   @override
@@ -172,6 +176,30 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                           emptyText: "You haven't joined any games yet",
                           currentUserId: currentUserId,
                           isCreatorSection: false,
+                        ),
+                        
+                        const SizedBox(height: 32),
+
+                        // Browse Online Games Section
+                        _BrowseGamesSection(
+                          title: "🌐 Browse Online Games",
+                          games: gameState.availableGames.where((g) => g.isOnline).toList(),
+                          isLoading: gameState.isLoading,
+                          emptyText: "No online games available to join",
+                          currentUserId: currentUserId,
+                          category: "ONLINE",
+                        ),
+                        
+                        const SizedBox(height: 28),
+
+                        // Browse Offline Games Section
+                        _BrowseGamesSection(
+                          title: "📍 Browse Offline Games",
+                          games: gameState.availableGames.where((g) => g.isOffline).toList(),
+                          isLoading: gameState.isLoading,
+                          emptyText: "No offline games available to join",
+                          currentUserId: currentUserId,
+                          category: "OFFLINE",
                         ),
                         
                         const SizedBox(height: 40),
@@ -419,6 +447,127 @@ class _GamesSection extends StatelessWidget {
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
               itemCount: games.length,
+              itemBuilder: (context, index) {
+                final game = games[index];
+                return Padding(
+                  padding: EdgeInsets.only(right: 12, left: index == 0 ? 4 : 0),
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.72,
+                    child: GameTileWidget(
+                      game: game,
+                      currentUserId: currentUserId,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+// ── Browse Games Section ────────────────────────────────────────────────────
+
+class _BrowseGamesSection extends ConsumerWidget {
+  final String title;
+  final List<GameEntity> games;
+  final bool isLoading;
+  final String emptyText;
+  final String? currentUserId;
+  final String category;
+
+  const _BrowseGamesSection({
+    required this.title,
+    required this.games,
+    required this.isLoading,
+    required this.emptyText,
+    required this.currentUserId,
+    required this.category,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  category == "ONLINE" ? Icons.public_rounded : Icons.location_on_rounded,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: isDark ? Colors.white : AppColors.textPrimary,
+                    letterSpacing: -0.4,
+                  ),
+                ),
+              ],
+            ),
+            if (games.isNotEmpty)
+              TextButton(
+                onPressed: () => Navigator.pushNamed(
+                  context,
+                  category == "ONLINE" ? AppRoutes.onlineGames : AppRoutes.offlineGames,
+                ),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  visualDensity: VisualDensity.compact,
+                ),
+                child: const Text('Browse all', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        if (isLoading && games.isEmpty)
+          SizedBox(
+            height: 120,
+            child: Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            ),
+          )
+        else if (games.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.surfaceDark : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: isDark ? AppColors.borderDark : AppColors.border),
+            ),
+            child: Column(
+              children: [
+                Icon(Icons.search_off_rounded, size: 40, color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary.withOpacity(0.5)),
+                const SizedBox(height: 12),
+                Text(
+                  emptyText,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          SizedBox(
+            height: 240,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: games.take(6).toList().length,
               itemBuilder: (context, index) {
                 final game = games[index];
                 return Padding(

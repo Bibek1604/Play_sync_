@@ -392,17 +392,69 @@ class _TournamentDetailPageState extends ConsumerState<TournamentDetailPage>
     
     setState(() => _isProcessing = true);
 
+    // Show loading dialog
+    if (mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext dialogContext) {
+          return WillPopScope(
+            onWillPop: () async => false,
+            child: AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    strokeWidth: 3,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Opening eSewa Payment...',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Amount: ${tournament.entryFee} NPR',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    }
+
     try {
       final esewaService = ref.read(esewaServiceProvider);
       final amount = tournament.entryFee.toString();
 
-      // Initiate native SDK payment
+      // Initiate eSewa payment
       await esewaService.initiatePayment(
         tournamentId: tournament.id,
         tournamentName: tournament.name,
         amount: amount,
         onSuccess: (result) async {
-          debugPrint('[Tournament] Payment success: ${result.refId}');
+          // Handle both real and demo payment results
+          final refId = result?['refId'] ?? result?.refId ?? 'DEMO-${DateTime.now().millisecondsSinceEpoch}';
+          debugPrint('[Tournament] Payment success: $refId');
+          
+          // Close loading dialog
+          if (mounted) {
+            Navigator.of(context).pop();
+          }
           
           // Set flag to wait for payment verification
           _awaitingPaymentReturn = true;
@@ -452,6 +504,12 @@ class _TournamentDetailPageState extends ConsumerState<TournamentDetailPage>
         },
         onFailure: (message) {
           debugPrint('[Tournament] Payment failure: $message');
+          
+          // Close loading dialog
+          if (mounted) {
+            Navigator.of(context).pop();
+          }
+          
           setState(() => _isProcessing = false);
           
           if (!mounted) return;
@@ -465,6 +523,12 @@ class _TournamentDetailPageState extends ConsumerState<TournamentDetailPage>
         },
         onCancellation: (message) {
           debugPrint('[Tournament] Payment cancelled: $message');
+          
+          // Close loading dialog
+          if (mounted) {
+            Navigator.of(context).pop();
+          }
+          
           setState(() => _isProcessing = false);
           
           if (!mounted) return;
@@ -479,6 +543,11 @@ class _TournamentDetailPageState extends ConsumerState<TournamentDetailPage>
       );
 
     } catch (e) {
+      // Close loading dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+      
       setState(() => _isProcessing = false);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
