@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import '../../../../app/theme/app_colors.dart';
+import '../../../../core/constants/app_colors.dart';
 
 /// Horizontal chip row for selecting sport type filter on leaderboard.
 class SportPicker extends StatelessWidget {
   final String? selectedSport;
   final void Function(String?) onChanged;
 
-  static const _sports = ['All', 'Football', 'Basketball', 'Cricket', 'Tennis', 'Badminton', 'Volleyball'];
+  static const _sports = ['All'];
 
   const SportPicker({super.key, this.selectedSport, required this.onChanged});
 
@@ -25,7 +25,7 @@ class SportPicker extends StatelessWidget {
           return ChoiceChip(
             label: Text(sport),
             selected: isSelected,
-            selectedColor: AppColors.emerald500.withValues(alpha: 0.2),
+            selectedColor: AppColors.primary.withValues(alpha: 0.2),
             onSelected: (_) => onChanged(sport == 'All' ? null : sport),
           );
         },

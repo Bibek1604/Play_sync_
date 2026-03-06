@@ -1,0 +1,6 @@
+Analyzing game_chat...                                          
+
+   info - The import of 'package:flutter/services.dart' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' - lib\features\game_chat\presentation\pages\game_chat_room_page.dart:2:8 - unnecessary_import
+   info - Unnecessary use of multiple underscores - lib\features\game_chat\presentation\pages\game_chat_room_page.dart:139:11 - unnecessary_underscores
+
+2 issues found. (ran in 1.9s)

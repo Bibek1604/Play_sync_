@@ -57,3 +57,38 @@ class GeneralFailure extends Failure {
     String message = 'An unexpected error occurred',
   }) : super(message);
 }
+
+/// Failure for location permission issues
+class PermissionFailure extends Failure {
+  const PermissionFailure(String message) : super(message);
+}
+
+/// Failure for location service (GPS) issues
+class LocationServiceFailure extends Failure {
+  const LocationServiceFailure(String message) : super(message);
+}
+
+/// Failure for timeout issues
+class TimeoutFailure extends Failure {
+  const TimeoutFailure({
+    String message = 'Operation timed out',
+  }) : super(message);
+}
+
+/// Failure for server-side errors
+class ServerFailure extends Failure {
+  final int? statusCode;
+
+  const ServerFailure({
+    String message = 'Server error occurred',
+    this.statusCode,
+  }) : super(message);
+
+  @override
+  List<Object> get props => [message, statusCode ?? 0];
+}
+
+/// Failure for validation errors
+class ValidationFailure extends Failure {
+  const ValidationFailure(String message) : super(message);
+}

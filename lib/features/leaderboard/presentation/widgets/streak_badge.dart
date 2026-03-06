@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../app/theme/app_colors.dart';
+import '../../../../core/constants/app_colors.dart';
 
 /// Displays user's current win streak with fire animation.
 class StreakBadge extends StatelessWidget {
@@ -12,7 +12,7 @@ class StreakBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     if (streak == 0) return const SizedBox.shrink();
 
-    final color = streak >= 5 ? Colors.orange : (streak >= 3 ? Colors.amber : AppColors.emerald500);
+    final color = streak >= 5 ? AppColors.warning : (streak >= 3 ? Colors.amber : AppColors.primary);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:play_sync_new/core/services/connectivity_service.dart';
 import 'package:play_sync_new/features/auth/data/datasources/auth_datasource.dart';
 import 'package:play_sync_new/features/auth/data/datasources/remote/auth_remote_datasource.dart';
 import 'package:play_sync_new/features/auth/data/datasources/local/auth_local_datasource.dart';
@@ -15,7 +14,7 @@ final hiveAuthBoxProvider = FutureProvider<Box<dynamic>>((ref) async {
   return Hive.openBox(HiveTableConstant.authBox);
 });
 
-/// Provider for local datasource
+/// Provider for local datasource (used for reading cached data only — NOT for login/register)
 final authLocalDataSourceProvider = FutureProvider<AuthLocalDataSource>((ref) async {
   final authBox = await ref.watch(hiveAuthBoxProvider.future);
   return AuthLocalDataSource(authBox: authBox);
@@ -27,45 +26,18 @@ final authRemoteDatasourceProvider = Provider<AuthRemoteDataSource>((ref) {
   return AuthRemoteDataSource(apiClient: apiClient);
 });
 
-/// Provider to determine which datasource to use
-/// Intelligently switches between remote and local based on backend availability
-final authDataSourceProvider = FutureProvider<IAuthDataSource>((ref) async {
-  final connectivityService = ref.watch(connectivityServiceProvider);
-  final isBackendAvailable = await connectivityService.isBackendAvailable();
-
-  if (isBackendAvailable) {
-    // Backend is available, use remote datasource
-    return ref.watch(authRemoteDatasourceProvider);
-  } else {
-    // Backend is not available, use local datasource (Hive)
-    return ref.watch(authLocalDataSourceProvider.future);
-  }
+/// Auth datasource provider — ALWAYS uses the remote datasource.
+/// Login and register require a live backend connection. If the server
+/// is unreachable the remote datasource will throw a connection error,
+/// which surfaces as a clear "No internet connection" / timeout message
+/// to the user. There is no silent offline fallback for authentication.
+final authDataSourceProvider = Provider<IAuthDataSource>((ref) {
+  return ref.watch(authRemoteDatasourceProvider);
 });
 
-/// Provider for auth datasource with fallback
-/// This provider will automatically switch between remote and local datasources
+/// Smart auth datasource — same as authDataSourceProvider (always remote).
+/// Kept for backwards compatibility with code that reads this provider.
 final smartAuthDataSourceProvider = FutureProvider<IAuthDataSource>((ref) async {
-  try {
-    // On web, always try remote first (connectivity check can be unreliable on web)
-    if (kIsWeb) {
-      debugPrint('[AUTH] Web platform - using remote datasource');
-      return ref.watch(authRemoteDatasourceProvider);
-    }
-    
-    // Try to use remote datasource first
-    final connectivityService = ref.watch(connectivityServiceProvider);
-    final isBackendAvailable = await connectivityService.isBackendAvailable();
-
-    if (isBackendAvailable) {
-      debugPrint('[AUTH] Backend available - using remote datasource');
-      return ref.watch(authRemoteDatasourceProvider);
-    } else {
-      debugPrint('[AUTH] Backend not available - using local datasource (Hive)');
-      return ref.watch(authLocalDataSourceProvider.future);
-    }
-  } catch (e) {
-    debugPrint('[AUTH] Error determining datasource, falling back to local: $e');
-    // Fallback to local datasource if anything goes wrong
-    return ref.watch(authLocalDataSourceProvider.future);
-  }
+  debugPrint('[AUTH] Using remote datasource (always required for login/register)');
+  return ref.watch(authRemoteDatasourceProvider);
 });

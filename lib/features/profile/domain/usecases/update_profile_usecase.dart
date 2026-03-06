@@ -15,8 +15,9 @@ final updateProfileUsecaseProvider = Provider<UpdateProfileUsecase>((ref) {
 class UpdateProfileParams {
   final String? fullName;
   final String? phone;
-  final String? favouriteGame;
+  final String? favoriteGame;
   final String? place;
+  final String? bio;
   final String? currentPassword;
   final String? changePassword;
   final XFile? profilePicture;
@@ -24,8 +25,9 @@ class UpdateProfileParams {
   UpdateProfileParams({
     this.fullName,
     this.phone,
-    this.favouriteGame,
+    this.favoriteGame,
     this.place,
+    this.bio,
     this.currentPassword,
     this.changePassword,
     this.profilePicture,
@@ -43,8 +45,9 @@ class UpdateProfileUsecase {
     return await _repository.updateProfile(
       fullName: params.fullName,
       phone: params.phone,
-      favouriteGame: params.favouriteGame,
+      favoriteGame: params.favoriteGame,
       place: params.place,
+      bio: params.bio,
       currentPassword: params.currentPassword,
       changePassword: params.changePassword,
       profilePicture: params.profilePicture,

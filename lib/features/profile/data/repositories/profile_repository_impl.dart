@@ -36,8 +36,9 @@ class ProfileRepositoryImpl implements IProfileRepository {
   Future<Either<Failure, ProfileEntity>> updateProfile({
     String? fullName,
     String? phone,
-    String? favouriteGame,
+    String? favoriteGame,
     String? place,
+    String? bio,
     String? currentPassword,
     String? changePassword,
     XFile? profilePicture,
@@ -46,8 +47,9 @@ class ProfileRepositoryImpl implements IProfileRepository {
       final requestModel = UpdateProfileRequestModel(
         fullName: fullName,
         phone: phone,
-        favouriteGame: favouriteGame,
+        favoriteGame: favoriteGame,
         place: place,
+        bio: bio,
         currentPassword: currentPassword,
         changePassword: changePassword,
       );

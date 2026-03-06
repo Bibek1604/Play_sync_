@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../app/theme/app_colors.dart';
+import '../../../../core/constants/app_colors.dart';
 
 /// Animated podium showing top-3 players with height variation.
 class LeaderboardPodium extends StatelessWidget {
@@ -28,14 +28,52 @@ class LeaderboardPodium extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Expanded(child: _PodiumSlot(rank: 2, username: secondUsername, points: secondPoints, avatarUrl: secondAvatarUrl, height: 90)),
-          Expanded(child: _PodiumSlot(rank: 1, username: firstUsername, points: firstPoints, avatarUrl: firstAvatarUrl, height: 120)),
-          Expanded(child: _PodiumSlot(rank: 3, username: thirdUsername, points: thirdPoints, avatarUrl: thirdAvatarUrl, height: 70)),
+          Expanded(
+            child: _PodiumSlot(
+              rank: 2,
+              username: secondUsername,
+              points: secondPoints,
+              avatarUrl: secondAvatarUrl,
+              height: 100,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _PodiumSlot(
+              rank: 1,
+              username: firstUsername,
+              points: firstPoints,
+              avatarUrl: firstAvatarUrl,
+              height: 140,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _PodiumSlot(
+              rank: 3,
+              username: thirdUsername,
+              points: thirdPoints,
+              avatarUrl: thirdAvatarUrl,
+              height: 80,
+            ),
+          ),
         ],
       ),
     );
@@ -57,35 +95,118 @@ class _PodiumSlot extends StatelessWidget {
     this.avatarUrl,
   });
 
-  static const _medals = ['🥇', '🥈', '🥉'];
-  static const _colors = [AppColors.emerald500, Color(0xFFC0C0C0), Color(0xFFCD7F32)];
+  static const _colors = [
+    AppColors.primary,
+    Color(0xFF94A3B8), // Slate 400
+    Color(0xFF92400E), // Amber 800 (Bronze)
+  ];
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final bool isFirst = rank == 1;
+    final color = _colors[rank - 1];
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        CircleAvatar(
-          radius: rank == 1 ? 30 : 24,
-          backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl!) : null,
-          backgroundColor: _colors[rank - 1].withValues(alpha: 0.2),
-          child: avatarUrl == null
-              ? Text(username[0].toUpperCase(), style: TextStyle(fontWeight: FontWeight.bold, fontSize: rank == 1 ? 18 : 14, color: _colors[rank - 1]))
-              : null,
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              padding: EdgeInsets.all(isFirst ? 3 : 2),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [color, color.withValues(alpha: 0.4)],
+                ),
+              ),
+              child: CircleAvatar(
+                radius: isFirst ? 34 : 28,
+                backgroundColor: AppColors.surface,
+                backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl!) : null,
+                child: avatarUrl == null
+                    ? Text(
+                        username[0].toUpperCase(),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: isFirst ? 20 : 16,
+                          color: color,
+                        ),
+                      )
+                    : null,
+              ),
+            ),
+            Positioned(
+              bottom: -2,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.surface, width: 2),
+                ),
+                child: Text(
+                  '#$rank',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 4),
-        Text(_medals[rank - 1], style: const TextStyle(fontSize: 16)),
-        Text(username, style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis, maxLines: 1),
-        Text('$points pts', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
-        const SizedBox(height: 4),
+        const SizedBox(height: 12),
+        Text(
+          username,
+          style: TextStyle(
+            fontWeight: isFirst ? FontWeight.w900 : FontWeight.w700,
+            fontSize: isFirst ? 14 : 12,
+            color: AppColors.textPrimary,
+            letterSpacing: -0.5,
+          ),
+          overflow: TextOverflow.ellipsis,
+          maxLines: 1,
+        ),
+        Text(
+          '${points.toString()} XP',
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            color: color.withValues(alpha: 0.8),
+          ),
+        ),
+        const SizedBox(height: 12),
         Container(
           height: height,
           decoration: BoxDecoration(
-            color: _colors[rank - 1].withValues(alpha: 0.2),
-            border: Border(top: BorderSide(color: _colors[rank - 1], width: 2)),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                color.withValues(alpha: 0.2),
+                color.withValues(alpha: 0.05),
+              ],
+            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            border: Border(
+              top: BorderSide(color: color.withValues(alpha: 0.3), width: 2),
+              left: BorderSide(color: color.withValues(alpha: 0.1), width: 1),
+              right: BorderSide(color: color.withValues(alpha: 0.1), width: 1),
+            ),
           ),
+          child: isFirst
+              ? Center(
+                  child: Icon(
+                    Icons.workspace_premium_rounded,
+                    color: color.withValues(alpha: 0.4),
+                    size: 32,
+                  ),
+                )
+              : null,
         ),
       ],
     );

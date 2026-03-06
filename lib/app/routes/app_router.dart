@@ -1,23 +1,42 @@
 import 'package:flutter/material.dart';
 
+import '../../core/constants/app_colors.dart';
 import 'app_routes.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/signup_page.dart';
+import '../../features/auth/presentation/pages/forgot_password_page.dart';
+import '../../features/auth/presentation/pages/verify_otp_page.dart';
+import '../../features/auth/presentation/pages/reset_password_page.dart';
 import '../../features/auth/presentation/widgets/auth_guard.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/settings/presentation/pages/theme_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
+import '../../features/profile/location/presentation/pages/location_page.dart';
 import '../../features/game/presentation/pages/game_page.dart';
+import '../../features/game/presentation/pages/game_detail_page.dart';
 import '../../features/game/presentation/pages/available_games_page.dart';
 import '../../features/game/presentation/pages/online_games_page.dart';
 import '../../features/game/presentation/pages/offline_games_page.dart';
+import '../../features/game/presentation/pages/ended_games_page.dart';
+import '../../features/game/domain/entities/game_entity.dart';
 import '../../features/chat/presentation/pages/chat_page.dart';
-import '../../features/game/presentation/pages/game_chat_page.dart';
+import '../../features/game/presentation/pages/game_chat_rest_page.dart';
 import '../../features/leaderboard/presentation/pages/leaderboard_page.dart';
 import '../../features/scorecard/scorecard.dart';
 import '../../features/history/presentation/pages/game_history_page.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
+import '../../features/tournament/presentation/pages/tournament_list_page.dart';
+import '../../features/tournament/presentation/pages/tournament_detail_page.dart';
+import '../../features/tournament/presentation/pages/create_tournament_page.dart';
+import '../../features/tournament/presentation/pages/tournament_chat_page.dart';
+import '../../features/tournament/presentation/pages/tournament_payments_page.dart';
+import '../../features/tournament/presentation/pages/tournament_payment_screen.dart';
+import '../../features/tournament/presentation/pages/esewa_payment_page.dart';
+import '../../features/tournament/presentation/pages/payment_success_screen.dart';
+import '../../features/tournament/presentation/pages/payment_failed_screen.dart';
+import '../../features/tournament/domain/entities/tournament_entity.dart';
+import '../../features/tournament/domain/entities/tournament_payment_entity.dart';
 import '../../core/widgets/app_shell.dart';
 
 /// Application Router
@@ -44,6 +63,26 @@ class AppRouter {
       case AppRoutes.signup:
         return _buildRoute(const SignupPage(), settings);
 
+      case AppRoutes.forgotPassword:
+        return _buildRoute(const ForgotPasswordPage(), settings);
+
+      case AppRoutes.verifyOtp:
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          VerifyOtpPage(email: args?['email'] as String?),
+          settings,
+        );
+
+      case AppRoutes.resetPassword:
+        final args = settings.arguments as Map<String, dynamic>?;
+        return _buildRoute(
+          ResetPasswordPage(
+            email: args?['email'] as String?,
+            otp: args?['otp'] as String?,
+          ),
+          settings,
+        );
+
       // ── App Shell (bottom-nav host) ───────────────────────────────────────
       case AppRoutes.dashboard:
         return _buildRoute(
@@ -67,6 +106,12 @@ class AppRouter {
       case AppRoutes.theme:
         return _buildRoute(
           const AuthGuard(child: ThemePage()),
+          settings,
+        );
+
+      case AppRoutes.location:
+        return _buildRoute(
+          const AuthGuard(child: LocationPage()),
           settings,
         );
 
@@ -95,16 +140,38 @@ class AppRouter {
           settings,
         );
 
-      // ── Game Chat (per-game room) ─────────────────────────────────────
-      case AppRoutes.gameChat:
-        final args = settings.arguments as Map<String, String>;
+      case AppRoutes.endedGames:
         return _buildRoute(
-          AuthGuard(
-            child: GameChatPage(
-              gameId: args['gameId']!,
-              gameTitle: args['gameTitle']!,
+          const AuthGuard(child: EndedGamesPage()),
+          settings,
+        );
+
+      // ── Game Detail ─────────────────────────────────────────────────────
+      case AppRoutes.gameDetail:
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        final gameId = args['gameId'] as String? ?? '';
+        return _buildRoute(
+          AuthGuard(child: GameDetailPage(gameId: gameId)),
+          settings,
+        );
+
+      // ── Game Chat (per-game room, REST-only) ─────────────────────────────
+      case AppRoutes.gameChat:
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        final game = args['game'] as GameEntity?;
+        if (game == null) {
+          // Fallback: Game object required
+          // Users should pass full GameEntity via MaterialPageRoute
+          return MaterialPageRoute(
+            builder: (_) => const Scaffold(
+              body: Center(
+                child: Text('Error: Game not found. Please navigate from game details.'),
+              ),
             ),
-          ),
+          );
+        }
+        return _buildRoute(
+          AuthGuard(child: GameChatRestPage(game: game)),
           settings,
         );
 
@@ -140,6 +207,138 @@ class AppRouter {
           settings,
         );
 
+      // ── Tournament routes ─────────────────────────────────────────────────
+      case AppRoutes.tournaments:
+        return _buildRoute(
+          const AuthGuard(child: TournamentListPage()),
+          settings,
+        );
+
+      case AppRoutes.tournamentDetail:
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        final tournament = args['tournament'] as TournamentEntity?;
+        
+        if (tournament == null) {
+          return MaterialPageRoute(
+            builder: (_) => const Scaffold(
+              body: Center(
+                child: Text('Error: Tournament details not found.'),
+              ),
+            ),
+          );
+        }
+
+        return _buildRoute(
+          AuthGuard(child: TournamentDetailPage(tournament: tournament)),
+          settings,
+        );
+
+      case AppRoutes.tournamentCreate:
+        final args = settings.arguments as Map<String, dynamic>?;
+        final existing = args?['tournament'] as TournamentEntity?;
+        return _buildRoute(
+          AuthGuard(child: CreateTournamentPage(existingTournament: existing)),
+          settings,
+        );
+
+      case AppRoutes.tournamentChat:
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        return _buildRoute(
+          AuthGuard(
+            child: TournamentChatPage(
+              tournamentId: args['tournamentId'] as String? ?? '',
+              tournamentName: args['tournamentName'] as String? ?? 'Chat',
+            ),
+          ),
+          settings,
+        );
+
+      case AppRoutes.tournamentPayments:
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        return _buildRoute(
+          AuthGuard(
+            child: TournamentPaymentsPage(
+              tournamentId: args['tournamentId'] as String? ?? '',
+            ),
+          ),
+          settings,
+        );
+
+      case AppRoutes.esewaPayment:
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        return _buildRoute(
+          AuthGuard(
+            child: EsewaPaymentPage(
+              paymentUrl: args['paymentUrl'] as String? ?? '',
+              params: args['params'] as Map<String, dynamic>? ?? {},
+              tournamentId: args['tournamentId'] as String? ?? '',
+            ),
+          ),
+          settings,
+        );
+
+      case AppRoutes.tournamentPayment:
+        final tournament = settings.arguments as TournamentEntity?;
+        if (tournament == null) {
+          return MaterialPageRoute(
+            builder: (_) => const Scaffold(
+              body: Center(
+                child: Text('Error: Tournament not found.'),
+              ),
+            ),
+          );
+        }
+        return _buildRoute(
+          AuthGuard(child: TournamentPaymentScreen(tournament: tournament)),
+          settings,
+        );
+
+      case AppRoutes.paymentSuccess:
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        final tournament = args['tournament'] as TournamentEntity?;
+        final payment = args['payment'] as TournamentPaymentEntity?;
+        if (tournament == null || payment == null) {
+          return MaterialPageRoute(
+            builder: (_) => const Scaffold(
+              body: Center(
+                child: Text('Error: Payment details not found.'),
+              ),
+            ),
+          );
+        }
+        return _buildRoute(
+          AuthGuard(
+            child: PaymentSuccessScreen(
+              tournament: tournament,
+              payment: payment,
+            ),
+          ),
+          settings,
+        );
+
+      case AppRoutes.paymentFailed:
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        final tournament = args['tournament'] as TournamentEntity?;
+        final error = args['error'] as String? ?? 'Payment failed';
+        if (tournament == null) {
+          return MaterialPageRoute(
+            builder: (_) => const Scaffold(
+              body: Center(
+                child: Text('Error: Tournament not found.'),
+              ),
+            ),
+          );
+        }
+        return _buildRoute(
+          AuthGuard(
+            child: PaymentFailedScreen(
+              tournament: tournament,
+              error: error,
+            ),
+          ),
+          settings,
+        );
+
       // ── Fallback ──────────────────────────────────────────────────────────
       default:
         return _buildRoute(
@@ -172,13 +371,13 @@ class _UnknownRoutePage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 80, color: Colors.grey),
+            const Icon(Icons.error_outline, size: 80, color: AppColors.textTertiary),
             const SizedBox(height: 16),
             const Text('Page Not Found',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Text('The requested page does not exist.',
-                style: TextStyle(fontSize: 16, color: Colors.grey[600])),
+                style: TextStyle(fontSize: 16, color: AppColors.textSecondary)),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () => Navigator.pushNamedAndRemoveUntil(

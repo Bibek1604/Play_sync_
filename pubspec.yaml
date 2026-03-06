@@ -30,7 +30,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  test_cov_console: ^0.2.2
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -45,21 +44,24 @@ dependencies:
   
   # Functional Programming (Either type)
   dartz: ^0.10.1
+  fpdart: ^1.1.0
   
   # Equality
   equatable: ^2.0.5
+  
+  # JSON Serialization
+  json_annotation: ^4.8.1
   
   # SVG Support
   flutter_svg: ^2.0.10
   
   # HTTP Client
   dio: ^5.3.3
+  http: ^1.1.0
   
   # Secure Storage
   flutter_secure_storage: ^9.0.0
   
-  # Connectivity Checking
-  connectivity_plus: ^5.0.2
   
   # UUID Generation
   uuid: ^4.2.1
@@ -67,36 +69,57 @@ dependencies:
   # Image Picker
   image_picker: ^1.0.7
 
+  # Camera for selfie-based dark mode detection
+  camera: ^0.10.5+5
+
   # Persistent Key-Value Storage
   shared_preferences: ^2.2.3
 
   # App Info (version, build number)
   package_info_plus: ^8.0.0
 
-  # WebSocket client for chat
-  web_socket_channel: ^3.0.1
+  # Location / GPS
+  geolocator: ^13.0.2
+  geocoding: ^3.0.0
+  permission_handler: ^11.3.1
+
+
 
   # Socket.IO client for real-time communication
   socket_io_client: ^2.0.3+1
 
-  # Audio playback for sound effects
-  audioplayers: ^5.2.1
 
-  # Loading skeleton effects
-  shimmer: ^3.0.0
 
   # Cached network images
   cached_network_image: ^3.3.1
 
-  # Page indicator dots
-  smooth_page_indicator: ^1.1.0
 
   # Internationalization and date formatting
   intl: ^0.19.0
 
+  # Crypto for signature generation
+  crypto: ^3.0.3
+
+  # WebView for in-app eSewa payment
+  webview_flutter: ^4.10.0
+
+  # URL launcher for external browser (eSewa payment)
+  url_launcher: ^6.3.1
+
+  # Confetti animation for success celebrations
+  confetti: ^0.7.0
+
+  # eSewa Native Mobile SDK for payment
+  # TODO: Download SDK from eSewa and extract to project root, then uncomment
+  esewa_flutter_sdk:
+    path: ./esewa_flutter_sdk
+
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  
+  test_cov_console: ^0.2.2
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -108,6 +131,7 @@ dev_dependencies:
   # Hive code generation
   hive_generator: ^2.0.1
   build_runner: ^2.4.8
+  json_serializable: ^6.7.1
   mocktail: ^1.0.4
   remove_from_coverage: ^2.0.0
 
@@ -118,8 +142,8 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/images/playsync.svg
-    - assets/images/home_illustration.svg
+    - assets/images/
+    - assets/font/
   fonts:
     - family: OpenSans
       fonts:

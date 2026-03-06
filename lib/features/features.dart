@@ -7,6 +7,7 @@ export 'auth/auth.dart';
 export 'dashboard/dashboard.dart';
 export 'game/game.dart';
 export 'chat/chat.dart';
+export 'game_chat/game_chat.dart';
 export 'profile/profile.dart';
 export 'leaderboard/leaderboard.dart';
 export 'history/history.dart';

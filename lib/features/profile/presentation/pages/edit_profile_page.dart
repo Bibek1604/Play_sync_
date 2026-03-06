@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:play_sync_new/app/theme/app_colors.dart';
+import 'package:play_sync_new/core/constants/app_colors.dart';
 import 'package:play_sync_new/features/profile/presentation/state/profile_state.dart';
 import 'package:play_sync_new/features/profile/presentation/viewmodel/profile_notifier.dart';
+import '../../../../core/widgets/back_button_widget.dart';
 
 /// Edit Profile Page
 class EditProfilePage extends ConsumerStatefulWidget {
@@ -20,27 +21,30 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   final _fullNameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _locationController = TextEditingController();
+  final _bioController = TextEditingController();
   final _favoriteGameController = TextEditingController();
-  final _oldPasswordController = TextEditingController();
-  final _newPasswordController = TextEditingController();
   
   XFile? _selectedImage;
   final ImagePicker _imagePicker = ImagePicker();
+  bool _prefilled = false;
 
   @override
   void initState() {
     super.initState();
-    // Pre-fill form with existing profile data
+    // Always fetch fresh profile for edit page
     Future.microtask(() {
+      ref.read(profileNotifierProvider.notifier).getProfile();
       final profile = ref.read(profileNotifierProvider).profile;
       if (profile != null) {
         _fullNameController.text = profile.fullName ?? '';
-        _phoneController.text = profile.phoneNumber ?? '';
-        _locationController.text = profile.location ?? '';
+        _phoneController.text = profile.phone ?? '';
+        _locationController.text = profile.place ?? '';
+        _bioController.text = profile.bio ?? '';
         
-        if (profile.favouriteGame != null && profile.favouriteGame!.isNotEmpty) {
-          _favoriteGameController.text = profile.favouriteGame!;
+        if (profile.favoriteGame != null && profile.favoriteGame!.isNotEmpty) {
+          _favoriteGameController.text = profile.favoriteGame!;
         }
+        _prefilled = true;
       }
     });
   }
@@ -50,9 +54,8 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
     _fullNameController.dispose();
     _phoneController.dispose();
     _locationController.dispose();
+    _bioController.dispose();
     _favoriteGameController.dispose();
-    _oldPasswordController.dispose();
-    _newPasswordController.dispose();
     super.dispose();
   }
 
@@ -135,10 +138,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
       await ref.read(profileNotifierProvider.notifier).updateProfile(
             fullName: _fullNameController.text.trim(),
             phone: _phoneController.text.trim(),
-            favouriteGame: _favoriteGameController.text.trim(),
+            bio: _bioController.text.trim(),
+            favoriteGame: _favoriteGameController.text.trim(),
             place: _locationController.text.trim(),
-            currentPassword: _oldPasswordController.text.isNotEmpty ? _oldPasswordController.text : null,
-            changePassword: _newPasswordController.text.isNotEmpty ? _newPasswordController.text : null,
             profilePicture: _selectedImage,
           );
     }
@@ -147,8 +149,19 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   @override
   Widget build(BuildContext context) {
     final profileState = ref.watch(profileNotifierProvider);
+    final profile = profileState.profile;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+
+    // Fill once when async profile data arrives
+    if (!_prefilled && profile != null) {
+      _fullNameController.text = profile.fullName ?? '';
+      _phoneController.text = profile.phone ?? '';
+      _locationController.text = profile.place ?? '';
+      _bioController.text = profile.bio ?? '';
+      _favoriteGameController.text = profile.favoriteGame ?? '';
+      _prefilled = true;
+    }
 
     // Listen to state changes
     ref.listen<ProfileState>(profileNotifierProvider, (previous, next) {
@@ -156,7 +169,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(next.error!),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error,
           ),
         );
         ref.read(profileNotifierProvider.notifier).clearError();
@@ -166,7 +179,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(next.successMessage!),
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.success,
           ),
         );
         ref.read(profileNotifierProvider.notifier).clearSuccess();
@@ -180,6 +193,11 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: BackButtonWidget(label: 'Back'),
+        ),
+        leadingWidth: 100,
         title: const Text('Edit Profile'),
         actions: [
           if (profileState.isUpdating)
@@ -208,6 +226,11 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (profileState.isLoading && profile == null)
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 12),
+                    child: LinearProgressIndicator(minHeight: 2),
+                  ),
                 // Profile Picture Section
                 Center(
                   child: Stack(
@@ -235,10 +258,10 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                                         fit: BoxFit.cover,
                                       ),
                               )
-                            : profileState.profile?.profilePicture != null
+                            : profileState.profile?.avatar != null
                                 ? ClipOval(
                                     child: Image.network(
-                                      profileState.profile!.profilePicture!,
+                                      profileState.profile!.avatar!,
                                       fit: BoxFit.cover,
                                       errorBuilder: (context, error, stackTrace) =>
                                           const Icon(Icons.person, size: 60, color: Colors.white),
@@ -336,37 +359,15 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                   hint: 'e.g., New York, USA',
                 ),
 
-                const SizedBox(height: 30),
-
-                // Password Section
-                Text(
-                  'Security',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    color: isDark ? AppColors.secondary : AppColors.primaryDark,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
                 const SizedBox(height: 16),
 
                 _buildTextField(
-                  controller: _oldPasswordController,
-                  label: 'Current Password',
-                  icon: Icons.lock_outline,
+                  controller: _bioController,
+                  label: 'Bio',
+                  icon: Icons.info_outline,
                   isDark: isDark,
-                  obscureText: true,
-                  hint: 'Enter current password to update',
-                ),
-
-                const SizedBox(height: 16),
-
-                _buildTextField(
-                  controller: _newPasswordController,
-                  label: 'New Password',
-                  icon: Icons.lock_reset,
-                  isDark: isDark,
-                  obscureText: true,
-                  hint: 'Enter new password',
+                  hint: 'Tell us about yourself',
+                  maxLines: 3,
                 ),
 
                 const SizedBox(height: 30),
@@ -436,7 +437,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: isDark ? Colors.grey[700]! : Colors.grey.shade300,
+            color: isDark ? AppColors.borderDark : AppColors.border,
           ),
         ),
         focusedBorder: OutlineInputBorder(

@@ -1,156 +1,357 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import "package:flutter/material.dart";
+import "package:flutter_riverpod/flutter_riverpod.dart";
+import "package:play_sync_new/app/routes/app_routes.dart";
+import "package:play_sync_new/core/constants/app_colors.dart";
+import "package:play_sync_new/core/widgets/app_drawer.dart";
+import "package:play_sync_new/features/auth/presentation/providers/auth_notifier.dart";
+import "package:play_sync_new/features/dashboard/presentation/widgets/game_tile_widget.dart";
+import "package:play_sync_new/features/game/domain/entities/game_entity.dart";
+import "package:play_sync_new/features/game/presentation/providers/game_notifier.dart";
+import "package:play_sync_new/features/profile/presentation/viewmodel/profile_notifier.dart";
 
-import '../../../../app/routes/app_routes.dart';
-import '../../../../app/theme/app_colors.dart';
-import '../../../auth/presentation/providers/auth_notifier.dart';
-
-/// Dashboard Page
-/// 
-/// Main home screen after user authentication.
-class DashboardPage extends ConsumerWidget {
+class DashboardPage extends ConsumerStatefulWidget {
   const DashboardPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends ConsumerState<DashboardPage> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() async {
+      await ref.read(profileNotifierProvider.notifier).getProfile();
+      await ref.read(gameProvider.notifier).fetchMyCreatedGames();
+      await ref.read(gameProvider.notifier).fetchMyJoinedGames();
+      // Fetch available games (exclude games user created/joined)
+      await ref.read(gameProvider.notifier).fetchGames(refresh: true, excludeMe: true);
+    });
+  }
+
+  Future<void> _refresh() async {
+    await ref.read(profileNotifierProvider.notifier).getProfile();
+    await ref.read(gameProvider.notifier).fetchMyCreatedGames();
+    await ref.read(gameProvider.notifier).fetchMyJoinedGames();
+    // Fetch available games
+    await ref.read(gameProvider.notifier).fetchGames(refresh: true, excludeMe: true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final authState = ref.watch(authNotifierProvider);
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final profileState = ref.watch(profileNotifierProvider);
+    final gameState = ref.watch(gameProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final user = authState.user;
+    final profile = profileState.profile;
+
+    final String displayName = profile?.fullName ?? user?.fullName ?? "Gamer";
+    final String? currentUserId = user?.userId ?? profile?.userId;
+    // Setup light bluish-white radial/linear background for light mode
+    final bgColor1 = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+    final bgColor2 = isDark ? const Color(0xFF1E293B) : const Color(0xFFE0E7FF);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('PlaySync'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {},
+      key: _scaffoldKey,
+      drawer: const AppDrawer(),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: isDark 
+              ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+              : [const Color(0xFFBAE6FD), Colors.white], // Sky blue tint matching bottom bar
+            stops: const [0.0, 0.35],
           ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await ref.read(authNotifierProvider.notifier).logout();
-              if (context.mounted) {
-                Navigator.pushReplacementNamed(context, AppRoutes.login);
-              }
-            },
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Welcome Section
-                _WelcomeCard(
-                  userName: authState.user?.fullName ?? authState.user?.email ?? 'Gamer',
-                  isDark: isDark,
-                ),
-
-                const SizedBox(height: 30),
-
-                // Quick Actions
-                Text(
-                  'Quick Actions',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    color: isDark ? AppColors.secondary : AppColors.primaryDark,
-                    fontWeight: FontWeight.bold,
+        ),
+        child: SafeArea(
+          child: RefreshIndicator(
+            onRefresh: _refresh,
+            color: AppColors.primary,
+            child: CustomScrollView(
+              physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+              slivers: [
+                // Minimal App Bar
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.menu_rounded, color: isDark ? Colors.white : const Color(0xFF0284C7), size: 28),
+                          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                        ),
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: Icon(Icons.notifications_none_rounded, color: isDark ? Colors.white : const Color(0xFF0284C7), size: 26),
+                              onPressed: () => Navigator.pushNamed(context, AppRoutes.notifications),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                
+                // Dashboard Content
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Greetings
+                        Text(
+                          "Welcome back,",
+                          style: TextStyle(
+                            color: isDark ? AppColors.textSecondaryDark : AppColors.primary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          displayName,
+                          style: TextStyle(
+                            color: isDark ? Colors.white : AppColors.textPrimary,
+                            fontSize: 26,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
 
-                Row(
-                  children: [
-                    Expanded(
-                      child: _ActionCard(
-                        icon: Icons.group_add,
-                        title: 'Find Players',
-                        subtitle: 'Match with gamers',
-                        color: AppColors.primary,
-                        isDark: isDark,
-                        onTap: () {},
-                      ),
+                        // Profile Details Card
+                        _ProfileDetailsCard(
+                          totalGames: profile?.totalGames ?? 0,
+                          wins: profile?.wins ?? 0,
+                          winRate: (profile?.winRate ?? 0).toDouble(),
+                          isDark: isDark,
+                        ),
+                        
+                        const SizedBox(height: 28),
+
+                        // 3 Action Cards
+                        Text(
+                          "Quick Actions",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: isDark ? Colors.white : AppColors.textPrimary,
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 14),
+                        Row(
+                          children: [
+                            Expanded(child: _ActionCard(icon: Icons.wifi_off_rounded, title: "Offline", color: AppColors.primary, onTap: () => Navigator.pushNamed(context, AppRoutes.offlineGames), isDark: isDark)),
+                            const SizedBox(width: 12),
+                            Expanded(child: _ActionCard(icon: Icons.public_rounded, title: "Online", color: AppColors.secondary, onTap: () => Navigator.pushNamed(context, AppRoutes.onlineGames), isDark: isDark)),
+                            const SizedBox(width: 12),
+                            Expanded(child: _ActionCard(icon: Icons.emoji_events_rounded, title: "Tourneys", color: AppColors.accent, onTap: () => Navigator.pushNamed(context, AppRoutes.tournaments), isDark: isDark)),
+                          ],
+                        ),
+                        
+                        const SizedBox(height: 32),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.primary.withOpacity(0.2),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                              child: GestureDetector(
+                                onTap: () => Navigator.pushNamed(context, AppRoutes.offlineGames),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: isDark 
+                                          ? [AppColors.primary.withOpacity(0.2), AppColors.primary.withOpacity(0.05)]
+                                          : [AppColors.primary.withOpacity(0.12), AppColors.primary.withOpacity(0.02)],
+                                    ),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(color: AppColors.primary.withOpacity(isDark ? 0.3 : 0.2)),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppColors.primary.withOpacity(0.05),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: isDark ? AppColors.primary.withOpacity(0.15) : Colors.white,
+                                          shape: BoxShape.circle,
+                                          boxShadow: isDark ? [] : [
+                                            BoxShadow(
+                                              color: AppColors.primary.withOpacity(0.15),
+                                              blurRadius: 8,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: const Icon(Icons.location_on_rounded, color: AppColors.primary, size: 28),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        "Browse\nOffline",
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 14,
+                                          height: 1.2,
+                                          color: isDark ? Colors.white : AppColors.textPrimary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.secondary.withOpacity(0.2),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                              child: GestureDetector(
+                                onTap: () => Navigator.pushNamed(context, AppRoutes.onlineGames),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: isDark 
+                                          ? [AppColors.secondary.withOpacity(0.2), AppColors.secondary.withOpacity(0.05)]
+                                          : [AppColors.secondary.withOpacity(0.12), AppColors.secondary.withOpacity(0.02)],
+                                    ),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(color: AppColors.secondary.withOpacity(isDark ? 0.3 : 0.2)),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppColors.secondary.withOpacity(0.05),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: isDark ? AppColors.secondary.withOpacity(0.15) : Colors.white,
+                                          shape: BoxShape.circle,
+                                          boxShadow: isDark ? [] : [
+                                            BoxShadow(
+                                              color: AppColors.secondary.withOpacity(0.15),
+                                              blurRadius: 8,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: const Icon(Icons.public_rounded, color: AppColors.secondary, size: 28),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        "Browse\nOnline",
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 14,
+                                          height: 1.2,
+                                          color: isDark ? Colors.white : AppColors.textPrimary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 48), // Added margin top to Games I Created
+                        
+                        // Games I Created Section
+                        _GamesSection(
+                          title: "🎮 Games I Created",
+                          games: gameState.myCreatedGames,
+                          isLoading: gameState.isLoading && gameState.myCreatedGames.isEmpty,
+                          emptyText: "You haven't created any games yet",
+                          currentUserId: currentUserId,
+                          isCreatorSection: true,
+                        ),
+                        const SizedBox(height: 48), // Increased gap in top of Games I Joined
+                        
+                        // Games I Joined Section
+                        _GamesSection(
+                          title: "🏆 Games I Joined",
+                          games: gameState.myJoinedGames.where((game) => game.isParticipant(currentUserId ?? '')).toList(),
+                          isLoading: gameState.isLoading && gameState.myJoinedGames.isEmpty,
+                          emptyText: "You haven't joined any games yet",
+                          currentUserId: currentUserId,
+                          isCreatorSection: false,
+                        ),
+                        
+                        const SizedBox(height: 32),
+
+                        // Browse Navigation Buttons
+
+                        const SizedBox(height: 40),
+
+                      ],
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _ActionCard(
-                        icon: Icons.event,
-                        title: 'Events',
-                        subtitle: 'Join tournaments',
-                        color: AppColors.primaryLight,
-                        isDark: isDark,
-                        onTap: () {},
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 16),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: _ActionCard(
-                        icon: Icons.chat_bubble_outline,
-                        title: 'Messages',
-                        subtitle: 'Chat with friends',
-                        color: AppColors.primaryVariant,
-                        isDark: isDark,
-                        onTap: () {},
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _ActionCard(
-                        icon: Icons.leaderboard,
-                        title: 'Rankings',
-                        subtitle: 'View leaderboard',
-                        color: AppColors.secondary,
-                        isDark: isDark,
-                        onTap: () {},
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 30),
-
-                // Recent Activity
-                Text(
-                  'Recent Activity',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    color: isDark ? AppColors.secondary : AppColors.primaryDark,
-                    fontWeight: FontWeight.bold,
                   ),
-                ),
-                const SizedBox(height: 16),
-
-                _ActivityItem(
-                  icon: Icons.emoji_events,
-                  title: 'Welcome to PlaySync!',
-                  subtitle: 'Start exploring and connect with gamers',
-                  time: 'Just now',
-                  isDark: isDark,
                 ),
               ],
             ),
           ),
         ),
       ),
-      bottomNavigationBar: _BottomNavBar(isDark: isDark),
     );
   }
 }
 
-/// Welcome Card Widget
-class _WelcomeCard extends StatelessWidget {
-  final String userName;
+class _ProfileDetailsCard extends StatelessWidget {
+  final int totalGames;
+  final int wins;
+  final double winRate;
   final bool isDark;
 
-  const _WelcomeCard({
-    required this.userName,
+  const _ProfileDetailsCard({
+    required this.totalGames,
+    required this.wins,
+    required this.winRate,
     required this.isDark,
   });
 
@@ -158,151 +359,96 @@ class _WelcomeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isDark
-              ? [AppColors.primaryDark, AppColors.primary]
-              : [AppColors.primary, AppColors.primaryLight],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.3),
-            blurRadius: 15,
+            color: isDark ? Colors.black26 : const Color(0xFF64748B).withOpacity(0.08),
+            blurRadius: 24,
             offset: const Offset(0, 8),
           ),
         ],
+        border: Border.all(
+          color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
+          width: 1,
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 60,
-                height: 60,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Stack(
+          children: [
+            // Subtle top-right accent gradient
+            Positioned(
+              top: -40,
+              right: -40,
+              child: Container(
+                width: 120,
+                height: 120,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: const Icon(
-                  Icons.person,
-                  color: Colors.white,
-                  size: 35,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Welcome back!',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      userName,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.sports_esports, color: Colors.white, size: 20),
-                SizedBox(width: 8),
-                Text(
-                  'Ready to play?',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppColors.primary.withOpacity(0.1),
+                      AppColors.primary.withOpacity(0.0),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Action Card Widget
-class _ActionCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color color;
-  final bool isDark;
-  final VoidCallback onTap;
-
-  const _ActionCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.color,
-    required this.isDark,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.cardDark : AppColors.cardLight,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withValues(alpha: 0.2)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: color, size: 28),
-            ),
-            const SizedBox(height: 14),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: color,
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontSize: 12,
-                color: isDark ? AppColors.textSecondaryDark : Colors.grey[600],
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(isDark ? 0.2 : 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.analytics_rounded, color: AppColors.primary, size: 22),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Performance Summary",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 15,
+                                color: isDark ? Colors.white : AppColors.textPrimary,
+                                letterSpacing: -0.3,
+                              ),
+                            ),
+                            Text(
+                              "Real-time gaming statistics",
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: isDark ? AppColors.textSecondaryDark : const Color(0xFF64748B),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(child: _StatBadge(label: "Played", value: totalGames.toString(), icon: Icons.sports_esports_rounded, color: AppColors.primary, isDark: isDark)),
+                      _VerticalDivider(isDark: isDark),
+                      Expanded(child: _StatBadge(label: "Wins", value: wins.toString(), icon: Icons.emoji_events_rounded, color: const Color(0xFFF59E0B), isDark: isDark)),
+                      _VerticalDivider(isDark: isDark),
+                      Expanded(child: _StatBadge(label: "Win Rate", value: "${winRate.toInt()}%", icon: Icons.bolt_rounded, color: const Color(0xFF10B981), isDark: isDark)),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],
@@ -312,134 +458,223 @@ class _ActionCard extends StatelessWidget {
   }
 }
 
-/// Activity Item Widget
-class _ActivityItem extends StatelessWidget {
+class _VerticalDivider extends StatelessWidget {
+  final bool isDark;
+  const _VerticalDivider({required this.isDark});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 40,
+      width: 1,
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
+    );
+  }
+}
+
+class _StatBadge extends StatelessWidget {
+  final String label;
+  final String value;
   final IconData icon;
-  final String title;
-  final String subtitle;
-  final String time;
+  final Color color;
   final bool isDark;
 
-  const _ActivityItem({
-    required this.icon,
+  const _StatBadge({required this.label, required this.value, required this.icon, required this.color, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+            color: isDark ? Colors.white : AppColors.textPrimary,
+            letterSpacing: -0.5,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 12),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.2,
+                color: isDark ? AppColors.textSecondaryDark : const Color(0xFF64748B),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _ActionCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final Color color;
+  final VoidCallback onTap;
+  final bool isDark;
+
+  const _ActionCard({required this.icon, required this.title, required this.color, required this.onTap, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isDark 
+                ? [color.withOpacity(0.2), color.withOpacity(0.05)]
+                : [color.withOpacity(0.12), color.withOpacity(0.02)],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withOpacity(isDark ? 0.3 : 0.2)),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isDark ? color.withOpacity(0.15) : Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: isDark ? [] : [
+                  BoxShadow(
+                    color: color.withOpacity(0.15),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Icon(icon, color: color, size: 26),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: isDark ? Colors.white : AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GamesSection extends StatelessWidget {
+  final String title;
+  final List<GameEntity> games;
+  final bool isLoading;
+  final String emptyText;
+  final String? currentUserId;
+  final bool isCreatorSection;
+
+  const _GamesSection({
     required this.title,
-    required this.subtitle,
-    required this.time,
-    required this.isDark,
+    required this.games,
+    required this.isLoading,
+    required this.emptyText,
+    required this.currentUserId,
+    required this.isCreatorSection,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.cardDark : Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isDark ? Colors.grey[800]! : Colors.grey.shade200,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark ? Colors.black26 : Colors.grey.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.primary.withValues(alpha: 0.2) : AppColors.cardLight,
-              borderRadius: BorderRadius.circular(12),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.gamepad_rounded, color: AppColors.primary, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                color: isDark ? Colors.white : AppColors.textPrimary,
+                letterSpacing: -0.4,
+              ),
             ),
-            child: Icon(icon, color: AppColors.primary, size: 24),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
+          ],
+        ),
+        const SizedBox(height: 16),
+        if (isLoading)
+          const SizedBox(
+            height: 120,
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (games.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.surfaceDark : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: isDark ? AppColors.borderDark : AppColors.border),
+            ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Icon(Icons.videogame_asset_off_rounded, size: 40, color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary.withOpacity(0.5)),
+                const SizedBox(height: 12),
                 Text(
-                  title,
+                  emptyText,
                   style: TextStyle(
-                    fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? AppColors.secondary : AppColors.primaryDark,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isDark ? AppColors.textSecondaryDark : Colors.grey[600],
+                    color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
                   ),
                 ),
               ],
             ),
-          ),
-          Text(
-            time,
-            style: TextStyle(
-              fontSize: 12,
-              color: isDark ? AppColors.textSecondaryDark : Colors.grey[500],
+          )
+        else
+          SizedBox(
+            height: 275, // Decreased height from 295
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: games.length,
+              itemBuilder: (context, index) {
+                final game = games[index];
+                return Padding(
+                  padding: EdgeInsets.only(right: 12, left: index == 0 ? 4 : 0),
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.45, // Decreased width of the card
+                    child: GameTileWidget(
+                      game: game,
+                      currentUserId: currentUserId,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
-        ],
-      ),
+      ],
     );
   }
 }
 
-/// Bottom Navigation Bar Widget
-class _BottomNavBar extends StatelessWidget {
-  final bool isDark;
 
-  const _BottomNavBar({required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: isDark ? Colors.black26 : Colors.grey.withValues(alpha: 0.2),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      child: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: 0,
-        onTap: (index) {
-          if (index == 3) {
-            // Navigate to Profile Page
-            Navigator.pushNamed(context, '/profile');
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Discover',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people),
-            label: 'Friends',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
-      ),
-    );
-  }
-}

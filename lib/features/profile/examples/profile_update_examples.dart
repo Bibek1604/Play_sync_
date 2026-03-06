@@ -17,7 +17,7 @@ class ProfileUpdateExamples {
     await ref.read(profileNotifierProvider.notifier).updateProfile(
       fullName: 'Bibek Pandey',
       phone: '9823482382',
-      favouriteGame: 'Clash of Clans',
+      favoriteGame: 'Clash of Clans',
       place: 'Kathmandu',
     );
   }
@@ -44,7 +44,7 @@ class ProfileUpdateExamples {
     await ref.read(profileNotifierProvider.notifier).updateProfile(
       fullName: 'Bibek Pandey',
       phone: '9823482382',
-      favouriteGame: 'Clash of Clans',
+      favoriteGame: 'Clash of Clans',
       place: 'Kathmandu',
       profilePicture: selectedImage,
     );
@@ -70,7 +70,7 @@ class ProfileUpdateExamples {
     await ref.read(profileNotifierProvider.notifier).updateProfile(
       fullName: 'Bibek Pandey',
       phone: '9823482382',
-      favouriteGame: 'Clash of Clans',
+      favoriteGame: 'Clash of Clans',
       place: 'Kathmandu',
       currentPassword: 'oldPassword123',
       changePassword: 'newPassword456',
@@ -191,10 +191,10 @@ class ProfileUpdateExamples {
       debugPrint('User ID: ${profile.userId}');
       debugPrint('Full Name: ${profile.fullName}');
       debugPrint('Email: ${profile.email}');
-      debugPrint('Phone: ${profile.phoneNumber}');
-      debugPrint('Favorite Game: ${profile.favouriteGame}');
-      debugPrint('Location: ${profile.location}');
-      debugPrint('Profile Picture: ${profile.profilePicture}');
+      debugPrint('Phone: ${profile.phone}');
+      debugPrint('Favorite Game: ${profile.favoriteGame}');
+      debugPrint('Location: ${profile.place}');
+      debugPrint('Profile Picture: ${profile.avatar}');
     }
   }
 }
@@ -247,7 +247,7 @@ class _ExampleProfileUpdateFormState
       await ref.read(profileNotifierProvider.notifier).updateProfile(
             fullName: _nameController.text.trim(),
             phone: _phoneController.text.trim(),
-            favouriteGame: _gameController.text.trim(),
+            favoriteGame: _gameController.text.trim(),
             place: _locationController.text.trim(),
             profilePicture: _selectedImage,
           );

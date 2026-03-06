@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/leaderboard_entry.dart';
-import '../../../../app/theme/app_colors.dart';
+import '../../../../core/constants/app_colors.dart';
 
 /// A single animated leaderboard row widget.
 class LeaderboardRow extends StatelessWidget {
@@ -11,78 +11,180 @@ class LeaderboardRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isTop3 = entry.rank <= 3;
+    final bool isCurrentUser = entry.isCurrentUser;
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: entry.isCurrentUser
-              ? AppColors.emerald500.withValues(alpha: 0.12)
-              : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(12),
-          border: entry.isCurrentUser
-              ? Border.all(color: AppColors.emerald500, width: 1.5)
-              : null,
-        ),
-        child: Row(
-          children: [
-            _RankBadge(rank: entry.rank, isTop3: isTop3),
-            const SizedBox(width: 12),
-            CircleAvatar(
-              radius: 20,
-              backgroundImage: entry.profileImageUrl != null
-                  ? NetworkImage(entry.profileImageUrl!)
-                  : null,
-              child: entry.profileImageUrl == null
-                  ? Text(entry.username[0].toUpperCase(),
-                      style: const TextStyle(fontWeight: FontWeight.bold))
-                  : null,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isCurrentUser
+                ? AppColors.primary.withValues(alpha: 0.1)
+                : AppColors.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isCurrentUser
+                  ? AppColors.primary.withValues(alpha: 0.3)
+                  : AppColors.primary.withValues(alpha: 0.05),
+              width: isCurrentUser ? 1.5 : 1,
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 32,
+                alignment: Alignment.center,
+                child: Text(
+                  '#${entry.rank}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14,
+                    color: entry.rank <= 3
+                        ? AppColors.primary
+                        : AppColors.textTertiary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 22,
+                    backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                    backgroundImage: entry.avatar != null && entry.avatar!.isNotEmpty
+                        ? NetworkImage(entry.avatar!)
+                        : null,
+                    child: entry.avatar == null || entry.avatar!.isEmpty
+                        ? Text(
+                            entry.initials,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.primary,
+                              fontSize: 14,
+                            ),
+                          )
+                        : null,
+                  ),
+                  if (isCurrentUser)
+                    Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(
+                          color: AppColors.success,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.check,
+                          size: 10,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      entry.fullName,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                        color: AppColors.textPrimary,
+                        letterSpacing: -0.5,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        _StatChip(
+                          icon: Icons.emoji_events_rounded,
+                          label: '${entry.wins} Wins',
+                          color: AppColors.warning,
+                        ),
+                        const SizedBox(width: 8),
+                        _StatChip(
+                          icon: Icons.bolt_rounded,
+                          label: '${(entry.winRate * 100).toStringAsFixed(0)}%',
+                          color: AppColors.info,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    entry.username,
-                    style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                    overflow: TextOverflow.ellipsis,
+                    entry.xp.toString(),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 16,
+                      color: AppColors.primary,
+                      letterSpacing: -0.5,
+                    ),
                   ),
-                  Text(
-                    '${entry.gamesWon}W · ${(entry.winRate * 100).toStringAsFixed(0)}% WR',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  const Text(
+                    'XP',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textTertiary,
                     ),
                   ),
                 ],
               ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '${entry.totalPoints}',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: isTop3 ? AppColors.emerald500 : null,
-                  ),
-                ),
-                Text(
-                  'pts',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                  ),
-                ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+class _StatChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _StatChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 12, color: color.withValues(alpha: 0.8)),
+        const SizedBox(width: 2),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textSecondary.withValues(alpha: 0.8),
+          ),
+        ),
+      ],
     );
   }
 }

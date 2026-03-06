@@ -22,10 +22,10 @@ void main() {
       ProfileState(
         profile: ProfileEntity(
           fullName: 'Bibek Shrestha',
-          phoneNumber: '+977987654321',
-          location: 'Kathmandu',
-          favouriteGame: 'Valorant',
-          profilePicture: 'https://example.com/avatar.jpg',
+          phone: '+977987654321',
+          place: 'Kathmandu',
+          favoriteGame: 'Valorant',
+          avatar: 'https://example.com/avatar.jpg',
         ),
         isUpdating: false,
         isUploadingPicture: false,
@@ -40,7 +40,7 @@ void main() {
       () => mockNotifier.updateProfile(
         fullName: any(named: 'fullName'),
         phone: any(named: 'phone'),
-        favouriteGame: any(named: 'favouriteGame'),
+        favoriteGame: any(named: 'favoriteGame'),
         place: any(named: 'place'),
         currentPassword: any(named: 'currentPassword'),
         changePassword: any(named: 'changePassword'),
@@ -125,7 +125,7 @@ void main() {
       () => mockNotifier.updateProfile(
         fullName: 'New Bibek Name',
         phone: '+977987654321',
-        favouriteGame: 'Valorant',
+        favoriteGame: 'Valorant',
         place: 'Kathmandu',
         currentPassword: null,
         changePassword: null,

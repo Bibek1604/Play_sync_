@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../app/theme/app_colors.dart';
+import '../../../../core/constants/app_colors.dart';
 import '../../../../app/theme/theme_provider.dart';
+import '../../../../core/widgets/back_button_widget.dart';
 
 /// Theme Page
 /// 
@@ -19,6 +20,11 @@ class ThemePage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: BackButtonWidget(label: 'Back'),
+        ),
+        leadingWidth: 100,
         title: const Text('Theme Settings'),
       ),
       body: Padding(
@@ -37,7 +43,7 @@ class ThemePage extends ConsumerWidget {
             Text(
               'Select how PlaySync looks to you',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: 32),
@@ -45,7 +51,7 @@ class ThemePage extends ConsumerWidget {
             // Theme Options
             _ThemeOptionCard(
               icon: Icons.brightness_auto,
-              iconColor: Colors.blue,
+              iconColor: AppColors.primary,
               title: 'System Default',
               subtitle: 'Follow system theme settings',
               isSelected: currentThemeMode == ThemeMode.system,
@@ -69,7 +75,7 @@ class ThemePage extends ConsumerWidget {
 
             _ThemeOptionCard(
               icon: Icons.dark_mode,
-              iconColor: Colors.indigo,
+              iconColor: AppColors.primaryDark,
               title: 'Dark Theme',
               subtitle: 'Easy on the eyes in low light',
               isSelected: currentThemeMode == ThemeMode.dark,
@@ -84,7 +90,7 @@ class ThemePage extends ConsumerWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: isDark ? AppColors.cardDark : AppColors.cardLight,
+                color: isDark ? AppColors.cardDark : AppColors.surface,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: (isDark ? AppColors.secondary : AppColors.primary).withValues(alpha: 0.3),
@@ -151,7 +157,7 @@ class _ThemeOptionCard extends StatelessWidget {
               : (isDark ? AppColors.cardDark : Colors.white),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? selectedColor : (isDark ? Colors.grey[700]! : Colors.grey[300]!),
+            color: isSelected ? selectedColor : (isDark ? AppColors.borderDark : AppColors.border),
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -175,7 +181,7 @@ class _ThemeOptionCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                      color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -183,7 +189,7 @@ class _ThemeOptionCard extends StatelessWidget {
                     subtitle,
                     style: TextStyle(
                       fontSize: 13,
-                      color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                      color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -191,7 +197,7 @@ class _ThemeOptionCard extends StatelessWidget {
             ),
             Icon(
               isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-              color: isSelected ? selectedColor : (isDark ? Colors.grey[600] : Colors.grey[400]),
+              color: isSelected ? selectedColor : (isDark ? AppColors.textSecondaryDark : AppColors.textTertiary),
             ),
           ],
         ),

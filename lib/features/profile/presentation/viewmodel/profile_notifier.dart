@@ -63,8 +63,9 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
   Future<void> updateProfile({
     String? fullName,
     String? phone,
-    String? favouriteGame,
+    String? favoriteGame,
     String? place,
+    String? bio,
     String? currentPassword,
     String? changePassword,
     XFile? profilePicture,
@@ -74,8 +75,9 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
     final params = UpdateProfileParams(
       fullName: fullName,
       phone: phone,
-      favouriteGame: favouriteGame,
+      favoriteGame: favoriteGame,
       place: place,
+      bio: bio,
       currentPassword: currentPassword,
       changePassword: changePassword,
       profilePicture: profilePicture,
@@ -123,16 +125,19 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
       },
       (imageUrl) {
         debugPrint('[PROFILE NOTIFIER] Picture uploaded successfully: $imageUrl');
-        
-        // Update profile with new picture URL
-        final updatedProfile = state.profile?.copyWith(profilePicture: imageUrl);
-        
+
+        // Immediately reflect the new URL so the UI doesn't wait for re-fetch.
+        final updatedProfile = state.profile?.copyWith(avatar: imageUrl);
         state = state.copyWith(
           isUploadingPicture: false,
           profile: updatedProfile,
           successMessage: 'Profile picture updated successfully',
           clearError: true,
         );
+
+        // Re-fetch the full profile from the server so Hive / Riverpod state
+        // contains the authoritative URL (e.g. Cloudinary final URL).
+        getProfile();
       },
     );
   }
