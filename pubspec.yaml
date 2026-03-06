@@ -69,6 +69,9 @@ dependencies:
   # Image Picker
   image_picker: ^1.0.7
 
+  # Camera for selfie-based dark mode detection
+  camera: ^0.10.5+5
+
   # Persistent Key-Value Storage
   shared_preferences: ^2.2.3
 
@@ -97,8 +100,16 @@ dependencies:
   # WebView for in-app eSewa payment
   webview_flutter: ^4.10.0
 
+  # URL launcher for external browser (eSewa payment)
+  url_launcher: ^6.3.1
+
   # Confetti animation for success celebrations
   confetti: ^0.7.0
+
+  # eSewa Native Mobile SDK for payment
+  # TODO: Download SDK from eSewa and extract to project root, then uncomment
+  esewa_flutter_sdk:
+    path: ./esewa_flutter_sdk
 
 
 dev_dependencies:

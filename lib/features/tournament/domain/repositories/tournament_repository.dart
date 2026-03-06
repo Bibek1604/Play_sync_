@@ -29,7 +29,7 @@ abstract class ITournamentRepository {
   Future<Either<Failure, PaymentInitiation>> initiatePayment(String id);
 
   Future<Either<Failure, TournamentPaymentEntity>> verifyPayment(
-      String transactionUuid);
+      String? transactionUuid);
 
   Future<Either<Failure, TournamentPaymentEntity>> getPaymentStatus(String id);
 

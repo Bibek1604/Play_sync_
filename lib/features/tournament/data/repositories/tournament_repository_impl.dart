@@ -139,7 +139,7 @@ class TournamentRepositoryImpl implements ITournamentRepository {
 
   @override
   Future<Either<Failure, TournamentPaymentEntity>> verifyPayment(
-      String transactionUuid) async {
+      String? transactionUuid) async {
     try {
       final raw = await _remote.verifyPaymentRaw(transactionUuid);
       final statusCode = raw['statusCode'] as int?;

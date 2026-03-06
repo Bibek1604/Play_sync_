@@ -118,7 +118,7 @@ class TournamentPaymentNotifier extends StateNotifier<TournamentPaymentState> {
 
   // ── Verify Payment (POST callback from eSewa) ────────────────────────────
 
-  Future<void> verifyPayment(String base64Data) async {
+  Future<void> verifyPayment([String? base64Data]) async {
     _retryTimer?.cancel();
     state = state.copyWith(
       flowStatus: PaymentFlowStatus.verifying,
@@ -147,7 +147,7 @@ class TournamentPaymentNotifier extends StateNotifier<TournamentPaymentState> {
     );
   }
 
-  void _scheduleRetry(String base64Data) {
+  void _scheduleRetry(String? base64Data) {
     final nextRetry = state.verifyRetryCount + 1;
     state = state.copyWith(verifyRetryCount: nextRetry);
     debugPrint('[Payment] Retry $nextRetry/$_maxRetries in ${_retryDelay.inSeconds}s');

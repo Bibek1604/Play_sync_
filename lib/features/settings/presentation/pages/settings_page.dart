@@ -4,6 +4,7 @@ import "../../../../core/constants/app_colors.dart";
 import "../../../../core/widgets/app_drawer.dart";
 import "../../../profile/presentation/pages/edit_profile_page.dart";
 import "../../../profile/presentation/viewmodel/profile_notifier.dart";
+import 'theme_preferences_page.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -123,7 +124,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           const SizedBox(height: 32),
           _MenuSectionHeader(title: "Preference", isDark: isDark),
           const SizedBox(height: 16),
-          _SettingsCardTile(icon: Icons.palette_rounded, title: "Theme & Appearance", subtitle: "Dark mode and accent colors", isDark: isDark, onTap: () {}),
+          _SettingsCardTile(icon: Icons.palette_rounded, title: "Theme & Appearance", subtitle: "Dark mode and accent colors", isDark: isDark, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ThemePreferencesPage()))),
           const SizedBox(height: 12),
           _SettingsCardTile(icon: Icons.notifications_active_rounded, title: "Notifications", subtitle: "Manage your alerts and pings", isDark: isDark, onTap: () {}),
           const SizedBox(height: 32),

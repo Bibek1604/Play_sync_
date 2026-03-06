@@ -11,8 +11,8 @@ import 'package:play_sync_new/features/game_chat/game_chat.dart';
 /// GameCard — shows game info with state-driven action buttons.
 ///
 /// Button logic (state-driven, never error-driven):
-///   • Creator + OPEN  → "Go to Chat" + "Cancel Game"
-///   • Participant (not creator) + OPEN → "Go to Chat" + "Leave Game"
+///   • Creator + OPEN  → "Go to Chat" + "Cancel" + "Delete"
+///   • Participant (not creator) + OPEN → "View Details" + "Leave Game"
 ///   • Not joined + OPEN + not full → "Join Game"
 ///   • Not joined + OPEN + full → "Game Full" (disabled)
 ///   • ENDED   → "View Results"
@@ -256,16 +256,23 @@ class _GameCardState extends ConsumerState<GameCard> {
                           ],
                         ),
                       ),
-                      // Chips wrapped in Flexible to prevent overflow
-                      Flexible(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (_isCreator) const SizedBox(width: 8),
-                            _CategoryChip(category: widget.game.category),
-                            const SizedBox(width: 6),
-                            _StatusChip(status: widget.game.status),
-                          ],
+                      // Chips wrapped with max width constraint to prevent overflow
+                      Expanded(
+                        flex: 0,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 12),
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            physics: const NeverScrollableScrollPhysics(),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _CategoryChip(category: widget.game.category),
+                                const SizedBox(width: 6),
+                                _StatusChip(status: widget.game.status),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -428,7 +435,7 @@ class _ActionButtons extends StatelessWidget {
     if (isJoined) {
       return Column(
         children: [
-          // Primary: creator -> Go to Chat, participant -> View Details
+          // Primary: creator -> Go to Chat (Dark Blue), participant -> View Details (Blue)
           SizedBox(
             width: double.infinity,
             height: 40,
@@ -463,9 +470,14 @@ class _ActionButtons extends StatelessWidget {
                 softWrap: false,
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor: isCreator 
+                    ? const Color(0xFF1E40AF)  // Dark blue for chat
+                    : const Color(0xFF0EA5E9), // Sky blue for view details
                 foregroundColor: Colors.white,
-                elevation: 0,
+                elevation: 2,
+                shadowColor: isCreator 
+                    ? const Color(0xFF1E40AF).withOpacity(0.3)
+                    : const Color(0xFF0EA5E9).withOpacity(0.3),
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.md)),
@@ -475,38 +487,78 @@ class _ActionButtons extends StatelessWidget {
           SizedBox(height: AppSpacing.sm),
           // Secondary actions
           if (isCreator)
-            // Creator: Cancel Game only (delete is the top-right icon)
-            SizedBox(
-              width: double.infinity,
-              height: 40,
-              child: OutlinedButton.icon(
-                onPressed: isProcessing || onCancel == null ? null : onCancel,
-                icon: isProcessing
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.warning),
-                        ),
-                      )
-                    : const Icon(Icons.cancel_outlined, size: 16),
-                label: const Text('Cancel Game',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.warning,
-                  side: const BorderSide(color: AppColors.warning, width: 1.2),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md)),
+            // Creator: Show both Cancel Game and Delete buttons
+            Row(
+              children: [
+                // Cancel Game button
+                Expanded(
+                  child: SizedBox(
+                    height: 40,
+                    child: ElevatedButton.icon(
+                      onPressed: isProcessing || onCancel == null ? null : onCancel,
+                      icon: isProcessing
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : const Icon(Icons.cancel_outlined, size: 16),
+                      label: const Text('Cancel',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFDC2626), // Red for cancel
+                        foregroundColor: Colors.white,
+                        elevation: 2,
+                        shadowColor: const Color(0xFFDC2626).withOpacity(0.3),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.md)),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+                if (onDelete != null) ...[
+                  SizedBox(width: AppSpacing.sm),
+                  // Delete button
+                  Expanded(
+                    child: SizedBox(
+                      height: 40,
+                      child: ElevatedButton.icon(
+                        onPressed: isProcessing ? null : onDelete,
+                        icon: isProcessing
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : const Icon(Icons.delete_outline, size: 16),
+                        label: const Text('Delete',
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF7C2D12), // Dark red for delete
+                          foregroundColor: Colors.white,
+                          elevation: 2,
+                          shadowColor: const Color(0xFF7C2D12).withOpacity(0.3),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.md)),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             )
           else
             // Participant: Leave button
             SizedBox(
               width: double.infinity,
               height: 40,
-              child: OutlinedButton.icon(
+              child: ElevatedButton.icon(
                 onPressed: isProcessing || onLeave == null ? null : onLeave,
                 icon: isProcessing
                     ? const SizedBox(
@@ -514,15 +566,17 @@ class _ActionButtons extends StatelessWidget {
                         height: 16,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.warning),
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
                     : const Icon(Icons.exit_to_app_rounded, size: 16),
                 label: const Text('Leave Game',
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.warning,
-                  side: const BorderSide(color: AppColors.warning, width: 1.2),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF10B981), // Green for leave
+                  foregroundColor: Colors.white,
+                  elevation: 2,
+                  shadowColor: const Color(0xFF10B981).withOpacity(0.3),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.md)),
                 ),
@@ -575,9 +629,10 @@ class _ActionButtons extends StatelessWidget {
           style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
         ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
+          backgroundColor: const Color(0xFF10B981), // Green for join
           foregroundColor: Colors.white,
-          elevation: 0,
+          elevation: 2,
+          shadowColor: const Color(0xFF10B981).withOpacity(0.3),
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppRadius.md)),
         ),
@@ -666,21 +721,28 @@ class _CategoryChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: textColor.withValues(alpha: 0.2)),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 10, color: textColor),
-          const SizedBox(width: 4),
-          Text(
-            isOnline ? 'ONLINE' : 'OFFLINE',
-            style: TextStyle(
-              fontSize: 9,
-              fontWeight: FontWeight.w800,
-              color: textColor,
-              letterSpacing: 0.5,
+      child: IntrinsicWidth(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 10, color: textColor),
+            const SizedBox(width: 4),
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  isOnline ? 'ONLINE' : 'OFFLINE',
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    color: textColor,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

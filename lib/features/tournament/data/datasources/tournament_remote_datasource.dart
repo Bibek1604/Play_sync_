@@ -111,15 +111,20 @@ class TournamentRemoteDataSource {
 
   /// Verify payment — returns entity or throws.
   /// Backend returns 202 for PENDING (caller should retry).
-  Future<Map<String, dynamic>> verifyPaymentRaw(String base64Data) async {
+  Future<Map<String, dynamic>> verifyPaymentRaw(String? base64Data) async {
+    final params = <String, dynamic>{};
+    if (base64Data != null && base64Data.isNotEmpty) {
+      params['data'] = base64Data;
+    }
     final response = await _apiClient.get(
       ApiEndpoints.verifyPayment,
-      queryParameters: {'data': base64Data},
+      queryParameters: params,
     );
     return {
       'statusCode': response.statusCode,
       'data': response.data,
-      'callbackData': _decodeEsewaData(base64Data),
+      'callbackData':
+          (base64Data != null && base64Data.isNotEmpty) ? _decodeEsewaData(base64Data) : null,
     };
   }
 

@@ -137,7 +137,7 @@ class ApiEndpoints {
   // ========== TOURNAMENT ENDPOINTS ==========
   static const String getTournaments = '/tournaments';
   static const String createTournament = '/tournaments';
-  static const String getMyTournaments = '/tournaments/mine/list';
+  static const String getMyTournaments = '/tournaments/my';  // Changed from /tournaments/mine/list
   static String getTournamentById(String id) => '/tournaments/$id';
   static String updateTournament(String id) => '/tournaments/$id';
   static String deleteTournament(String id) => '/tournaments/$id';

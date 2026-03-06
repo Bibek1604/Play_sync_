@@ -154,9 +154,15 @@ class ChatAccessResult extends Equatable {
   const ChatAccessResult({required this.canAccess, this.reason});
 
   factory ChatAccessResult.fromJson(Map<String, dynamic> json) {
+    final allowed = json['allowed'];
+    final canAccess = json['canAccess'];
     return ChatAccessResult(
-      canAccess: json['canAccess'] as bool? ?? false,
-      reason: json['reason'] as String?,
+      canAccess: (canAccess is bool)
+          ? canAccess
+          : (allowed is bool)
+              ? allowed
+              : false,
+      reason: json['reason'] as String? ?? json['message'] as String?,
     );
   }
 

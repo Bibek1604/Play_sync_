@@ -93,7 +93,16 @@ class _GameDetailPageState extends ConsumerState<GameDetailPage> {
                           child: Text(game.sport.toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
                         ),
                         const SizedBox(height: 8),
-                        Text(game.title, style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900)),
+                        Text(
+                          game.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 28,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -126,7 +135,13 @@ class _GameDetailPageState extends ConsumerState<GameDetailPage> {
                       Navigator.push(context, MaterialPageRoute(builder: (_) => GameChatRoomPage(gameId: game.id, gameTitle: game.title)));
                     },
                     style: FilledButton.styleFrom(backgroundColor: AppColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
-                    child: const Text("OPEN SESSION CHAT", style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                    child: const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        "OPEN SESSION CHAT",
+                        style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 100),
@@ -171,16 +186,35 @@ class _IconDetail extends StatelessWidget {
   const _IconDetail({required this.icon, required this.label, required this.value});
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, size: 20, color: AppColors.primary),
           const SizedBox(width: 12),
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
-            Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-          ]),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  value,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: isDark ? Colors.white : AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

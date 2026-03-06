@@ -239,9 +239,12 @@ class _VerifyOtpPageState extends ConsumerState<VerifyOtpPage> {
           padding: EdgeInsets.all(AppSpacing.xl),
           child: Form(
             key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isCompact = constraints.maxWidth < 360;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
                 // Icon
                 Container(
                   height: 80,
@@ -265,6 +268,8 @@ class _VerifyOtpPageState extends ConsumerState<VerifyOtpPage> {
                         fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary,
                       ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 SizedBox(height: AppSpacing.sm),
 
@@ -282,16 +287,17 @@ class _VerifyOtpPageState extends ConsumerState<VerifyOtpPage> {
                         color: AppColors.primary,
                         fontWeight: FontWeight.w600,
                       ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 SizedBox(height: AppSpacing.xxl),
 
                 // OTP Input Boxes
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(
-                    6,
-                    (index) => _buildOtpBox(index),
-                  ),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: isCompact ? 6 : 8,
+                  runSpacing: 8,
+                  children: List.generate(6, (index) => _buildOtpBox(index, isCompact: isCompact)),
                 ),
                 SizedBox(height: AppSpacing.xxl),
 
@@ -319,11 +325,14 @@ class _VerifyOtpPageState extends ConsumerState<VerifyOtpPage> {
                       : Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text(
-                              'Continue',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                            const Flexible(
+                              child: Text(
+                                'Continue',
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                             SizedBox(width: AppSpacing.sm),
@@ -358,13 +367,12 @@ class _VerifyOtpPageState extends ConsumerState<VerifyOtpPage> {
                                   color: AppColors.primary,
                                 ),
                               )
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
+                            : Wrap(
+                                alignment: WrapAlignment.center,
                                 children: [
                                   Text(
                                     "Didn't receive code? ",
-                                    style: TextStyle(
-                                        color: AppColors.textSecondary),
+                                    style: TextStyle(color: AppColors.textSecondary),
                                   ),
                                   Text(
                                     'Resend OTP',
@@ -379,6 +387,8 @@ class _VerifyOtpPageState extends ConsumerState<VerifyOtpPage> {
                   ],
                 ),
               ],
+                );
+              },
             ),
           ),
         ),
@@ -386,13 +396,13 @@ class _VerifyOtpPageState extends ConsumerState<VerifyOtpPage> {
     );
   }
 
-  Widget _buildOtpBox(int index) {
+  Widget _buildOtpBox(int index, {bool isCompact = false}) {
     final isFocused = _focusNodes[index].hasFocus;
     final isFilled = _otpControllers[index].text.isNotEmpty;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 150),
-      width: 50,
-      height: 60,
+      width: isCompact ? 44 : 50,
+      height: isCompact ? 54 : 60,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadius.md),
         boxShadow: [

@@ -414,7 +414,7 @@ class _GamesSection extends StatelessWidget {
           )
         else
           SizedBox(
-            height: 250,
+            height: 285,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),

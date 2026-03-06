@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../auth/presentation/providers/auth_notifier.dart';
 import '../../domain/entities/tournament_chat_message.dart';
 import '../providers/tournament_chat_notifier.dart';
+import '../providers/tournament_notifier.dart';
 import '../../../../core/widgets/back_button_widget.dart';
 
 /// Real-time chat page for a tournament room (payment-gated).
@@ -27,13 +28,53 @@ class _TournamentChatPageState extends ConsumerState<TournamentChatPage> {
   final _messageCtrl = TextEditingController();
   final _scrollController = ScrollController();
   bool _showParticipants = false;
+  bool _isCheckingAccess = true;
+  bool _hasAccess = false;
+  String? _accessDeniedReason;
 
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      ref.read(tournamentChatProvider.notifier).joinRoom(widget.tournamentId);
-    });
+    _checkChatAccess();
+  }
+
+  /// Check if user has paid and can access chat
+  Future<void> _checkChatAccess() async {
+    setState(() => _isCheckingAccess = true);
+    
+    try {
+      // Check access via repository
+      final repository = ref.read(tournamentRepositoryProvider);
+      final result = await repository.checkChatAccess(widget.tournamentId);
+      
+      result.fold(
+        (failure) {
+          setState(() {
+            _isCheckingAccess = false;
+            _hasAccess = false;
+            _accessDeniedReason = failure.message;
+          });
+        },
+        (chatAccess) {
+          setState(() {
+            _isCheckingAccess = false;
+            _hasAccess = chatAccess.canAccess;
+            _accessDeniedReason = chatAccess.reason;
+          });
+          
+          // If access granted, join the chat room
+          if (chatAccess.canAccess) {
+            ref.read(tournamentChatProvider.notifier).joinRoom(widget.tournamentId);
+          }
+        },
+      );
+    } catch (e) {
+      setState(() {
+        _isCheckingAccess = false;
+        _hasAccess = false;
+        _accessDeniedReason = 'Error checking access: $e';
+      });
+    }
   }
 
   @override
@@ -63,6 +104,83 @@ class _TournamentChatPageState extends ConsumerState<TournamentChatPage> {
     final chatState = ref.watch(tournamentChatProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+
+    // Show loading while checking access
+    if (_isCheckingAccess) {
+      return Scaffold(
+        appBar: AppBar(
+          leading: const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: BackButtonWidget(label: 'Back'),
+          ),
+          leadingWidth: 100,
+          title: Text(widget.tournamentName),
+        ),
+        body: const Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Checking access...'),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Show access denied message
+    if (!_hasAccess) {
+      return Scaffold(
+        appBar: AppBar(
+          leading: const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: BackButtonWidget(label: 'Back'),
+          ),
+          leadingWidth: 100,
+          title: Text(widget.tournamentName),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.lock_outline, size: 64, color: AppColors.error),
+                const SizedBox(height: 24),
+                Text(
+                  'Chat Access Denied',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  _accessDeniedReason ?? 'You must join the tournament to access chat.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                ElevatedButton.icon(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.arrow_back),
+                  label: const Text('Back to Tournament'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     // Auto-scroll on new messages
     if (chatState.messages.isNotEmpty) _scrollToBottom();
