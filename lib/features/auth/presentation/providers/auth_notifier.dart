@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dartz/dartz.dart';
+import 'dart:async';
 import 'package:play_sync_new/core/error/failures.dart';
 import 'package:play_sync_new/features/auth/domain/entities/auth_entity.dart';
 import 'package:play_sync_new/features/auth/data/repositories/auth_repository_impl.dart';
@@ -11,13 +12,7 @@ import 'package:play_sync_new/features/auth/domain/usecases/register_usecase.dar
 // ============================================================================
 
 /// Enum for authentication status
-enum AuthStatus {
-  initial,
-  loading,
-  authenticated,
-  unauthenticated,
-  error,
-}
+enum AuthStatus { initial, loading, authenticated, unauthenticated, error }
 
 /// Auth state that holds the current user and status
 class AuthState {
@@ -25,11 +20,7 @@ class AuthState {
   final AuthStatus status;
   final String? error;
 
-  const AuthState({
-    this.user,
-    this.status = AuthStatus.initial,
-    this.error,
-  });
+  const AuthState({this.user, this.status = AuthStatus.initial, this.error});
 
   AuthState copyWith({
     AuthEntity? user,
@@ -62,37 +53,50 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final LoginUsecase _loginUsecase;
   final RegisterUsecase _registerUsecase;
   final Ref _ref;
+  final Completer<void> _initCompleter = Completer<void>();
+
+  /// Completes when startup session restoration has finished.
+  Future<void> get initialized => _initCompleter.future;
 
   AuthNotifier({
     required LoginUsecase loginUsecase,
     required RegisterUsecase registerUsecase,
     required Ref ref,
-  })  : _loginUsecase = loginUsecase,
-        _registerUsecase = registerUsecase,
-        _ref = ref,
-        super(const AuthState()) {
+  }) : _loginUsecase = loginUsecase,
+       _registerUsecase = registerUsecase,
+       _ref = ref,
+       super(const AuthState(status: AuthStatus.loading)) {
     _init();
   }
 
   /// Initialize - check for cached user on startup
   Future<void> _init() async {
-    final repository = _ref.read(authRepositoryProvider);
-    final isLoggedIn = await repository.isLoggedIn();
-    
-    if (isLoggedIn) {
-      final result = await repository.getCurrentUser();
-      result.fold(
-        (failure) => state = const AuthState(status: AuthStatus.unauthenticated),
-        (user) {
-          if (user != null) {
-            state = AuthState(user: user, status: AuthStatus.authenticated);
-          } else {
-            state = const AuthState(status: AuthStatus.unauthenticated);
-          }
-        },
-      );
-    } else {
+    try {
+      final repository = _ref.read(authRepositoryProvider);
+      final isLoggedIn = await repository.isLoggedIn();
+
+      if (isLoggedIn) {
+        final result = await repository.getCurrentUser();
+        result.fold(
+          (failure) =>
+              state = const AuthState(status: AuthStatus.unauthenticated),
+          (user) {
+            if (user != null) {
+              state = AuthState(user: user, status: AuthStatus.authenticated);
+            } else {
+              state = const AuthState(status: AuthStatus.unauthenticated);
+            }
+          },
+        );
+      } else {
+        state = const AuthState(status: AuthStatus.unauthenticated);
+      }
+    } catch (_) {
       state = const AuthState(status: AuthStatus.unauthenticated);
+    } finally {
+      if (!_initCompleter.isCompleted) {
+        _initCompleter.complete();
+      }
     }
   }
 
@@ -102,15 +106,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String password,
   }) async {
     state = state.copyWith(status: AuthStatus.loading, clearError: true);
-    
-    final result = await _loginUsecase(LoginParams(
-      email: email,
-      password: password,
-    ));
-    
+
+    final result = await _loginUsecase(
+      LoginParams(email: email, password: password),
+    );
+
     return result.fold(
       (failure) {
-        state = state.copyWith(status: AuthStatus.error, error: failure.message);
+        state = state.copyWith(
+          status: AuthStatus.error,
+          error: failure.message,
+        );
         return Left(failure);
       },
       (user) {
@@ -128,22 +134,30 @@ class AuthNotifier extends StateNotifier<AuthState> {
     String? confirmPassword,
   }) async {
     state = state.copyWith(status: AuthStatus.loading, clearError: true);
-    
-    final result = await _registerUsecase(RegisterParams(
-      fullName: fullName,
-      email: email,
-      password: password,
-      confirmPassword: confirmPassword,
-    ));
-    
+
+    final result = await _registerUsecase(
+      RegisterParams(
+        fullName: fullName,
+        email: email,
+        password: password,
+        confirmPassword: confirmPassword,
+      ),
+    );
+
     return result.fold(
       (failure) {
-        state = state.copyWith(status: AuthStatus.error, error: failure.message);
+        state = state.copyWith(
+          status: AuthStatus.error,
+          error: failure.message,
+        );
         return Left(failure);
       },
       (user) {
         // After registration, set state but don't auto-login
-        state = state.copyWith(status: AuthStatus.unauthenticated, clearError: true);
+        state = state.copyWith(
+          status: AuthStatus.unauthenticated,
+          clearError: true,
+        );
         return Right(user);
       },
     );
@@ -157,7 +171,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
     final result = await repository.logout();
 
     result.fold(
-      (failure) => state = state.copyWith(status: AuthStatus.error, error: failure.message),
+      (failure) => state = state.copyWith(
+        status: AuthStatus.error,
+        error: failure.message,
+      ),
       (_) => state = const AuthState(status: AuthStatus.unauthenticated),
     );
   }
@@ -177,11 +194,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
 // ============================================================================
 
 /// Main auth state provider
-final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
+final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((
+  ref,
+) {
   return AuthNotifier(
     loginUsecase: ref.read(loginUsecaseProvider),
     registerUsecase: ref.read(registerUsecaseProvider),
     ref: ref,
   );
 });
-

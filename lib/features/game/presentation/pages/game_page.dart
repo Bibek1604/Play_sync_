@@ -350,7 +350,7 @@ class _GamePageState extends ConsumerState<GamePage>
                       await ref.read(gameProvider.notifier).fetchMyCreatedGames();
                     },
                     child: ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 80),
                       itemCount:
                           displayed.length + (state.hasMore ? 1 : 0),
                       itemBuilder: (_, i) {
@@ -410,14 +410,17 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   _SliverAppBarDelegate(this.tabBar);
 
   @override
-  double get minExtent => tabBar.preferredSize.height;
+  double get minExtent => tabBar.preferredSize.height + 18;
   @override
-  double get maxExtent => tabBar.preferredSize.height;
+  double get maxExtent => tabBar.preferredSize.height + 18;
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
       color: Theme.of(context).scaffoldBackgroundColor,
+      height: maxExtent,
+      alignment: Alignment.center,
+      padding: const EdgeInsets.only(bottom: 10), // extra room for shadow/overflow
       child: tabBar,
     );
   }

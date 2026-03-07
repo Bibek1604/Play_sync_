@@ -69,9 +69,6 @@ dependencies:
   # Image Picker
   image_picker: ^1.0.7
 
-  # Camera for selfie-based dark mode detection
-  camera: ^0.10.5+5
-
   # Persistent Key-Value Storage
   shared_preferences: ^2.2.3
 

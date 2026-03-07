@@ -6,7 +6,7 @@ Enhanced `GameCard` widget with comprehensive role-based UI, loading states, cam
 ## Key Features Implemented
 
 ### 1. **Camera Dark Mode Integration**
-- **Provider**: `cameraDarkModeProvider` from `camera_dark_mode_provider.dart`
+- **Provider**: theme state from `themeModeProvider`
 - **Usage**: Card automatically adapts to dark mode based on front camera light sensor
 - **Benefits**: 
   - More immersive experience in low-light environments
@@ -138,7 +138,7 @@ final isDark = cameraDarkMode; // Uses camera sensor for theme
 
 ## Dependencies Added
 - `flutter_riverpod` (Consumer widget for cameraDarkModeProvider)
-- `camera_dark_mode_provider.dart` (custom provider for sensor-based theming)
+- `theme_provider.dart` (app theme preference provider)
 
 ## Breaking Changes
 - Changed from `StatelessWidget` to `ConsumerStatefulWidget`

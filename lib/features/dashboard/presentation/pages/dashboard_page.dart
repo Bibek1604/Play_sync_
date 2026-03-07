@@ -153,154 +153,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                             Expanded(child: _ActionCard(icon: Icons.wifi_off_rounded, title: "Offline", color: AppColors.primary, onTap: () => Navigator.pushNamed(context, AppRoutes.offlineGames), isDark: isDark)),
                             const SizedBox(width: 12),
                             Expanded(child: _ActionCard(icon: Icons.public_rounded, title: "Online", color: AppColors.secondary, onTap: () => Navigator.pushNamed(context, AppRoutes.onlineGames), isDark: isDark)),
-                            const SizedBox(width: 12),
-                            Expanded(child: _ActionCard(icon: Icons.emoji_events_rounded, title: "Tourneys", color: AppColors.accent, onTap: () => Navigator.pushNamed(context, AppRoutes.tournaments), isDark: isDark)),
                           ],
                         ),
                         
-                        const SizedBox(height: 32),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(16),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.primary.withOpacity(0.2),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                              child: GestureDetector(
-                                onTap: () => Navigator.pushNamed(context, AppRoutes.offlineGames),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: isDark 
-                                          ? [AppColors.primary.withOpacity(0.2), AppColors.primary.withOpacity(0.05)]
-                                          : [AppColors.primary.withOpacity(0.12), AppColors.primary.withOpacity(0.02)],
-                                    ),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(color: AppColors.primary.withOpacity(isDark ? 0.3 : 0.2)),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppColors.primary.withOpacity(0.05),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Column(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(12),
-                                        decoration: BoxDecoration(
-                                          color: isDark ? AppColors.primary.withOpacity(0.15) : Colors.white,
-                                          shape: BoxShape.circle,
-                                          boxShadow: isDark ? [] : [
-                                            BoxShadow(
-                                              color: AppColors.primary.withOpacity(0.15),
-                                              blurRadius: 8,
-                                              offset: const Offset(0, 2),
-                                            ),
-                                          ],
-                                        ),
-                                        child: const Icon(Icons.location_on_rounded, color: AppColors.primary, size: 28),
-                                      ),
-                                      const SizedBox(height: 12),
-                                      Text(
-                                        "Browse\nOffline",
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w800,
-                                          fontSize: 14,
-                                          height: 1.2,
-                                          color: isDark ? Colors.white : AppColors.textPrimary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(16),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.secondary.withOpacity(0.2),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                              child: GestureDetector(
-                                onTap: () => Navigator.pushNamed(context, AppRoutes.onlineGames),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: isDark 
-                                          ? [AppColors.secondary.withOpacity(0.2), AppColors.secondary.withOpacity(0.05)]
-                                          : [AppColors.secondary.withOpacity(0.12), AppColors.secondary.withOpacity(0.02)],
-                                    ),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(color: AppColors.secondary.withOpacity(isDark ? 0.3 : 0.2)),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppColors.secondary.withOpacity(0.05),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Column(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(12),
-                                        decoration: BoxDecoration(
-                                          color: isDark ? AppColors.secondary.withOpacity(0.15) : Colors.white,
-                                          shape: BoxShape.circle,
-                                          boxShadow: isDark ? [] : [
-                                            BoxShadow(
-                                              color: AppColors.secondary.withOpacity(0.15),
-                                              blurRadius: 8,
-                                              offset: const Offset(0, 2),
-                                            ),
-                                          ],
-                                        ),
-                                        child: const Icon(Icons.public_rounded, color: AppColors.secondary, size: 28),
-                                      ),
-                                      const SizedBox(height: 12),
-                                      Text(
-                                        "Browse\nOnline",
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w800,
-                                          fontSize: 14,
-                                          height: 1.2,
-                                          color: isDark ? Colors.white : AppColors.textPrimary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 48), // Added margin top to Games I Created
+                        const SizedBox(height: 16),
+                        const SizedBox(height: 48), // Gap above Created section
                         
                         // Games I Created Section
                         _GamesSection(
@@ -311,7 +168,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                           currentUserId: currentUserId,
                           isCreatorSection: true,
                         ),
-                        const SizedBox(height: 48), // Increased gap in top of Games I Joined
+                        const SizedBox(height: 48), // Gap above Joined section
                         
                         // Games I Joined Section
                         _GamesSection(
@@ -384,7 +241,7 @@ class _ProfileDetailsCard extends StatelessWidget {
               right: -40,
               child: Container(
                 width: 120,
-                height: 120,
+                height: 270,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
@@ -652,17 +509,17 @@ class _GamesSection extends StatelessWidget {
           )
         else
           SizedBox(
-            height: 275, // Decreased height from 295
-            child: ListView.builder(
+            height: 280, // Increased to 280 to resolve the 2.1px bottom overflow
+child: ListView.builder(
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
               itemCount: games.length,
               itemBuilder: (context, index) {
                 final game = games[index];
                 return Padding(
-                  padding: EdgeInsets.only(right: 12, left: index == 0 ? 4 : 0),
+                  padding: EdgeInsets.only(right: 16, left: index == 0 ? 4 : 0, bottom: 8),
                   child: SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.45, // Decreased width of the card
+                    width: MediaQuery.of(context).size.width * 0.65, // Reduced width for better balance
                     child: GameTileWidget(
                       game: game,
                       currentUserId: currentUserId,

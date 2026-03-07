@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -132,7 +133,7 @@ class _GameCardState extends ConsumerState<GameCard> {
 
           // ── Body ────────────────────────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -149,7 +150,7 @@ class _GameCardState extends ConsumerState<GameCard> {
                           Text(
                             widget.game.title,
                             style: TextStyle(
-                              fontSize: 16,
+                              fontSize: 18,
                               fontWeight: FontWeight.w900,
                               letterSpacing: -0.4,
                               color: isDark
@@ -159,7 +160,7 @@ class _GameCardState extends ConsumerState<GameCard> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: 6),
                           Row(
                             children: [
                               Flexible(
@@ -293,9 +294,8 @@ class _Banner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (statusLabel, statusColor) = _statusStyle(game.status);
-
     return SizedBox(
-      height: 200, // increased area
+      height: 260, // increased area
       width: double.infinity,
       child: Stack(
         fit: StackFit.expand,
@@ -307,23 +307,26 @@ class _Banner extends StatelessWidget {
           
           // Image Container with Gap
           Padding(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(12),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
               child: Stack(
                 fit: StackFit.expand,
                 children: [
                   if (game.imageUrl != null && game.imageUrl!.isNotEmpty) ...[
-                    // LAYER 1: Blurred background to fill gaps (Premium look)
-                    CachedNetworkImage(
-                      imageUrl: game.imageUrl!,
-                      fit: BoxFit.cover,
-                      color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
-                      colorBlendMode: BlendMode.darken,
+                    // LAYER 1: Blurred background (Premium depth)
+                    ImageFiltered(
+                      imageFilter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      child: CachedNetworkImage(
+                        imageUrl: game.imageUrl!,
+                        fit: BoxFit.cover,
+                        color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
+                        colorBlendMode: BlendMode.darken,
+                      ),
                     ),
                     const Positioned.fill(
                       child: DecoratedBox(
-                        decoration: BoxDecoration(color: Colors.black26),
+                        decoration: BoxDecoration(color: Colors.black12),
                       ),
                     ),
                     // LAYER 2: Non-zoomed foreground image
@@ -344,7 +347,7 @@ class _Banner extends StatelessWidget {
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [Colors.transparent, Color(0x44000000)],
+                        colors: [Colors.transparent, Color(0x33000000)],
                       ),
                     ),
                   ),
@@ -501,7 +504,7 @@ class _Buttons extends StatelessWidget {
                     outlined: true,
                   )
                 : _Btn(
-                    label: 'Leave',
+                    label: 'Leave Game', // Updated from 'Leave'
                     icon: Icons.exit_to_app_rounded,
                     color: _kClrLeave,
                     busy: busy,
@@ -520,7 +523,7 @@ class _Buttons extends StatelessWidget {
 
     // Not joined + open
     return _Btn(
-      label: 'Join Game  ·  ${game.spotsLeft} ${game.spotsLeft == 1 ? 'spot' : 'spots'} left',
+      label: 'Join Game', // Simplified from 'Join Game · X spots left'
       icon: Icons.login_rounded,
       color: _kClrJoin,
       busy: busy,
