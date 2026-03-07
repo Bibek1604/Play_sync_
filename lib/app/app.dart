@@ -8,7 +8,7 @@ import '../core/providers/socket_provider.dart';
 import '../core/services/service_initializer.dart';
 
 /// PlaySync Application Root Widget
-/// 
+///
 /// Main application widget with theme and routing configuration.
 class PlaySyncApp extends ConsumerStatefulWidget {
   const PlaySyncApp({super.key});
@@ -23,20 +23,22 @@ class _PlaySyncAppState extends ConsumerState<PlaySyncApp> {
     super.initState();
     // Initialize services after first frame is rendered
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-       debugPrint('[MAIN] First frame rendered in PlaySyncApp, starting initialization...');
-       try {
-         await ServiceInitializer.initialize(ref);
-         debugPrint('[MAIN] ✓ All services initialized successfully');
-       } catch (e, stack) {
-         debugPrint('[MAIN] ✗ Service initialization failed: $e');
-         debugPrint('[MAIN] Stack trace: $stack');
-       }
+      debugPrint(
+        '[MAIN] First frame rendered in PlaySyncApp, starting initialization...',
+      );
+      try {
+        await ServiceInitializer.initialize(ref);
+        debugPrint('[MAIN] ✓ All services initialized successfully');
+      } catch (e, stack) {
+        debugPrint('[MAIN] ✗ Service initialization failed: $e');
+        debugPrint('[MAIN] Stack trace: $stack');
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Watch the dynamic theme mode that accounts for camera usage
+    // Watch resolved theme mode from persisted user/system preference
     final themeMode = ref.watch(dynamicThemeModeProvider);
 
     // Initialize socket connection (auto-connects when authenticated)

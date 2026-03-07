@@ -14,7 +14,7 @@ class AuthGuard extends ConsumerWidget {
     final authState = ref.watch(authNotifierProvider);
 
     // Show loading while checking auth state
-    if (authState.isLoading) {
+    if (authState.status == AuthStatus.initial || authState.isLoading) {
       return const Scaffold(
         backgroundColor: Colors.white,
         body: Center(

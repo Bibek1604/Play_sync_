@@ -22,10 +22,14 @@ class _SplashPageState extends ConsumerState<SplashPage>
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 900));
-    _fade  = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
-    _scale = Tween<double>(begin: 0.85, end: 1.0)
-        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutBack));
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+    _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
+    _scale = Tween<double>(
+      begin: 0.85,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutBack));
     _ctrl.forward();
     _checkAuthAndNavigate();
   }
@@ -37,9 +41,14 @@ class _SplashPageState extends ConsumerState<SplashPage>
   }
 
   Future<void> _checkAuthAndNavigate() async {
-    await Future.delayed(const Duration(milliseconds: 2000));
+    await Future.wait([
+      Future.delayed(const Duration(milliseconds: 1200)),
+      ref.read(authNotifierProvider.notifier).initialized,
+    ]);
+
     if (!mounted || _hasNavigated) return;
     _hasNavigated = true;
+
     final auth = ref.read(authNotifierProvider);
     if (auth.user != null && (auth.user!.token?.isNotEmpty ?? false)) {
       Navigator.pushReplacementNamed(context, AppRoutes.dashboard);

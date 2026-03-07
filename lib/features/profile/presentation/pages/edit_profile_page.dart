@@ -23,7 +23,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   final _locationController = TextEditingController();
   final _bioController = TextEditingController();
   final _favoriteGameController = TextEditingController();
-  
+
   XFile? _selectedImage;
   final ImagePicker _imagePicker = ImagePicker();
   bool _prefilled = false;
@@ -40,7 +40,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         _phoneController.text = profile.phone ?? '';
         _locationController.text = profile.place ?? '';
         _bioController.text = profile.bio ?? '';
-        
+
         if (profile.favoriteGame != null && profile.favoriteGame!.isNotEmpty) {
           _favoriteGameController.text = profile.favoriteGame!;
         }
@@ -75,9 +75,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking image: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
       }
     }
   }
@@ -98,9 +98,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error taking photo: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error taking photo: $e')));
       }
     }
   }
@@ -135,7 +135,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
 
   Future<void> _saveProfile() async {
     if (_formKey.currentState!.validate()) {
-      await ref.read(profileNotifierProvider.notifier).updateProfile(
+      await ref
+          .read(profileNotifierProvider.notifier)
+          .updateProfile(
             fullName: _fullNameController.text.trim(),
             phone: _phoneController.text.trim(),
             bio: _bioController.text.trim(),
@@ -144,6 +146,22 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             profilePicture: _selectedImage,
           );
     }
+  }
+
+  ImageProvider<Object>? _profileImageProvider(ProfileState profileState) {
+    if (_selectedImage != null) {
+      if (kIsWeb) {
+        return NetworkImage(_selectedImage!.path);
+      }
+      return FileImage(File(_selectedImage!.path));
+    }
+
+    final avatarUrl = profileState.profile?.avatar;
+    if (avatarUrl != null && avatarUrl.isNotEmpty) {
+      return NetworkImage(avatarUrl);
+    }
+
+    return null;
   }
 
   @override
@@ -183,7 +201,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
           ),
         );
         ref.read(profileNotifierProvider.notifier).clearSuccess();
-        
+
         // Navigate back after successful update
         if (!next.isUpdating && !next.isUploadingPicture) {
           Navigator.pop(context);
@@ -212,10 +230,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
               ),
             )
           else
-            IconButton(
-              icon: const Icon(Icons.save),
-              onPressed: _saveProfile,
-            ),
+            IconButton(icon: const Icon(Icons.save), onPressed: _saveProfile),
         ],
       ),
       body: SingleChildScrollView(
@@ -233,71 +248,69 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                   ),
                 // Profile Picture Section
                 Center(
-                  child: Stack(
+                  child: Column(
                     children: [
-                      Container(
-                        width: 120,
-                        height: 120,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            colors: isDark
-                                ? [AppColors.primaryDark, AppColors.primary]
-                                : [AppColors.primary, AppColors.primaryLight],
-                          ),
-                        ),
-                        child: _selectedImage != null
-                            ? ClipOval(
-                                child: kIsWeb
-                                    ? Image.network(
-                                        _selectedImage!.path,
-                                        fit: BoxFit.cover,
-                                      )
-                                    : Image.file(
-                                        File(_selectedImage!.path),
-                                        fit: BoxFit.cover,
-                                      ),
-                              )
-                            : profileState.profile?.avatar != null
-                                ? ClipOval(
-                                    child: Image.network(
-                                      profileState.profile!.avatar!,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) =>
-                                          const Icon(Icons.person, size: 60, color: Colors.white),
-                                    ),
-                                  )
-                                : const Icon(Icons.person, size: 60, color: Colors.white),
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: GestureDetector(
-                          onTap: profileState.isUploadingPicture ? null : _showImageSourceDialog,
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.2),
-                                  blurRadius: 8,
-                                ),
-                              ],
+                      Stack(
+                        children: [
+                          GestureDetector(
+                            onTap: profileState.isUploadingPicture
+                                ? null
+                                : _showImageSourceDialog,
+                            child: CircleAvatar(
+                              radius: 60,
+                              backgroundColor: isDark
+                                  ? AppColors.primaryDark
+                                  : AppColors.primaryLight,
+                              foregroundImage: _profileImageProvider(
+                                profileState,
+                              ),
+                              child: const Icon(
+                                Icons.person,
+                                size: 60,
+                                color: Colors.white,
+                              ),
                             ),
-                            child: profileState.isUploadingPicture
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : const Icon(Icons.camera_alt, color: Colors.white, size: 20),
                           ),
-                        ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.2),
+                                    blurRadius: 8,
+                                  ),
+                                ],
+                              ),
+                              child: profileState.isUploadingPicture
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Icon(
+                                      Icons.camera_alt,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      TextButton.icon(
+                        onPressed: profileState.isUploadingPicture
+                            ? null
+                            : _showImageSourceDialog,
+                        icon: const Icon(Icons.upload_rounded),
+                        label: const Text('Upload Profile Photo'),
                       ),
                     ],
                   ),
@@ -431,9 +444,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
         labelText: label,
         hintText: hint,
         prefixIcon: Icon(icon, color: AppColors.primary),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
