@@ -4,13 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../../features/leaderboard/presentation/pages/leaderboard_page.dart';
-import '../../features/tournament/presentation/pages/tournament_list_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/chat/presentation/pages/chat_page.dart';
 import '../../app/routes/app_routes.dart';
 import '../../core/api/api_client.dart';
 import '../../features/auth/presentation/providers/auth_notifier.dart';
-import '../constants/app_colors.dart';
 
 /// Provider that tracks the active bottom-nav tab index.
 final shellIndexProvider = StateProvider<int>((ref) => 0);
@@ -62,8 +60,10 @@ class AppShell extends ConsumerWidget {
       next.whenOrNull(
         data: (_) {
           ref.read(authNotifierProvider.notifier).forceLogout();
-          Navigator.of(context, rootNavigator: true)
-              .pushNamedAndRemoveUntil(AppRoutes.login, (_) => false);
+          Navigator.of(
+            context,
+            rootNavigator: true,
+          ).pushNamedAndRemoveUntil(AppRoutes.login, (_) => false);
         },
       );
     });
@@ -78,7 +78,9 @@ class AppShell extends ConsumerWidget {
     ];
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+      backgroundColor: isDark
+          ? const Color(0xFF0F172A)
+          : const Color(0xFFF8FAFC),
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 260),
         switchInCurve: Curves.easeOutCubic,
@@ -203,12 +205,12 @@ class _NavItem extends StatelessWidget {
   });
 
   // Active colour matches primary nav blue (#0284C7) from profile/sidebar
-  static const _activeColor = Color(0xFF0284C7); 
-  static final _activeDark  = const Color(0xFF38BDF8); 
+  static const _activeColor = Color(0xFF0284C7);
+  static final _activeDark = const Color(0xFF38BDF8);
 
   @override
   Widget build(BuildContext context) {
-    final active  = isDark ? _activeDark : _activeColor;
+    final active = isDark ? _activeDark : _activeColor;
     final inactive = isDark
         ? Colors.white.withOpacity(0.3)
         : const Color(0xFF94A3B8);
@@ -227,8 +229,8 @@ class _NavItem extends StatelessWidget {
           // Soft sky-blue active background
           color: isActive
               ? (isDark
-                  ? const Color(0xFF0EA5E9).withOpacity(0.15)
-                  : const Color(0xFFE0F2FE))
+                    ? const Color(0xFF0EA5E9).withOpacity(0.15)
+                    : const Color(0xFFE0F2FE))
               : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
         ),
