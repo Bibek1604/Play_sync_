@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/app_theme.dart';
 import '../../../auth/presentation/providers/auth_notifier.dart';
 import '../../../profile/presentation/viewmodel/profile_notifier.dart';
 import '../providers/game_notifier.dart';
@@ -15,7 +14,7 @@ import 'game_detail_page.dart';
 import '../../../chat/presentation/providers/chat_notifier.dart';
 
 /// Filter options for offline games
-enum OfflineFilter { all, open, myGames }
+enum OfflineFilter { all, nearby, open, myGames }
 
 /// Offline Games — organized with filter tabs.
 class OfflineGamesPage extends ConsumerStatefulWidget {
@@ -30,6 +29,8 @@ class _OfflineGamesPageState extends ConsumerState<OfflineGamesPage> {
   bool _locationEnabled = false;
   bool _enablingLocation = false;
   String? _locationError;
+  double? _userLat;
+  double? _userLng;
 
   @override
   void initState() {
@@ -39,7 +40,7 @@ class _OfflineGamesPageState extends ConsumerState<OfflineGamesPage> {
       ref.read(gameProvider.notifier).setCategoryFilter('OFFLINE');
       ref.read(gameProvider.notifier).fetchMyJoinedGames();
       ref.read(gameProvider.notifier).fetchMyCreatedGames();
-      
+
       // Auto-trigger location detection for offline games
       _enableLocationBasedGames();
     });
@@ -78,7 +79,6 @@ class _OfflineGamesPageState extends ConsumerState<OfflineGamesPage> {
 
       Position? position;
       try {
-        // Try high accuracy first (better for discovery)
         position = await Geolocator.getCurrentPosition(
           locationSettings: const LocationSettings(
             accuracy: LocationAccuracy.high,
@@ -87,7 +87,6 @@ class _OfflineGamesPageState extends ConsumerState<OfflineGamesPage> {
         );
       } catch (e) {
         debugPrint('[LOCATION] High accuracy failed or timed out, trying medium: $e');
-        // Fallback to medium accuracy if high fails or takes too long
         position = await Geolocator.getCurrentPosition(
           locationSettings: const LocationSettings(
             accuracy: LocationAccuracy.medium,
@@ -97,22 +96,31 @@ class _OfflineGamesPageState extends ConsumerState<OfflineGamesPage> {
       }
 
       if (!mounted) return;
-      
-      // Use the optimized single-call method to fetch matching offline games
-      await ref.read(gameProvider.notifier).fetchOfflineGamesNearby(
-        latitude: position.latitude,
-        longitude: position.longitude,
-        radius: 10,
-      );
+
+      if (position == null) {
+        throw Exception('Could not determine your location. Please try again.');
+      }
 
       setState(() {
         _locationEnabled = true;
+        _userLat = position!.latitude;
+        _userLng = position!.longitude;
       });
+
+      await ref
+          .read(gameProvider.notifier)
+          .fetchOfflineGamesNearby(
+            latitude: position!.latitude,
+            longitude: position!.longitude,
+            radius: 10,
+          );
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _locationEnabled = false;
         _locationError = e.toString();
+        _userLat = null;
+        _userLng = null;
       });
     } finally {
       if (!mounted) return;
@@ -131,17 +139,35 @@ class _OfflineGamesPageState extends ConsumerState<OfflineGamesPage> {
     );
   }
 
-  List<GameEntity> _getFilteredGames(List<GameEntity> allOfflineGames, String? userId) {
+  List<GameEntity> _getFilteredGames(
+    List<GameEntity> allOfflineGames,
+    String? userId,
+  ) {
     switch (_selectedFilter) {
       case OfflineFilter.all:
+      case OfflineFilter.nearby:
         return allOfflineGames;
       case OfflineFilter.open:
         return allOfflineGames.where((g) => g.isOpen).toList();
       case OfflineFilter.myGames:
         if (userId == null) return [];
-        return allOfflineGames.where((g) => 
-          g.isCreator(userId) || g.isParticipant(userId)
-        ).toList();
+        return allOfflineGames
+            .where((g) => g.isCreator(userId) || g.isParticipant(userId))
+            .toList();
+    }
+  }
+
+  Future<void> _refreshData() async {
+    if (_selectedFilter == OfflineFilter.nearby &&
+        _locationEnabled &&
+        _userLat != null) {
+      await _enableLocationBasedGames();
+    } else {
+      await Future.wait([
+        ref.read(gameProvider.notifier).fetchGames(refresh: true),
+        ref.read(gameProvider.notifier).fetchMyJoinedGames(),
+        ref.read(gameProvider.notifier).fetchMyCreatedGames(),
+      ]);
     }
   }
 
@@ -149,56 +175,79 @@ class _OfflineGamesPageState extends ConsumerState<OfflineGamesPage> {
   Widget build(BuildContext context) {
     final state = ref.watch(gameProvider);
     final authState = ref.watch(authNotifierProvider);
-    final profileState = ref.watch(profileNotifierProvider);
     final currentUserId = authState.user?.userId;
-    final profile = profileState.profile;
+
     final allOfflineGames = () {
       final Set<String> allIds = {};
       final list = <GameEntity>[];
-      for (final g in state.filteredGames) {
-        if (!allIds.contains(g.id) && g.status != GameStatus.ENDED) {
+      for (final g in state.games) {
+        if (g.category == 'OFFLINE' &&
+            !allIds.contains(g.id) &&
+            g.status != GameStatus.ENDED) {
           list.add(g);
           allIds.add(g.id);
         }
       }
       for (final g in state.myCreatedGames) {
-        if (g.category == 'OFFLINE' && !allIds.contains(g.id) && g.status != GameStatus.ENDED) {
+        if (g.category == 'OFFLINE' &&
+            !allIds.contains(g.id) &&
+            g.status != GameStatus.ENDED) {
           list.add(g);
           allIds.add(g.id);
         }
       }
       for (final g in state.myJoinedGames) {
-        if (g.category == 'OFFLINE' && !allIds.contains(g.id) && g.status != GameStatus.ENDED) {
+        if (g.category == 'OFFLINE' &&
+            !allIds.contains(g.id) &&
+            g.status != GameStatus.ENDED) {
           list.add(g);
           allIds.add(g.id);
         }
       }
       return list;
     }();
-    final filteredGames = _locationEnabled
-      ? _getFilteredGames(allOfflineGames, currentUserId)
-      : <GameEntity>[];
 
-    // Build a set of joined + created game IDs for quick lookup
+    final filteredGames = _locationEnabled && _userLat != null && _userLng != null
+        ? _getFilteredGames(
+            allOfflineGames.where((g) {
+              if (g.location != null) {
+                final distance = Geolocator.distanceBetween(
+                  _userLat!,
+                  _userLng!,
+                  g.location!.latitude,
+                  g.location!.longitude,
+                );
+                return distance <= 10000;
+              }
+              return false;
+            }).toList(),
+            currentUserId,
+          )
+        : _getFilteredGames(allOfflineGames, currentUserId);
+
     final joinedGameIds = <String>{
       ...state.myJoinedGames.map((g) => g.id),
       ...state.myCreatedGames.map((g) => g.id),
     };
     final createdGameIds = <String>{...state.myCreatedGames.map((g) => g.id)};
 
-    Future<void> doAction(Future<bool> Function() action, String successMsg,
-        String failKey) async {
+    Future<void> doAction(
+      Future<bool> Function() action,
+      String successMsg,
+      String failKey,
+    ) async {
       final ok = await action();
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(ok
-              ? successMsg
-              : (ref.read(gameProvider).error ?? failKey)),
+          content: Text(
+            ok ? successMsg : (ref.read(gameProvider).error ?? failKey),
+          ),
           backgroundColor: ok ? AppColors.success : AppColors.error,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md)),
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
           margin: const EdgeInsets.all(16),
         ),
       );
@@ -210,15 +259,19 @@ class _OfflineGamesPageState extends ConsumerState<OfflineGamesPage> {
         builder: (ctx) => AlertDialog(
           title: const Text('Delete Game'),
           content: const Text(
-              'Are you sure you want to permanently delete this game? This cannot be undone.'),
+            'Are you sure you want to permanently delete this game? This cannot be undone.',
+          ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Cancel')),
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel'),
+            ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Delete',
-                  style: TextStyle(color: AppColors.error)),
+              child: const Text(
+                'Delete',
+                style: TextStyle(color: AppColors.error),
+              ),
             ),
           ],
         ),
@@ -237,168 +290,225 @@ class _OfflineGamesPageState extends ConsumerState<OfflineGamesPage> {
     return Scaffold(
       backgroundColor: isDark ? AppColors.backgroundDark : Colors.white,
       drawer: const AppDrawer(),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: isDark 
-              ? [const Color(0xFF1E293B), AppColors.backgroundDark]
-              : [const Color(0xFFF0F9FF), Colors.white],
-            stops: const [0.0, 0.4],
-          ),
-        ),
-        child: NestedScrollView(
-          headerSliverBuilder: (context, innerBoxIsScrolled) => [
-            SliverAppBar(
-              pinned: true,
-              floating: false,
-              expandedHeight: 200,
-              backgroundColor: const Color(0xFF0284C7),
-              surfaceTintColor: Colors.transparent,
-              elevation: 0,
-              scrolledUnderElevation: 0,
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back_ios_rounded, size: 20, color: Colors.white),
-                onPressed: () => Navigator.of(context).pop(),
+      body: NestedScrollView(
+        headerSliverBuilder: (context, innerBoxIsScrolled) => [
+          SliverAppBar(
+            pinned: true,
+            expandedHeight: 200,
+            backgroundColor: const Color(0xFF0284C7),
+            surfaceTintColor: Colors.transparent,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(
+                Icons.arrow_back_ios_rounded,
+                size: 20,
+                color: Colors.white,
               ),
-              flexibleSpace: FlexibleSpaceBar(
-                collapseMode: CollapseMode.pin,
-                background: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    // Layer 1: Signature Sky-Blue Gradient
-                    Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [Color(0xFF0EA5E9), Color(0xFF0284C7)],
-                        ),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            flexibleSpace: FlexibleSpaceBar(
+              collapseMode: CollapseMode.pin,
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFF0EA5E9), Color(0xFF0284C7)],
                       ),
                     ),
-                    // Layer 2: Signature Mixture Overlay
-                    Container(
+                  ),
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withOpacity(0.1),
+                          Colors.black.withOpacity(0.6),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Opacity(
+                    opacity: 0.1,
+                    child: Image.asset(
+                      'assets/images/pattern_bg.png',
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const SizedBox(),
+                    ),
+                  ),
+                  Positioned(
+                    top: 55,
+                    left: 20,
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.black.withOpacity(0.1),
-                            Colors.black.withOpacity(0.6),
-                          ],
-                        ),
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.radar_rounded,
+                        color: Colors.white,
+                        size: 20,
                       ),
                     ),
-                    // Layer 3: Texture
-                    Opacity(
-                      opacity: 0.1,
-                      child: Image.asset(
-                        'assets/images/pattern_bg.png',
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const SizedBox(),
-                      ),
-                    ),
-                    // Layer 4: Themed Icon
-                    Positioned(
-                      top: 55,
-                      left: 20,
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.radar_rounded,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                titlePadding: const EdgeInsets.only(left: 20, bottom: 65),
-                title: const Text(
-                  'Local Games',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 24,
-                    letterSpacing: -1.0,
-                    color: Colors.white,
                   ),
+                ],
+              ),
+              titlePadding: const EdgeInsets.only(left: 20, bottom: 65),
+              title: const Text(
+                'Local Games',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 24,
+                  letterSpacing: -1.0,
+                  color: Colors.white,
                 ),
               ),
-              actions: [
-                IconButton(
-                  icon: Icon(
-                    _locationEnabled ? Icons.my_location_rounded : Icons.location_disabled_rounded,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                  onPressed: _enablingLocation ? null : _enableLocationBasedGames,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.refresh_rounded, color: Colors.white, size: 20),
-                  onPressed: () async {
-                    if (_locationEnabled) {
-                      await _enableLocationBasedGames();
-                    } else {
-                      await Future.wait([
-                        ref.read(gameProvider.notifier).fetchGames(refresh: true),
-                        ref.read(gameProvider.notifier).fetchMyJoinedGames(),
-                        ref.read(gameProvider.notifier).fetchMyCreatedGames(),
-                      ]);
-                    }
-                  },
-                ),
-              ],
-              bottom: PreferredSize(
-                preferredSize: const Size.fromHeight(60),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.backgroundDark : Colors.white,
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                  ),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        _FilterChip(
-                          label: 'All',
-                          count: allOfflineGames.length,
-                          isSelected: _selectedFilter == OfflineFilter.all,
-                          onTap: () => setState(() => _selectedFilter = OfflineFilter.all),
+            ),
+            actions: [
+              IconButton(
+                icon: _enablingLocation
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
                         ),
-                        const SizedBox(width: 8),
-                        _FilterChip(
-                          label: 'Open',
-                          count: allOfflineGames.where((g) => g.isOpen).length,
-                          isSelected: _selectedFilter == OfflineFilter.open,
-                          onTap: () => setState(() => _selectedFilter = OfflineFilter.open),
+                      )
+                    : Icon(
+                        _locationEnabled
+                            ? Icons.my_location_rounded
+                            : Icons.location_disabled_rounded,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                onPressed: _enablingLocation
+                    ? null
+                    : () {
+                        if (_locationEnabled) {
+                          setState(() {
+                            _locationEnabled = false;
+                            _userLat = null;
+                            _userLng = null;
+                            _locationError = null;
+                          });
+                          ref.read(gameProvider.notifier).clearLocationFilter();
+                        } else {
+                          _enableLocationBasedGames();
+                        }
+                      },
+              ),
+              IconButton(
+                icon: const Icon(
+                  Icons.refresh_rounded,
+                  color: Colors.white,
+                  size: 24,
+                ),
+                onPressed: _refreshData,
+              ),
+            ],
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(60),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.backgroundDark : Colors.white,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(24),
+                  ),
+                ),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _FilterChip(
+                        label: 'All',
+                        count: allOfflineGames.length,
+                        isSelected: _selectedFilter == OfflineFilter.all,
+                        onTap: () {
+                          if (_selectedFilter == OfflineFilter.all) return;
+                          setState(() => _selectedFilter = OfflineFilter.all);
+                          ref.read(gameProvider.notifier).clearLocationFilter();
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      _FilterChip(
+                        label: 'Nearby',
+                        count: allOfflineGames.where((g) {
+                          if (_userLat != null && _userLng != null && g.location != null) {
+                            final d = Geolocator.distanceBetween(_userLat!, _userLng!, g.location!.latitude, g.location!.longitude);
+                            return d <= 10000;
+                          }
+                          return false;
+                        }).length,
+                        isSelected: _selectedFilter == OfflineFilter.nearby,
+                        onTap: () {
+                          if (_selectedFilter == OfflineFilter.nearby) return;
+                          setState(() => _selectedFilter = OfflineFilter.nearby);
+                          if (!_locationEnabled) {
+                            _enableLocationBasedGames();
+                          } else {
+                             // Location already on, just refresh for nearby
+                             _refreshData();
+                          }
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      _FilterChip(
+                        label: 'Open',
+                        count: allOfflineGames.where((g) => g.isOpen).length,
+                        isSelected: _selectedFilter == OfflineFilter.open,
+                        onTap: () => setState(
+                          () => _selectedFilter = OfflineFilter.open,
                         ),
-                        const SizedBox(width: 8),
-                        _FilterChip(
-                          label: 'My Games',
-                          count: currentUserId != null 
-                            ? allOfflineGames.where((g) => g.isCreator(currentUserId) || g.isParticipant(currentUserId)).length 
+                      ),
+                      const SizedBox(width: 8),
+                      _FilterChip(
+                        label: 'My Games',
+                        count: currentUserId != null
+                            ? allOfflineGames
+                                .where(
+                                  (g) =>
+                                      g.isCreator(currentUserId) ||
+                                      g.isParticipant(currentUserId),
+                                )
+                                .length
                             : 0,
-                          isSelected: _selectedFilter == OfflineFilter.myGames,
-                          onTap: () => setState(() => _selectedFilter = OfflineFilter.myGames),
+                        isSelected: _selectedFilter == OfflineFilter.myGames,
+                        onTap: () => setState(
+                          () => _selectedFilter = OfflineFilter.myGames,
                         ),
+                      ),
+                      if (_locationEnabled && !_enablingLocation) ...[
                         const SizedBox(width: 12),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFF0284C7).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: const Color(0xFF0284C7).withOpacity(0.2)),
+                            border: Border.all(
+                              color: const Color(0xFF0284C7).withOpacity(0.2),
+                            ),
                           ),
                           child: const Row(
                             children: [
-                              Icon(Icons.radar_rounded, size: 12, color: Color(0xFF0284C7)),
+                              Icon(
+                                Icons.radar_rounded,
+                                size: 12,
+                                color: Color(0xFF0284C7),
+                              ),
                               SizedBox(width: 4),
                               Text(
                                 '10km Radius',
@@ -412,109 +522,121 @@ class _OfflineGamesPageState extends ConsumerState<OfflineGamesPage> {
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-          body: Container(
-            color: isDark ? AppColors.backgroundDark : Colors.white,
-            child: !_locationEnabled
-          ? _LocationAccessState(
-            isLoading: _enablingLocation,
-            error: _locationError,
-            onEnable: _enableLocationBasedGames,
-          )
-          : state.isLoading && allOfflineGames.isEmpty
-          ? const Center(
-              child: CircularProgressIndicator(
-                  strokeWidth: 2.5, color: AppColors.primary))
-          : filteredGames.isEmpty
-              ? _EmptyState(
-                  filter: _selectedFilter,
-                  onCreateTap: () => _showCreateSheet(context),
-                  onShowAll: () => setState(() => _selectedFilter = OfflineFilter.all),
-                )
-              : RefreshIndicator(
-                  color: AppColors.primary,
-                  onRefresh: () async {
-                    await Future.wait([
-                      ref.read(gameProvider.notifier).fetchGames(refresh: true),
-                      ref.read(gameProvider.notifier).fetchMyJoinedGames(),
-                      ref.read(gameProvider.notifier).fetchMyCreatedGames(),
-                    ]);
-                  },
-                  child: ListView.separated(
-                    padding: EdgeInsets.all(AppSpacing.lg),
-                    itemCount: filteredGames.length,
-                    separatorBuilder: (_, __) => SizedBox(height: AppSpacing.md),
-                    itemBuilder: (_, i) {
-                      final game = filteredGames[i];
-                      // A user is "joined" if they appear in myJoinedGames/myCreatedGames
-                      // OR if the participants list on the game itself contains them.
-                      final isAlreadyJoined = currentUserId != null && (
-                        joinedGameIds.contains(game.id) ||
-                        game.isCreator(currentUserId) ||
-                        game.isParticipant(currentUserId)
-                      );
-                        final isAlreadyCreator = createdGameIds.contains(game.id) ||
-                          (currentUserId != null && game.isCreator(currentUserId));
-                      return GameCard(
-                        game: game,
-                        currentUserId: currentUserId,
-                        isAlreadyJoined: isAlreadyJoined,
-                        isAlreadyCreator: isAlreadyCreator,
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => GameDetailPage(
-                              gameId: game.id,
-                              preloadedGame: game,
-                            ),
-                          ),
-                        ),
-                        onJoin: () => doAction(
-                          () async {
-                            final result = await ref.read(gameProvider.notifier).joinGame(game.id);
-                            return result != null;
-                          },
-                          'Joined game!',
-                          'Failed to join',
-                        ),
-                        onLeave: () => doAction(
-                          () async {
-                            final result = await ref.read(gameProvider.notifier).leaveGame(game.id);
-                            if (result != null) ref.read(chatProvider.notifier).leaveRoom(game.id);
-                            return result != null;
-                          },
-                          'Left game',
-                          'Failed to leave',
-                        ),
-                        onCancel: () => doAction(
-                          () async {
-                            final result = await ref.read(gameProvider.notifier).cancelGame(game.id);
-                            return result != null;
-                          },
-                          'Game cancelled',
-                          'Failed to cancel',
-                        ),
-                        onDelete: isAlreadyCreator ? () => confirmDelete(game.id) : null,
-                      );
-                    },
+                    ],
                   ),
                 ),
               ),
             ),
           ),
+        ],
+        body: Container(
+          color: isDark ? AppColors.backgroundDark : Colors.white,
+          child: state.isLoading && allOfflineGames.isEmpty
+              ? const Center(
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: AppColors.primary,
+                  ),
+                )
+              : (_selectedFilter == OfflineFilter.nearby && !_locationEnabled)
+                  ? _LocationAccessState(
+                      isLoading: _enablingLocation,
+                      error: _locationError,
+                      onEnable: _enableLocationBasedGames,
+                    )
+                  : filteredGames.isEmpty
+                      ? _EmptyState(
+                          filter: _selectedFilter,
+                          onCreateTap: () => _showCreateSheet(context),
+                          onShowAll: () =>
+                              setState(() => _selectedFilter = OfflineFilter.all),
+                        )
+                      : RefreshIndicator(
+                      color: AppColors.primary,
+                      onRefresh: _refreshData,
+                      child: ListView.separated(
+                        padding: EdgeInsets.all(AppSpacing.lg),
+                        itemCount: filteredGames.length,
+                        separatorBuilder: (_, __) =>
+                            SizedBox(height: AppSpacing.md),
+                        itemBuilder: (_, i) {
+                          final game = filteredGames[i];
+                          final isAlreadyJoined = currentUserId != null &&
+                              (joinedGameIds.contains(game.id) ||
+                                  game.isCreator(currentUserId) ||
+                                  game.isParticipant(currentUserId));
+                          final isAlreadyCreator = createdGameIds
+                                  .contains(game.id) ||
+                              (currentUserId != null &&
+                                  game.isCreator(currentUserId));
+                          return GameCard(
+                            game: game,
+                            currentUserId: currentUserId,
+                            isAlreadyJoined: isAlreadyJoined,
+                            isAlreadyCreator: isAlreadyCreator,
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => GameDetailPage(
+                                  gameId: game.id,
+                                  preloadedGame: game,
+                                ),
+                              ),
+                            ),
+                            onJoin: () => doAction(
+                              () async {
+                                final result = await ref
+                                    .read(gameProvider.notifier)
+                                    .joinGame(game.id);
+                                return result != null;
+                              },
+                              'Joined game!',
+                              'Failed to join',
+                            ),
+                            onLeave: () => doAction(
+                              () async {
+                                final result = await ref
+                                    .read(gameProvider.notifier)
+                                    .leaveGame(game.id);
+                                if (result != null) {
+                                  ref
+                                      .read(chatProvider.notifier)
+                                      .leaveRoom(game.id);
+                                }
+                                return result != null;
+                              },
+                              'Left game',
+                              'Failed to leave',
+                            ),
+                            onCancel: () => doAction(
+                              () async {
+                                final result = await ref
+                                    .read(gameProvider.notifier)
+                                    .cancelGame(game.id);
+                                return result != null;
+                              },
+                              'Game cancelled',
+                              'Failed to cancel',
+                            ),
+                            onDelete: isAlreadyCreator
+                                ? () => confirmDelete(game.id)
+                                : null,
+                          );
+                        },
+                      ),
+                    ),
+        ),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showCreateSheet(context),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 2,
         icon: const Icon(Icons.add_rounded, size: 22),
-        label: const Text('Create Game',
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+        label: const Text(
+          'Create Game',
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+        ),
       ),
     );
   }
@@ -539,7 +661,10 @@ class _FilterChip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+        padding: EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primary : AppColors.surface,
           borderRadius: BorderRadius.circular(AppRadius.md),
@@ -560,10 +685,13 @@ class _FilterChip extends StatelessWidget {
             ),
             SizedBox(width: AppSpacing.xs),
             Container(
-              padding: EdgeInsets.symmetric(horizontal: AppSpacing.xs + 2, vertical: 2),
+              padding: EdgeInsets.symmetric(
+                horizontal: AppSpacing.xs + 2,
+                vertical: 2,
+              ),
               decoration: BoxDecoration(
-                color: isSelected 
-                    ? Colors.white.withValues(alpha: 0.2) 
+                color: isSelected
+                    ? Colors.white.withValues(alpha: 0.2)
                     : AppColors.primaryLight,
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -602,24 +730,28 @@ class _LocationAccessState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.location_on_outlined, size: 52, color: AppColors.primary),
+            const Icon(
+              Icons.location_on_outlined,
+              size: 52,
+              color: AppColors.primary,
+            ),
             SizedBox(height: AppSpacing.md),
             Text(
               'Enable location to see offline games within 10 km.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w700,
-                  ),
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             if (error != null) ...[
               SizedBox(height: AppSpacing.sm),
               Text(
                 error!,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.error,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: AppColors.error),
               ),
             ],
             SizedBox(height: AppSpacing.lg),
@@ -629,10 +761,15 @@ class _LocationAccessState extends StatelessWidget {
                   ? const SizedBox(
                       width: 16,
                       height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
                   : const Icon(Icons.my_location_rounded, size: 18),
-              label: Text(isLoading ? 'Detecting location...' : 'Enable Location'),
+              label: Text(
+                isLoading ? 'Detecting location...' : 'Enable Location',
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
@@ -658,13 +795,18 @@ class _EmptyState extends StatelessWidget {
 
   String get _title => switch (filter) {
     OfflineFilter.all => 'No Offline Games Yet',
+    OfflineFilter.nearby => 'No Games Nearby',
     OfflineFilter.open => 'No Open Games',
     OfflineFilter.myGames => 'No Games You\'re Part Of',
   };
 
   String get _subtitle => switch (filter) {
-    OfflineFilter.all => 'Organise a local match and meet\nplayers in your area!',
-    OfflineFilter.open => 'All games are either full or ended.\nCreate a new one!',
+    OfflineFilter.all =>
+      'Organise a local match and meet\nplayers in your area!',
+    OfflineFilter.nearby =>
+      'Search for games within 10km or\ncreate your own local game!',
+    OfflineFilter.open =>
+      'All games are either full or ended.\nCreate a new one!',
     OfflineFilter.myGames => 'Join a game or create your own\nto see it here.',
   };
 
@@ -679,25 +821,33 @@ class _EmptyState extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(AppSpacing.xxl),
               decoration: const BoxDecoration(
-                  color: AppColors.surfaceLight, shape: BoxShape.circle),
+                color: AppColors.surfaceLight,
+                shape: BoxShape.circle,
+              ),
               child: Icon(
-                filter == OfflineFilter.myGames 
-                    ? Icons.person_outline_rounded 
+                filter == OfflineFilter.myGames
+                    ? Icons.person_outline_rounded
                     : Icons.sports_rounded,
-                size: 56, 
+                size: 56,
                 color: AppColors.textTertiary,
               ),
             ),
             SizedBox(height: AppSpacing.xl),
-            Text(_title,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
+            Text(
+              _title,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
             SizedBox(height: AppSpacing.sm),
             Text(
               _subtitle,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary, height: 1.5),
+                color: AppColors.textSecondary,
+                height: 1.5,
+              ),
             ),
             SizedBox(height: AppSpacing.xxl),
             if (filter != OfflineFilter.all) ...[
@@ -707,28 +857,38 @@ class _EmptyState extends StatelessWidget {
                   foregroundColor: AppColors.primary,
                   side: const BorderSide(color: AppColors.primary),
                   padding: EdgeInsets.symmetric(
-                      horizontal: AppSpacing.xl, vertical: AppSpacing.md),
+                    horizontal: AppSpacing.xl,
+                    vertical: AppSpacing.md,
+                  ),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md)),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
                 ),
-                child: const Text('Show All Games',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                child: const Text(
+                  'Show All Games',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                ),
               ),
               SizedBox(height: AppSpacing.md),
             ],
             ElevatedButton.icon(
               onPressed: onCreateTap,
               icon: const Icon(Icons.add_rounded, size: 20),
-              label: const Text('Create Offline Game',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+              label: const Text(
+                'Create Offline Game',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 padding: EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xl, vertical: AppSpacing.md + 2),
+                  horizontal: AppSpacing.xl,
+                  vertical: AppSpacing.md + 2,
+                ),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.md)),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
               ),
             ),
           ],

@@ -150,9 +150,10 @@ class GameNotifier extends StateNotifier<GameState> {
   }
 
   Future<void> fetchGames({bool refresh = false, bool excludeMe = false}) async {
-    if (state.isLoading) return;
+    if (state.isLoading && !refresh) return;
     final page = refresh ? 1 : state.page;
     state = state.copyWith(isLoading: true, clearError: true, page: page);
+    debugPrint('[GameNotifier] 🔄 Fetching games (page: $page, refresh: $refresh, category: ${state.categoryFilter}, location: ${state.hasLocationFilter ? "${state.nearLatitude}, ${state.nearLongitude} (${state.nearRadius}km)" : "none"})');
     try {
       final result = await _repository.fetchGames(
         page: page,

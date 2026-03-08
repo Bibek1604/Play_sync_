@@ -26,17 +26,6 @@ import '../../features/leaderboard/presentation/pages/leaderboard_page.dart';
 import '../../features/scorecard/scorecard.dart';
 import '../../features/history/presentation/pages/game_history_page.dart';
 import '../../features/notifications/presentation/pages/notifications_page.dart';
-import '../../features/tournament/presentation/pages/tournament_list_page.dart';
-import '../../features/tournament/presentation/pages/tournament_detail_page.dart';
-import '../../features/tournament/presentation/pages/create_tournament_page.dart';
-import '../../features/tournament/presentation/pages/tournament_chat_page.dart';
-import '../../features/tournament/presentation/pages/tournament_payments_page.dart';
-import '../../features/tournament/presentation/pages/tournament_payment_screen.dart';
-import '../../features/tournament/presentation/pages/esewa_payment_page.dart';
-import '../../features/tournament/presentation/pages/payment_success_screen.dart';
-import '../../features/tournament/presentation/pages/payment_failed_screen.dart';
-import '../../features/tournament/domain/entities/tournament_entity.dart';
-import '../../features/tournament/domain/entities/tournament_payment_entity.dart';
 import '../../core/widgets/app_shell.dart';
 
 /// Application Router
@@ -85,42 +74,24 @@ class AppRouter {
 
       // ── App Shell (bottom-nav host) ───────────────────────────────────────
       case AppRoutes.dashboard:
-        return _buildRoute(
-          const AuthGuard(child: AppShell()),
-          settings,
-        );
+        return _buildRoute(const AuthGuard(child: AppShell()), settings);
 
       // ── Stand-alone protected pages ───────────────────────────────────────
       case AppRoutes.settings:
-        return _buildRoute(
-          const AuthGuard(child: SettingsPage()),
-          settings,
-        );
+        return _buildRoute(const AuthGuard(child: SettingsPage()), settings);
 
       case AppRoutes.profile:
-        return _buildRoute(
-          const AuthGuard(child: ProfilePage()),
-          settings,
-        );
+        return _buildRoute(const AuthGuard(child: ProfilePage()), settings);
 
       case AppRoutes.theme:
-        return _buildRoute(
-          const AuthGuard(child: ThemePage()),
-          settings,
-        );
+        return _buildRoute(const AuthGuard(child: ThemePage()), settings);
 
       case AppRoutes.location:
-        return _buildRoute(
-          const AuthGuard(child: LocationPage()),
-          settings,
-        );
+        return _buildRoute(const AuthGuard(child: LocationPage()), settings);
 
       // ── Game routes ───────────────────────────────────────────────────────
       case AppRoutes.game:
-        return _buildRoute(
-          const AuthGuard(child: GamePage()),
-          settings,
-        );
+        return _buildRoute(const AuthGuard(child: GamePage()), settings);
 
       case AppRoutes.availableGames:
         return _buildRoute(
@@ -129,10 +100,7 @@ class AppRouter {
         );
 
       case AppRoutes.onlineGames:
-        return _buildRoute(
-          const AuthGuard(child: OnlineGamesPage()),
-          settings,
-        );
+        return _buildRoute(const AuthGuard(child: OnlineGamesPage()), settings);
 
       case AppRoutes.offlineGames:
         return _buildRoute(
@@ -141,10 +109,7 @@ class AppRouter {
         );
 
       case AppRoutes.endedGames:
-        return _buildRoute(
-          const AuthGuard(child: EndedGamesPage()),
-          settings,
-        );
+        return _buildRoute(const AuthGuard(child: EndedGamesPage()), settings);
 
       // ── Game Detail ─────────────────────────────────────────────────────
       case AppRoutes.gameDetail:
@@ -165,7 +130,9 @@ class AppRouter {
           return MaterialPageRoute(
             builder: (_) => const Scaffold(
               body: Center(
-                child: Text('Error: Game not found. Please navigate from game details.'),
+                child: Text(
+                  'Error: Game not found. Please navigate from game details.',
+                ),
               ),
             ),
           );
@@ -177,29 +144,17 @@ class AppRouter {
 
       // ── Scorecard ─────────────────────────────────────────────────────────
       case AppRoutes.scorecard:
-        return _buildRoute(
-          const AuthGuard(child: ScorecardPage()),
-          settings,
-        );
+        return _buildRoute(const AuthGuard(child: ScorecardPage()), settings);
 
       // ── Social / Chat ────────────────────────────────────────────────────
       case AppRoutes.chat:
-        return _buildRoute(
-          const AuthGuard(child: ChatPage()),
-          settings,
-        );
+        return _buildRoute(const AuthGuard(child: ChatPage()), settings);
 
       case AppRoutes.rankings:
-        return _buildRoute(
-          const AuthGuard(child: LeaderboardPage()),
-          settings,
-        );
+        return _buildRoute(const AuthGuard(child: LeaderboardPage()), settings);
 
       case AppRoutes.gameHistory:
-        return _buildRoute(
-          const AuthGuard(child: GameHistoryPage()),
-          settings,
-        );
+        return _buildRoute(const AuthGuard(child: GameHistoryPage()), settings);
 
       case AppRoutes.notifications:
         return _buildRoute(
@@ -343,10 +298,7 @@ class AppRouter {
 
       // ── Fallback ──────────────────────────────────────────────────────────
       default:
-        return _buildRoute(
-          const _UnknownRoutePage(),
-          settings,
-        );
+        return _buildRoute(const _UnknownRoutePage(), settings);
     }
   }
 
@@ -354,10 +306,7 @@ class AppRouter {
     Widget page,
     RouteSettings settings,
   ) {
-    return MaterialPageRoute(
-      builder: (_) => page,
-      settings: settings,
-    );
+    return MaterialPageRoute(builder: (_) => page, settings: settings);
   }
 }
 
@@ -373,17 +322,28 @@ class _UnknownRoutePage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 80, color: AppColors.textTertiary),
+            const Icon(
+              Icons.error_outline,
+              size: 80,
+              color: AppColors.textTertiary,
+            ),
             const SizedBox(height: 16),
-            const Text('Page Not Found',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            const Text(
+              'Page Not Found',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
-            Text('The requested page does not exist.',
-                style: TextStyle(fontSize: 16, color: AppColors.textSecondary)),
+            Text(
+              'The requested page does not exist.',
+              style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
+            ),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () => Navigator.pushNamedAndRemoveUntil(
-                  context, AppRoutes.dashboard, (r) => false),
+                context,
+                AppRoutes.dashboard,
+                (r) => false,
+              ),
               child: const Text('Go to Home'),
             ),
           ],
