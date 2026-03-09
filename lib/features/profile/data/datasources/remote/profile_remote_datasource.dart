@@ -17,8 +17,6 @@ class ProfileRemoteDataSource implements IProfileDataSource {
   final ApiClient _apiClient;
 
   ProfileRemoteDataSource({required ApiClient apiClient}) : _apiClient = apiClient;
-
-  /// ========== GET PROFILE ==========
   @override
   Future<ProfileResponseModel> getProfile() async {
     try {
@@ -33,8 +31,6 @@ class ProfileRemoteDataSource implements IProfileDataSource {
       throw _handleDioError(e);
     }
   }
-
-  /// ========== UPDATE PROFILE ==========
   @override
   Future<ProfileResponseModel> updateProfile(
     Map<String, dynamic> profileData, {
@@ -95,8 +91,6 @@ class ProfileRemoteDataSource implements IProfileDataSource {
       throw _handleDioError(e);
     }
   }
-
-  /// ========== UPLOAD PROFILE PICTURE ==========
   @override
   Future<String> uploadProfilePicture(XFile image) async {
     try {
@@ -141,8 +135,6 @@ class ProfileRemoteDataSource implements IProfileDataSource {
       throw _handleDioError(e);
     }
   }
-
-  /// ========== UPLOAD COVER PICTURE ==========
   @override
   Future<String> uploadCoverPicture(XFile image) async {
     try {
@@ -177,8 +169,6 @@ class ProfileRemoteDataSource implements IProfileDataSource {
       throw _handleDioError(e);
     }
   }
-
-  /// ========== UPLOAD GALLERY PICTURES ==========
   @override
   Future<List<String>> uploadGalleryPictures(List<XFile> images) async {
     try {
@@ -218,8 +208,6 @@ class ProfileRemoteDataSource implements IProfileDataSource {
       throw _handleDioError(e);
     }
   }
-
-  /// ========== DELETE PROFILE PICTURE ==========
   @override
   Future<bool> deleteProfilePicture() async {
     try {

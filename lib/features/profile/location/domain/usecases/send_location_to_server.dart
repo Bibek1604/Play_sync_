@@ -4,7 +4,6 @@ import '../repositories/location_repository.dart';
 import '../../../../../core/error/failures.dart';
 
 /// Use case for sending location data to backend server
-/// 
 /// This encapsulates the business logic for:
 /// 1. Validating location data
 /// 2. Sending to API endpoint
@@ -16,14 +15,11 @@ class SendLocationToServer {
   SendLocationToServer(this.repository);
 
   /// Execute the use case to send location to server
-  /// 
-  /// [location] - LocationEntity with GPS coordinates and address
-  /// 
-  /// Returns:
+/// [location] - LocationEntity with GPS coordinates and address
+/// Returns:
   /// - Right(void) on success
   /// - Left(Failure) on error
-  /// 
-  /// Possible failures:
+/// Possible failures:
   /// - NetworkFailure: No internet connection
   /// - ServerFailure: API error (4xx, 5xx)
   /// - ValidationFailure: Invalid location data
@@ -49,8 +45,7 @@ class SendLocationToServer {
   }
 
   /// Execute with retry logic
-  /// 
-  /// [location] - Location to send
+/// [location] - Location to send
   /// [maxRetries] - Maximum number of retry attempts (default: 3)
   /// [retryDelay] - Delay between retries (default: 2 seconds)
   Future<Either<Failure, void>> executeWithRetry(

@@ -250,10 +250,7 @@ class _TournamentChatPageState extends ConsumerState<TournamentChatPage> {
       ),
     );
   }
-
-  // ── Messages ──────────────────────────────────────────────────────────────
-
-  Widget _buildMessagesList(
+Widget _buildMessagesList(
       TournamentChatState state, ThemeData theme, bool isDark) {
     if (state.isLoadingHistory && state.messages.isEmpty) {
       return const Center(child: CircularProgressIndicator());
@@ -313,10 +310,7 @@ class _TournamentChatPageState extends ConsumerState<TournamentChatPage> {
     }
     return msg.userId?.toString() == _myId;
   }
-
-  // ── Input ─────────────────────────────────────────────────────────────────
-
-  Widget _buildMessageInput(TournamentChatState state, bool isDark) {
+Widget _buildMessageInput(TournamentChatState state, bool isDark) {
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 8, 8, 12),
       decoration: BoxDecoration(
@@ -363,10 +357,7 @@ class _TournamentChatPageState extends ConsumerState<TournamentChatPage> {
     ref.read(tournamentChatProvider.notifier).sendMessage(content);
     _messageCtrl.clear();
   }
-
-  // ── Participants Panel ────────────────────────────────────────────────────
-
-  Widget _buildParticipantsList(TournamentChatState state, ThemeData theme) {
+Widget _buildParticipantsList(TournamentChatState state, ThemeData theme) {
     if (state.participants.isEmpty) {
       return const Center(child: Text('No participants loaded'));
     }
@@ -403,9 +394,6 @@ class _TournamentChatPageState extends ConsumerState<TournamentChatPage> {
     );
   }
 }
-
-// ── Message Bubble ──────────────────────────────────────────────────────────
-
 class _MessageBubble extends StatelessWidget {
   final TournamentChatMessage message;
   final bool isMe;

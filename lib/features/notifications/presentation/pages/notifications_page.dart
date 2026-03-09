@@ -141,11 +141,6 @@ class NotificationsPage extends ConsumerWidget {
     );
   }
 }
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-// ── Tile ──────────────────────────────────────────────────────────────────────
-
 class _NotificationCard extends StatelessWidget {
   final NotificationEntity notification;
   final bool isDark;
@@ -258,6 +253,3 @@ class _NotificationCard extends StatelessWidget {
     );
   }
 }
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-

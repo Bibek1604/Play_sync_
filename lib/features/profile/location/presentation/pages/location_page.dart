@@ -6,7 +6,6 @@ import '../widgets/location_card.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 /// Location page for getting and managing user's GPS location
-/// 
 /// Features:
 /// - Request location permission
 /// - Get current GPS coordinates

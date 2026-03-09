@@ -1,5 +1,4 @@
 /// Theme Barrel Export
-/// 
 /// Export all theme related files from one place.
 library;
 

@@ -81,9 +81,7 @@ class _SplashPageState extends ConsumerState<SplashPage>
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Spacer(flex: 3),
-
-                    // ── Logo ──────────────────────────────────────────
-                    Center(
+Center(
                       child: Image.asset(
                         'assets/images/final.png',
                         height: 160,
@@ -104,9 +102,7 @@ class _SplashPageState extends ConsumerState<SplashPage>
                     ),
 
                     const Spacer(flex: 3),
-
-                    // ── Loading indicator ─────────────────────────────
-                    SizedBox(
+SizedBox(
                       width: 28,
                       height: 28,
                       child: CircularProgressIndicator(

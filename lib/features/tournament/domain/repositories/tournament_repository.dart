@@ -5,8 +5,7 @@ import '../entities/tournament_payment_entity.dart';
 
 /// Tournament domain repository interface
 abstract class ITournamentRepository {
-  // ── CRUD ──────────────────────────────────────────────────────────────────
-  Future<Either<Failure, List<TournamentEntity>>> getTournaments({
+Future<Either<Failure, List<TournamentEntity>>> getTournaments({
     int page = 1,
     int limit = 10,
     String? status,
@@ -24,9 +23,7 @@ abstract class ITournamentRepository {
   Future<Either<Failure, void>> deleteTournament(String id);
 
   Future<Either<Failure, List<TournamentEntity>>> getMyTournaments();
-
-  // ── Payments ──────────────────────────────────────────────────────────────
-  Future<Either<Failure, PaymentInitiation>> initiatePayment(String id);
+Future<Either<Failure, PaymentInitiation>> initiatePayment(String id);
 
   Future<Either<Failure, TournamentPaymentEntity>> verifyPayment(
       String? transactionUuid);

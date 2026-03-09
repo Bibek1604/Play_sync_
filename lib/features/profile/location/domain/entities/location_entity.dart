@@ -1,7 +1,6 @@
 import 'package:equatable/equatable.dart';
 
 /// Domain entity representing a geographic location
-/// 
 /// This entity contains GPS coordinates and human-readable address information.
 /// Used for offline game creation and nearby game searches.
 class LocationEntity extends Equatable {

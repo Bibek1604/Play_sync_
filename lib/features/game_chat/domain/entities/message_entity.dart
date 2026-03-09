@@ -1,7 +1,6 @@
 import 'package:equatable/equatable.dart';
 
 /// A single chat message in the domain layer.
-///
 /// `isMe` is computed dynamically by comparing [senderId] against
 /// the current user's ID — it is NEVER stored as a field so it
 /// is always fresh, even if the auth state changes.
@@ -27,8 +26,7 @@ class MessageEntity extends Equatable {
   });
 
   /// Returns `true` when this message was sent by the current user.
-  ///
-  /// STRICT RULE: Comparison is ID-only, with normalization:
+/// STRICT RULE: Comparison is ID-only, with normalization:
   /// - Both IDs are trimmed and lowercased
   /// - No name fallback, no exceptions, no index-based logic
   /// - If IDs don't match exactly, this returns false

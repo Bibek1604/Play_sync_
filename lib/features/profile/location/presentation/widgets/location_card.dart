@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../domain/entities/location_entity.dart';
 
 /// Reusable location card widget
-/// 
 /// Shows:
 /// - Current location status
 /// - GPS coordinates

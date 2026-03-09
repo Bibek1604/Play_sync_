@@ -18,10 +18,7 @@ class TournamentRepositoryImpl implements ITournamentRepository {
     required TournamentLocalDataSource local,
   })  : _remote = remote,
         _local = local;
-
-  // ── CRUD ──────────────────────────────────────────────────────────────────
-
-  @override
+@override
   Future<Either<Failure, List<TournamentEntity>>> getTournaments({
     int page = 1,
     int limit = 10,
@@ -122,10 +119,7 @@ class TournamentRepositoryImpl implements ITournamentRepository {
       return Left(GeneralFailure(message: e.toString()));
     }
   }
-
-  // ── Payments ──────────────────────────────────────────────────────────────
-
-  @override
+@override
   Future<Either<Failure, PaymentInitiation>> initiatePayment(String id) async {
     try {
       final result = await _remote.initiatePayment(id);
@@ -247,10 +241,7 @@ class TournamentRepositoryImpl implements ITournamentRepository {
       return Left(GeneralFailure(message: e.toString()));
     }
   }
-
-  // ── Error mapping ─────────────────────────────────────────────────────────
-
-  Failure _mapDioError(DioException e) {
+Failure _mapDioError(DioException e) {
     final statusCode = e.response?.statusCode;
     final responseData = e.response?.data;
     String message = 'Network error occurred';

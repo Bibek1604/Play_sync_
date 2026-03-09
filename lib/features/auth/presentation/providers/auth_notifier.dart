@@ -6,10 +6,7 @@ import 'package:play_sync_new/features/auth/domain/entities/auth_entity.dart';
 import 'package:play_sync_new/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:play_sync_new/features/auth/domain/usecases/login_usecase.dart';
 import 'package:play_sync_new/features/auth/domain/usecases/register_usecase.dart';
-
-// ============================================================================
 // AUTH STATE
-// ============================================================================
 
 /// Enum for authentication status
 enum AuthStatus { initial, loading, authenticated, unauthenticated, error }
@@ -43,10 +40,7 @@ class AuthState {
     return AuthState(user: user, status: AuthStatus.authenticated);
   }
 }
-
-// ============================================================================
 // AUTH NOTIFIER
-// ============================================================================
 
 /// AuthNotifier manages authentication state using clean architecture
 class AuthNotifier extends StateNotifier<AuthState> {
@@ -188,10 +182,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
   }
 }
-
-// ============================================================================
 // PROVIDERS
-// ============================================================================
 
 /// Main auth state provider
 final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((

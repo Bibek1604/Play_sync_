@@ -4,7 +4,6 @@ import '../repositories/location_repository.dart';
 import '../../../../../core/error/failures.dart';
 
 /// Use case for getting current GPS location
-/// 
 /// This encapsulates the business logic for:
 /// 1. Checking location permissions
 /// 2. Checking if GPS is enabled
@@ -17,10 +16,8 @@ class GetCurrentLocation {
   GetCurrentLocation(this.repository);
 
   /// Execute the use case to get current location
-  /// 
-  /// Returns [LocationEntity] with GPS coordinates and human-readable address
-  /// 
-  /// This method handles:
+/// Returns [LocationEntity] with GPS coordinates and human-readable address
+/// This method handles:
   /// - Permission checks
   /// - GPS enabled checks
   /// - Coordinate fetching
@@ -62,8 +59,7 @@ class GetCurrentLocation {
   }
 
   /// Execute with custom error handling
-  /// 
-  /// Allows caller to handle specific error cases
+/// Allows caller to handle specific error cases
   Future<Either<Failure, LocationEntity>> execute({
     bool skipPermissionCheck = false,
     bool skipServiceCheck = false,

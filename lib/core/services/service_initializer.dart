@@ -13,8 +13,7 @@ class ServiceInitializer {
   ServiceInitializer._();
 
   /// Initialize all required services.
-  /// 
-  /// This is called after the first frame renders to avoid blocking the UI.
+/// This is called after the first frame renders to avoid blocking the UI.
   static Future<void> initialize(WidgetRef ref) async {
     final stopwatch = Stopwatch()..start();
     

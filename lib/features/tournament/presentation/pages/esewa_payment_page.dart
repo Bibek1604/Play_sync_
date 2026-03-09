@@ -3,12 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 /// In-app WebView page for eSewa payment.
-///
 /// Arguments:
 /// - [paymentUrl] — eSewa form URL
 /// - [params] — form parameters (amount, product_code, etc.)
 /// - [tournamentId] — tournament being paid for (informational)
-///
 /// Returns the base64-encoded data query param from the eSewa success callback URL.
 /// Returns null if payment was cancelled or failed.
 class EsewaPaymentPage extends StatefulWidget {

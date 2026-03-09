@@ -10,11 +10,9 @@ import '../../../../core/widgets/back_button_widget.dart';
 import '../providers/game_notifier.dart';
 
 /// Simple REST-based chat page for a game.
-/// 
 /// No Socket.IO complexity. Pure REST API implementation:
 /// - GET  /api/v1/games/:gameId/chat  → Fetch messages
 /// - POST /api/v1/games/:gameId/chat  → Send message
-/// 
 /// Messages are fetched on open and when sending.
 class GameChatRestPage extends ConsumerStatefulWidget {
   const GameChatRestPage({super.key, required this.game});
@@ -330,8 +328,7 @@ class _GameChatRestPageState extends ConsumerState<GameChatRestPage> {
       ),
       body: Column(
         children: [
-          // ── Messages List ──────────────────────────────────────────────
-          Expanded(
+Expanded(
             child: _isLoadingHistory
                 ? const Center(
                     child: CircularProgressIndicator(color: AppColors.primary),
@@ -365,9 +362,7 @@ class _GameChatRestPageState extends ConsumerState<GameChatRestPage> {
                         },
                       ),
           ),
-
-          // ── Message Input ──────────────────────────────────────────────
-          Container(
+Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: AppColors.surface,

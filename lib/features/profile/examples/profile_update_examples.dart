@@ -4,15 +4,13 @@ import 'package:image_picker/image_picker.dart';
 import 'package:play_sync_new/features/profile/presentation/viewmodel/profile_notifier.dart';
 
 /// Example: How to use the Profile Update feature
-/// 
 /// This file demonstrates various ways to update user profile
 /// in the Play Sync application.
 
 class ProfileUpdateExamples {
   
   /// Example 1: Update only text fields (no image)
-  /// 
-  /// This sends a JSON request to the backend
+/// This sends a JSON request to the backend
   static Future<void> updateTextFieldsOnly(WidgetRef ref) async {
     await ref.read(profileNotifierProvider.notifier).updateProfile(
       fullName: 'Bibek Pandey',
@@ -23,8 +21,7 @@ class ProfileUpdateExamples {
   }
 
   /// Example 2: Update profile picture only
-  /// 
-  /// This sends a multipart/form-data request with just the image
+/// This sends a multipart/form-data request with just the image
   static Future<void> updateProfilePictureOnly(
     WidgetRef ref,
     XFile selectedImage,
@@ -35,8 +32,7 @@ class ProfileUpdateExamples {
   }
 
   /// Example 3: Update all fields including profile picture
-  /// 
-  /// This sends a multipart/form-data request with all data
+/// This sends a multipart/form-data request with all data
   static Future<void> updateAllFields(
     WidgetRef ref,
     XFile selectedImage,
@@ -51,8 +47,7 @@ class ProfileUpdateExamples {
   }
 
   /// Example 4: Change password
-  /// 
-  /// This requires current password for security
+/// This requires current password for security
   static Future<void> changePassword(WidgetRef ref) async {
     await ref.read(profileNotifierProvider.notifier).updateProfile(
       currentPassword: 'oldPassword123',
@@ -61,8 +56,7 @@ class ProfileUpdateExamples {
   }
 
   /// Example 5: Update profile with password change
-  /// 
-  /// You can update profile data and change password in one request
+/// You can update profile data and change password in one request
   static Future<void> updateProfileAndChangePassword(
     WidgetRef ref,
     XFile? selectedImage,
@@ -79,8 +73,7 @@ class ProfileUpdateExamples {
   }
 
   /// Example 6: Pick image and update profile
-  /// 
-  /// Complete flow: pick image, then update profile
+/// Complete flow: pick image, then update profile
   static Future<void> pickImageAndUpdateProfile(
     BuildContext context,
     WidgetRef ref,
@@ -104,8 +97,7 @@ class ProfileUpdateExamples {
   }
 
   /// Example 7: Listen to profile state changes
-  /// 
-  /// This shows how to react to success/error states
+/// This shows how to react to success/error states
   static Widget buildProfileUpdateListener(
     BuildContext context,
     WidgetRef ref,
@@ -139,8 +131,7 @@ class ProfileUpdateExamples {
   }
 
   /// Example 8: Show loading state during update
-  /// 
-  /// This shows how to display loading indicator
+/// This shows how to display loading indicator
   static Widget buildUpdateButton(WidgetRef ref) {
     final profileState = ref.watch(profileNotifierProvider);
 
@@ -164,8 +155,7 @@ class ProfileUpdateExamples {
   }
 
   /// Example 9: Validate before updating
-  /// 
-  /// This shows how to validate form data before sending
+/// This shows how to validate form data before sending
   static Future<void> updateWithValidation(
     GlobalKey<FormState> formKey,
     WidgetRef ref,
@@ -181,8 +171,7 @@ class ProfileUpdateExamples {
   }
 
   /// Example 10: Get current profile data
-  /// 
-  /// This shows how to access current profile
+/// This shows how to access current profile
   static void getCurrentProfile(WidgetRef ref) {
     final profileState = ref.read(profileNotifierProvider);
     final profile = profileState.profile;

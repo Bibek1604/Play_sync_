@@ -8,7 +8,6 @@ import '../core/providers/socket_provider.dart';
 import '../core/services/service_initializer.dart';
 
 /// PlaySync Application Root Widget
-///
 /// Main application widget with theme and routing configuration.
 class PlaySyncApp extends ConsumerStatefulWidget {
   const PlaySyncApp({super.key});

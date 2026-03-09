@@ -4,7 +4,6 @@ import '../location.dart';
 import '../../../../app/routes/app_routes.dart';
 
 /// Example 1: Simple Location Button
-/// 
 /// Shows how to add a "Get Location" button anywhere in your app
 class SimpleLocationButton extends ConsumerWidget {
   const SimpleLocationButton({super.key});
@@ -35,7 +34,6 @@ class SimpleLocationButton extends ConsumerWidget {
 }
 
 /// Example 2: Display Current Location
-/// 
 /// Shows how to display location data in your UI
 class LocationDisplay extends ConsumerWidget {
   const LocationDisplay({super.key});
@@ -80,7 +78,6 @@ class LocationDisplay extends ConsumerWidget {
 }
 
 /// Example 3: Create Offline Game with Location
-/// 
 /// Shows how to use location when creating an offline game
 class CreateOfflineGameExample extends ConsumerWidget {
   const CreateOfflineGameExample({super.key});
@@ -151,7 +148,6 @@ class CreateOfflineGameExample extends ConsumerWidget {
 }
 
 /// Example 4: Find Nearby Games
-/// 
 /// Shows how to filter games by location radius
 class NearbyGamesExample extends ConsumerWidget {
   final double radiusKm;
@@ -218,7 +214,6 @@ class NearbyGamesExample extends ConsumerWidget {
 }
 
 /// Example 5: Location with Error Handling
-/// 
 /// Shows how to handle different location states
 class LocationWithErrorHandling extends ConsumerWidget {
   const LocationWithErrorHandling({super.key});
@@ -341,7 +336,6 @@ class LocationWithErrorHandling extends ConsumerWidget {
 }
 
 /// Example 6: Navigate to Location Page
-/// 
 /// Shows how to navigate to the full location page
 class NavigateToLocationPage extends StatelessWidget {
   const NavigateToLocationPage({super.key});
@@ -361,7 +355,6 @@ class NavigateToLocationPage extends StatelessWidget {
 }
 
 /// Example 7: Distance Calculator
-/// 
 /// Shows how to calculate distance between two locations
 class DistanceCalculatorExample extends StatelessWidget {
   const DistanceCalculatorExample({super.key});

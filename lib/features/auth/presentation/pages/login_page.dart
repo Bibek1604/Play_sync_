@@ -144,9 +144,7 @@ class _LoginPageState extends ConsumerState<LoginPage>
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const SizedBox(height: 32),
-
-                      // ── Logo ──────────────────────────────────────
-                      Center(
+Center(
                         child: Image.asset(
                           'assets/images/final.png',
                           height: 180,
@@ -155,9 +153,7 @@ class _LoginPageState extends ConsumerState<LoginPage>
                         ),
                       ),
                       const SizedBox(height: 32),
-
-                      // ── Heading ───────────────────────────────────
-                      const Center(
+const Center(
                         child: Text(
                           'Welcome back — sign in to continue',
                           style: TextStyle(
@@ -168,9 +164,7 @@ class _LoginPageState extends ConsumerState<LoginPage>
                         ),
                       ),
                       const SizedBox(height: 40),
-
-                      // ── Email ─────────────────────────────────────
-                      _buildTextField(
+_buildTextField(
                         controller: _emailController,
                         label: 'Email address',
                         hint: 'you@example.com',
@@ -187,9 +181,7 @@ class _LoginPageState extends ConsumerState<LoginPage>
                         },
                       ),
                       const SizedBox(height: 16),
-
-                      // ── Password ──────────────────────────────────
-                      _buildTextField(
+_buildTextField(
                         controller: _passwordController,
                         label: 'Password',
                         hint: 'Your password',
@@ -213,9 +205,7 @@ class _LoginPageState extends ConsumerState<LoginPage>
                         },
                       ),
                       const SizedBox(height: 8),
-
-                      // ── Forgot password ───────────────────────────
-                      Align(
+Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
                           onPressed: isLoading
@@ -240,9 +230,7 @@ class _LoginPageState extends ConsumerState<LoginPage>
                         ),
                       ),
                       const SizedBox(height: 28),
-
-                      // ── Sign In button ────────────────────────────
-                      SizedBox(
+SizedBox(
                         height: 54,
                         child: ElevatedButton(
                           onPressed: isLoading ? null : _handleLogin,
@@ -281,9 +269,7 @@ class _LoginPageState extends ConsumerState<LoginPage>
                         ),
                       ),
                       const SizedBox(height: 28),
-
-                      // ── Divider ───────────────────────────────────
-                      Row(
+Row(
                         children: [
                           const Expanded(
                               child: Divider(color: AppColors.border)),
@@ -302,9 +288,7 @@ class _LoginPageState extends ConsumerState<LoginPage>
                         ],
                       ),
                       const SizedBox(height: 20),
-
-                      // ── Create account button ─────────────────────
-                      SizedBox(
+SizedBox(
                         height: 54,
                         child: OutlinedButton(
                           onPressed: isLoading

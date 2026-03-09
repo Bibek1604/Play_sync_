@@ -16,13 +16,11 @@ import '../../../chat/presentation/providers/chat_notifier.dart';
 import '../../../../core/widgets/back_button_widget.dart';
 
 /// Real-time chat page for a specific game room.
-///
 /// Socket events (backend contract):
 ///   Emit:   join:game  → gameId (String)
 ///           leave:game → gameId (String)
 ///           chat:send  → {gameId, content}  (with ack callback)
 ///   Listen: chat:message → ChatMessageDTO
-///
 /// REST: GET /games/:gameId/chat  → {data: {messages: [], hasMore, nextCursor}}
 /// REST fallback: POST /games/:gameId/chat → send message when socket offline
 class GameChatPage extends ConsumerStatefulWidget {
@@ -49,9 +47,7 @@ class _GameChatPageState extends ConsumerState<GameChatPage> {
   bool _isSending = false;
   static const int _maxMessages = 200; // Increased to support pagination
   int _currentPlayerCount = 0;
-
-  // ── Pagination state ────────────────────────────────────────────────────
-  bool _hasMore = false;
+bool _hasMore = false;
   String? _nextCursor;
   bool _isLoadingMore = false;
   static const int _pageSize = 50;
@@ -103,10 +99,7 @@ class _GameChatPageState extends ConsumerState<GameChatPage> {
       _loadMore();
     }
   }
-
-  // ── History ──────────────────────────────────────────────────────────────
-
-  Future<void> _loadHistory() async {
+Future<void> _loadHistory() async {
     try {
       final api = ref.read(apiClientProvider);
       final resp = await api.get(
@@ -194,10 +187,7 @@ class _GameChatPageState extends ConsumerState<GameChatPage> {
       if (mounted) setState(() => _isLoadingMore = false);
     }
   }
-
-  // ── Socket ───────────────────────────────────────────────────────────────
-
-  Future<void> _initSocket() async {
+Future<void> _initSocket() async {
     final storage = ref.read(secureStorageProvider);
     final token = await storage.read(key: 'access_token') ?? '';
     if (token.isEmpty) return;
@@ -282,14 +272,9 @@ class _GameChatPageState extends ConsumerState<GameChatPage> {
         _scrollToBottom();
       });
   }
-
-  // ── Message parsing ───────────────────────────────────────────────────────
-
-  /// Parses a backend ChatMessageDTO into a local [_ChatMsg].
-  ///
-  /// Supports both API formats:
-  ///
-  /// New format (current backend):
+/// Parses a backend ChatMessageDTO into a local [_ChatMsg].
+/// Supports both API formats:
+/// New format (current backend):
   /// ```json
   /// {
   ///   "_id": "...",
@@ -301,8 +286,7 @@ class _GameChatPageState extends ConsumerState<GameChatPage> {
   ///   "createdAt": "<ISO string>"
   /// }
   /// ```
-  ///
-  /// Old format (legacy fallback):
+/// Old format (legacy fallback):
   /// ```json
   /// {
   ///   "_id": "...",
@@ -316,9 +300,7 @@ class _GameChatPageState extends ConsumerState<GameChatPage> {
     final type = map['type'] as String? ?? 'text';
     final isSystem = type == 'system';
     final msgId = GameEntity.normalize(map['_id'] ?? map['id']);
-
-    // ── NEW format: flat senderId / senderName / text ──────────────────────
-    final newSenderId = map['senderId'] as String?;
+final newSenderId = map['senderId'] as String?;
     if (newSenderId != null && newSenderId.isNotEmpty) {
       final senderId = GameEntity.normalize(newSenderId);
       final senderName = (map['senderName'] as String?)?.trim();
@@ -338,9 +320,7 @@ class _GameChatPageState extends ConsumerState<GameChatPage> {
         avatarUrl: avatarUrl?.isNotEmpty == true ? avatarUrl : null,
       );
     }
-
-    // ── OLD format: nested user object / content ───────────────────────────
-    final rawUser = map['user'];
+final rawUser = map['user'];
     String senderId = '';
     String senderName = 'User';
     String? avatarUrl;
@@ -367,10 +347,7 @@ class _GameChatPageState extends ConsumerState<GameChatPage> {
       avatarUrl: avatarUrl?.isNotEmpty == true ? avatarUrl : null,
     );
   }
-
-  // ── Send ──────────────────────────────────────────────────────────────────
-
-  /// Returns true if we can send (either connected or REST fallback available)
+/// Returns true if we can send (either connected or REST fallback available)
   bool get _canSend => (_socket?.connected ?? false) || !_isLoadingHistory;
 
   void _sendMessage() async {
@@ -580,10 +557,7 @@ class _GameChatPageState extends ConsumerState<GameChatPage> {
     _messageController.dispose();
     super.dispose();
   }
-
-  // ── Build ─────────────────────────────────────────────────────────────────
-
-  @override
+@override
   Widget build(BuildContext context) {
     // Watch auth providers so we update _myUserId if it wasn't available on init
     final auth = ref.watch(authNotifierProvider);
@@ -718,9 +692,7 @@ class _GameChatPageState extends ConsumerState<GameChatPage> {
       body: Column(
         children: [
           // Message list begins immediately without offline banners
-
-          // ── Message list ─────────────────────────────────────────────────
-          Expanded(
+Expanded(
             child: _isLoadingHistory
                 ? const Center(child: CircularProgressIndicator())
                 : _messages.isEmpty
@@ -766,9 +738,7 @@ class _GameChatPageState extends ConsumerState<GameChatPage> {
                         },
                       ),
           ),
-
-          // ── Input bar ────────────────────────────────────────────────────
-          SafeArea(
+SafeArea(
             top: false,
             child: Padding(
               padding:
@@ -821,9 +791,6 @@ class _GameChatPageState extends ConsumerState<GameChatPage> {
     );
   }
 }
-
-// ── Data ─────────────────────────────────────────────────────────────────────
-
 class _ChatMsg {
   const _ChatMsg({
     this.id,

@@ -6,9 +6,6 @@ import '../../data/datasources/tournament_local_datasource.dart';
 import '../../data/repositories/tournament_repository_impl.dart';
 import '../../domain/entities/tournament_entity.dart';
 import '../../domain/repositories/tournament_repository.dart';
-
-// ── Dependency Providers ────────────────────────────────────────────────────
-
 final tournamentRemoteDataSourceProvider =
     Provider<TournamentRemoteDataSource>((ref) {
   final apiClient = ref.watch(apiClientProvider);
@@ -26,9 +23,6 @@ final tournamentRepositoryProvider = Provider<ITournamentRepository>((ref) {
     local: ref.watch(tournamentLocalDataSourceProvider),
   );
 });
-
-// ── State ───────────────────────────────────────────────────────────────────
-
 class TournamentState {
   final List<TournamentEntity> tournaments;
   final List<TournamentEntity> myTournaments;
@@ -83,9 +77,6 @@ class TournamentState {
     );
   }
 }
-
-// ── Notifier ────────────────────────────────────────────────────────────────
-
 class TournamentNotifier extends StateNotifier<TournamentState> {
   final ITournamentRepository _repository;
   // ignore: unused_field
@@ -95,10 +86,7 @@ class TournamentNotifier extends StateNotifier<TournamentState> {
       : super(const TournamentState()) {
     fetchTournaments();
   }
-
-  // ── Fetch tournaments ─────────────────────────────────────────────────────
-
-  Future<void> fetchTournaments({bool refresh = false}) async {
+Future<void> fetchTournaments({bool refresh = false}) async {
     if (state.isLoading) return;
     state = state.copyWith(
       isLoading: true,
@@ -173,10 +161,7 @@ class TournamentNotifier extends StateNotifier<TournamentState> {
       ),
     );
   }
-
-  // ── CRUD ──────────────────────────────────────────────────────────────────
-
-  Future<bool> createTournament(Map<String, dynamic> data) async {
+Future<bool> createTournament(Map<String, dynamic> data) async {
     state = state.copyWith(isLoading: true, clearError: true);
     final result = await _repository.createTournament(data);
     return result.fold(
@@ -238,10 +223,7 @@ class TournamentNotifier extends StateNotifier<TournamentState> {
       },
     );
   }
-
-  // ── Filters ───────────────────────────────────────────────────────────────
-
-  void setStatusFilter(String? status) {
+void setStatusFilter(String? status) {
     state = state.copyWith(statusFilter: status);
     fetchTournaments(refresh: true);
   }
@@ -256,9 +238,6 @@ class TournamentNotifier extends StateNotifier<TournamentState> {
     fetchTournaments(refresh: true);
   }
 }
-
-// ── Provider ────────────────────────────────────────────────────────────────
-
 final tournamentProvider =
     StateNotifierProvider<TournamentNotifier, TournamentState>((ref) {
   final repository = ref.watch(tournamentRepositoryProvider);

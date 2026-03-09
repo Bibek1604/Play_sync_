@@ -29,7 +29,6 @@ import '../../features/notifications/presentation/pages/notifications_page.dart'
 import '../../core/widgets/app_shell.dart';
 
 /// Application Router
-///
 /// Handles all navigation and route generation for the app.
 /// Uses named routes for easy navigation management.
 class AppRouter {
@@ -42,8 +41,7 @@ class AppRouter {
   /// Generate routes based on route settings
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
-      // ── Auth ─────────────────────────────────────────────────────────────
-      case AppRoutes.splash:
+case AppRoutes.splash:
         return _buildRoute(const SplashPage(), settings);
 
       case AppRoutes.login:
@@ -71,13 +69,9 @@ class AppRouter {
           ),
           settings,
         );
-
-      // ── App Shell (bottom-nav host) ───────────────────────────────────────
-      case AppRoutes.dashboard:
+case AppRoutes.dashboard:
         return _buildRoute(const AuthGuard(child: AppShell()), settings);
-
-      // ── Stand-alone protected pages ───────────────────────────────────────
-      case AppRoutes.settings:
+case AppRoutes.settings:
         return _buildRoute(const AuthGuard(child: SettingsPage()), settings);
 
       case AppRoutes.profile:
@@ -88,9 +82,7 @@ class AppRouter {
 
       case AppRoutes.location:
         return _buildRoute(const AuthGuard(child: LocationPage()), settings);
-
-      // ── Game routes ───────────────────────────────────────────────────────
-      case AppRoutes.game:
+case AppRoutes.game:
         return _buildRoute(const AuthGuard(child: GamePage()), settings);
 
       case AppRoutes.availableGames:
@@ -110,18 +102,14 @@ class AppRouter {
 
       case AppRoutes.endedGames:
         return _buildRoute(const AuthGuard(child: EndedGamesPage()), settings);
-
-      // ── Game Detail ─────────────────────────────────────────────────────
-      case AppRoutes.gameDetail:
+case AppRoutes.gameDetail:
         final args = settings.arguments as Map<String, dynamic>? ?? {};
         final gameId = args['gameId'] as String? ?? '';
         return _buildRoute(
           AuthGuard(child: GameDetailPage(gameId: gameId)),
           settings,
         );
-
-      // ── Game Chat (per-game room, REST-only) ─────────────────────────────
-      case AppRoutes.gameChat:
+case AppRoutes.gameChat:
         final args = settings.arguments as Map<String, dynamic>? ?? {};
         final game = args['game'] as GameEntity?;
         if (game == null) {
@@ -141,13 +129,9 @@ class AppRouter {
           AuthGuard(child: GameChatRestPage(game: game)),
           settings,
         );
-
-      // ── Scorecard ─────────────────────────────────────────────────────────
-      case AppRoutes.scorecard:
+case AppRoutes.scorecard:
         return _buildRoute(const AuthGuard(child: ScorecardPage()), settings);
-
-      // ── Social / Chat ────────────────────────────────────────────────────
-      case AppRoutes.chat:
+case AppRoutes.chat:
         return _buildRoute(const AuthGuard(child: ChatPage()), settings);
 
       case AppRoutes.rankings:
@@ -161,9 +145,7 @@ class AppRouter {
           const AuthGuard(child: NotificationsPage()),
           settings,
         );
-
-      // ── Tournament routes ─────────────────────────────────────────────────
-      /*
+/*
       case AppRoutes.tournaments:
         return _buildRoute(
           const AuthGuard(child: TournamentListPage()),
@@ -295,9 +277,7 @@ class AppRouter {
           settings,
         );
       */
-
-      // ── Fallback ──────────────────────────────────────────────────────────
-      default:
+default:
         return _buildRoute(const _UnknownRoutePage(), settings);
     }
   }

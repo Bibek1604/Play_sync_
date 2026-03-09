@@ -85,8 +85,6 @@ class HistoryStatsCard extends StatelessWidget {
     );
   }
 }
-
-// ─── Stacked proportional bar ─────────────────────────────────────────────────
 class _StackedBar extends StatefulWidget {
   final int ended, cancelled, active, total;
   const _StackedBar({
@@ -155,8 +153,6 @@ class _StackedBarState extends State<_StackedBar>
     );
   }
 }
-
-// ─── Single stat tile ─────────────────────────────────────────────────────────
 class _StatTile extends StatelessWidget {
   final IconData icon;
   final String label;

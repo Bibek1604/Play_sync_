@@ -18,8 +18,6 @@ class AuthRemoteDataSource implements IAuthDataSource {
   final ApiClient _apiClient;
 
   AuthRemoteDataSource({required ApiClient apiClient}) : _apiClient = apiClient;
-
-  /// ========== REGISTER STUDENT ==========
   @override
   Future<AuthResponseModel> register({
     required String fullName,
@@ -55,8 +53,6 @@ class AuthRemoteDataSource implements IAuthDataSource {
       throw _handleDioError(e);
     }
   }
-
-  /// ========== LOGIN ==========
   @override
   Future<AuthResponseModel> login({
     required String email,
@@ -86,8 +82,6 @@ class AuthRemoteDataSource implements IAuthDataSource {
       throw _handleDioError(e);
     }
   }
-
-  /// ========== LOGOUT ==========
   @override
   Future<bool> logout() async {
     try {
@@ -99,8 +93,6 @@ class AuthRemoteDataSource implements IAuthDataSource {
       return true;
     }
   }
-
-  /// ========== HELPER METHODS ==========
 
   /// Save tokens to secure storage
 

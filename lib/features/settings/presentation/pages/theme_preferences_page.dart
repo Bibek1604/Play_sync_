@@ -128,9 +128,7 @@ class ThemePreferencesPage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 32),
-
-          // ── Current Theme Status ────────────────────────────────────
-          _SectionHeader(title: "Current Theme", isDark: isDark),
+_SectionHeader(title: "Current Theme", isDark: isDark),
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(20),
@@ -186,9 +184,7 @@ class ThemePreferencesPage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 32),
-
-          // ── How It Works ─────────────────────────────────────────────
-          _SectionHeader(title: "How It Works", isDark: isDark),
+_SectionHeader(title: "How It Works", isDark: isDark),
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(20),
@@ -231,9 +227,7 @@ class ThemePreferencesPage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 32),
-
-          // ── Privacy Notice ───────────────────────────────────────────
-          Container(
+Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: AppColors.info.withOpacity(0.08),

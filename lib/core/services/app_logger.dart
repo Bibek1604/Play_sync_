@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 enum LogLevel { debug, info, warning, error }
 
 /// A robust logging utility for the PlaySync app.
-/// 
 /// This ensures logs are visible in the console and can be captured
 /// by tools like 'adb logcat' even after a debugger disconnects.
 class AppLogger {
@@ -73,8 +72,6 @@ class AppLogger {
       case LogLevel.error: return 1000;
     }
   }
-
-  // --- Specialized Loggers ---
 
   /// Log API related activity
   static void api(String message, {bool isError = false, dynamic error}) {

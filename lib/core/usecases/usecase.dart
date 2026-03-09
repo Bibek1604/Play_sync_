@@ -3,7 +3,6 @@ import '../error/failure.dart';
 
 /// Base class for all use cases in the application
 /// Follows Clean Architecture principles
-/// 
 /// Type Parameters:
 /// - [Type]: The return type of the use case
 /// - [Params]: The parameters required by the use case

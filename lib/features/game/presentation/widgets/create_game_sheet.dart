@@ -27,23 +27,16 @@ class CreateGameSheet extends ConsumerStatefulWidget {
 }
 
 class _CreateGameSheetState extends ConsumerState<CreateGameSheet> {
-  // ── Wizard step ───────────────────────────────────────────────────────────
-  int _currentStep = 0;
+int _currentStep = 0;
   int get _totalSteps => widget.isOnlineMode ? 2 : 3;
-
-  // ── Form keys per step ────────────────────────────────────────────────────
-  final _step1Key = GlobalKey<FormState>();
+final _step1Key = GlobalKey<FormState>();
   final _step2Key = GlobalKey<FormState>();
   final _step3Key = GlobalKey<FormState>();
-
-  // ── Controllers ───────────────────────────────────────────────────────────
-  final _titleCtrl      = TextEditingController();
+final _titleCtrl      = TextEditingController();
   final _descCtrl       = TextEditingController();
   final _tagsCtrl       = TextEditingController();
   final _maxPlayersCtrl = TextEditingController(text: '10');
-
-  // ── State ─────────────────────────────────────────────────────────────────
-  Uint8List? _imageBytes;
+Uint8List? _imageBytes;
   String?    _imageName;
   DateTime   _startTime = DateTime.now();
   DateTime   _endTime   = DateTime.now().add(const Duration(hours: 1));
@@ -71,9 +64,7 @@ class _CreateGameSheetState extends ConsumerState<CreateGameSheet> {
     _maxPlayersCtrl.dispose();
     super.dispose();
   }
-
-  // ── Step Navigation ───────────────────────────────────────────────────────
-  bool _validateCurrentStep() {
+bool _validateCurrentStep() {
     switch (_currentStep) {
       case 0:
         return _step1Key.currentState?.validate() ?? false;
@@ -107,9 +98,7 @@ class _CreateGameSheetState extends ConsumerState<CreateGameSheet> {
       setState(() => _currentStep--);
     }
   }
-
-  // ── Date/time pickers ─────────────────────────────────────────────────────
-  Future<DateTime?> _pickDateTime(BuildContext ctx, DateTime initial) async {
+Future<DateTime?> _pickDateTime(BuildContext ctx, DateTime initial) async {
     final date = await showDatePicker(
       context: ctx,
       initialDate: initial,
@@ -136,9 +125,7 @@ class _CreateGameSheetState extends ConsumerState<CreateGameSheet> {
     if (time == null) return null;
     return DateTime(date.year, date.month, date.day, time.hour, time.minute);
   }
-
-  // ── GPS ───────────────────────────────────────────────────────────────────
-  Future<void> _fetchGps() async {
+Future<void> _fetchGps() async {
     if (!mounted) return;
     setState(() {
       _fetchingGps = true;
@@ -234,9 +221,7 @@ class _CreateGameSheetState extends ConsumerState<CreateGameSheet> {
       if (mounted) setState(() => _fetchingGps = false);
     }
   }
-
-  // ── Submit ────────────────────────────────────────────────────────────────
-  Future<void> _submit() async {
+Future<void> _submit() async {
     // End time must be > now + 2 min (backend rule)
     if (_endTime.isBefore(DateTime.now().add(const Duration(minutes: 2)))) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -317,9 +302,7 @@ class _CreateGameSheetState extends ConsumerState<CreateGameSheet> {
       ));
     }
   }
-
-  // ── Build ─────────────────────────────────────────────────────────────────
-  @override
+@override
   Widget build(BuildContext context) {
     final mode = widget.isOnlineMode ? 'Online' : 'Offline';
 
@@ -337,8 +320,7 @@ class _CreateGameSheetState extends ConsumerState<CreateGameSheet> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // ── Drag handle ──────────────────────────────────────
-              Center(
+Center(
                 child: Container(
                   width: 36, height: 4,
                   margin: EdgeInsets.only(top: AppSpacing.md, bottom: AppSpacing.sm),
@@ -347,9 +329,7 @@ class _CreateGameSheetState extends ConsumerState<CreateGameSheet> {
                     borderRadius: BorderRadius.circular(2)),
                 ),
               ),
-
-              // ── Header with step indicator ───────────────────────
-              Padding(
+Padding(
                 padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 child: Row(children: [
                   Container(
@@ -382,9 +362,7 @@ class _CreateGameSheetState extends ConsumerState<CreateGameSheet> {
               ),
 
               SizedBox(height: AppSpacing.md),
-
-              // ── Step progress bar ────────────────────────────────
-              Padding(
+Padding(
                 padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 child: _StepProgressBar(
                   totalSteps: _totalSteps,
@@ -393,9 +371,7 @@ class _CreateGameSheetState extends ConsumerState<CreateGameSheet> {
               ),
 
               SizedBox(height: AppSpacing.md),
-
-              // ── Step content ─────────────────────────────────────
-              Flexible(
+Flexible(
                 child: SingleChildScrollView(
                   padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                   child: AnimatedSwitcher(
@@ -404,9 +380,7 @@ class _CreateGameSheetState extends ConsumerState<CreateGameSheet> {
                   ),
                 ),
               ),
-
-              // ── Bottom navigation ────────────────────────────────
-              Container(
+Container(
                 padding: EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
@@ -508,11 +482,7 @@ class _CreateGameSheetState extends ConsumerState<CreateGameSheet> {
     }
   }
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // STEP PROGRESS BAR
-// ═══════════════════════════════════════════════════════════════════════════════
-
 class _StepProgressBar extends StatelessWidget {
   final int totalSteps;
   final int currentStep;
@@ -567,11 +537,7 @@ class _StepProgressBar extends StatelessWidget {
     );
   }
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // STEP 1: BASIC INFO
-// ═══════════════════════════════════════════════════════════════════════════════
-
 class _Step1BasicInfo extends StatelessWidget {
   final GlobalKey<FormState> formKey;
   final TextEditingController titleCtrl;
@@ -655,11 +621,7 @@ class _Step1BasicInfo extends StatelessWidget {
     );
   }
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // STEP 2: GAME SETTINGS
-// ═══════════════════════════════════════════════════════════════════════════════
-
 class _Step2GameSettings extends StatelessWidget {
   final GlobalKey<FormState> formKey;
   final TextEditingController tagsCtrl;
@@ -761,11 +723,7 @@ class _Step2GameSettings extends StatelessWidget {
     );
   }
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // STEP 3: LOCATION (Offline only)
-// ═══════════════════════════════════════════════════════════════════════════════
-
 class _Step3Location extends StatelessWidget {
   final GlobalKey<FormState> formKey;
   final String? address;
@@ -826,11 +784,7 @@ class _Step3Location extends StatelessWidget {
     );
   }
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // SHARED WIDGETS
-// ═══════════════════════════════════════════════════════════════════════════════
-
 class _StepHeader extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -903,11 +857,7 @@ class _SectionLabel extends StatelessWidget {
             letterSpacing: 0.5),
       );
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // IMAGE PICKER
-// ═══════════════════════════════════════════════════════════════════════════════
-
 class _ImagePicker extends StatelessWidget {
   final Uint8List? imageBytes;
   final String? imageName;
@@ -993,11 +943,7 @@ class _ImagePicker extends StatelessWidget {
     );
   }
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // DATE BUTTON
-// ═══════════════════════════════════════════════════════════════════════════════
-
 class _DateButton extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
@@ -1029,11 +975,7 @@ class _DateButton extends StatelessWidget {
         ),
       );
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // GPS WIDGETS
-// ═══════════════════════════════════════════════════════════════════════════════
-
 class _GpsActiveCard extends StatelessWidget {
   final double lat, lng;
   final String? address;

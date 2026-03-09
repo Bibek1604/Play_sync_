@@ -1,24 +1,17 @@
 import 'package:flutter/material.dart';
 
 /// PlaySync Application Color Palette
-///
 /// Brand: Deep Blue → Medium Blue — Clean, Professional Gray-Blue.
 class AppColors {
   AppColors._();
-
-  // ── Primary Brand — Deep Blue ────────────────────────────────────────────
-  static const Color primary = Color(0xFF1E3A8A);
+static const Color primary = Color(0xFF1E3A8A);
   static const Color primaryLight = Color(0xFFDBEAFE);
   static const Color primaryDark = Color(0xFF1E3070);
   static const Color primaryVariant = Color(0xFF2563EB);
-
-  // ── Secondary — Medium Blue ──────────────────────────────────────────────
-  static const Color secondary = Color(0xFF3B82F6);
+static const Color secondary = Color(0xFF3B82F6);
   static const Color secondaryLight = Color(0xFFEFF6FF);
   static const Color secondaryDark = Color(0xFF2563EB);
-
-  // ── Accent — Gray ────────────────────────────────────────────────────────
-  static const Color accent = Color(0xFF6B7280);
+static const Color accent = Color(0xFF6B7280);
   static const Color accentLight = Color(0xFFF3F4F6);
 
   // Background Colors
@@ -66,7 +59,6 @@ class AppColors {
 }
 
 /// Application Typography
-/// 
 /// Centralized text style definitions for consistent typography.
 class AppTypography {
   // Prevent instantiation
@@ -172,7 +164,6 @@ class AppTypography {
 }
 
 /// Application Spacing
-/// 
 /// Consistent spacing values across the app.
 class AppSpacing {
   // Prevent instantiation
@@ -192,7 +183,6 @@ class AppSpacing {
 }
 
 /// Application Border Radius
-/// 
 /// Consistent border radius values across the app.
 class AppRadius {
   // Prevent instantiation

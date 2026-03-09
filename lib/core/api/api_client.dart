@@ -63,10 +63,7 @@ class ApiClient {
 
   Dio get dio => _dio;
   FlutterSecureStorage get storage => _secureStorage;
-
-  // ── Token helpers ──────────────────────────────────────────────────────
-
-  Future<String?> get accessToken => _secureStorage.read(key: 'access_token');
+Future<String?> get accessToken => _secureStorage.read(key: 'access_token');
   Future<String?> get refreshToken => _secureStorage.read(key: 'refresh_token');
 
   Future<void> saveTokens({required String access, required String refresh}) async {
@@ -125,10 +122,7 @@ class ApiClient {
       _isRefreshing = false;
     }
   }
-
-  // ── HTTP verbs ─────────────────────────────────────────────────────────
-
-  Future<Response> get(String path, {Map<String, dynamic>? queryParameters, Options? options}) =>
+Future<Response> get(String path, {Map<String, dynamic>? queryParameters, Options? options}) =>
       _dio.get(path, queryParameters: queryParameters, options: options);
 
   Future<Response> post(String path, {dynamic data, Map<String, dynamic>? queryParameters, Options? options}) =>

@@ -8,9 +8,7 @@ import '../../domain/entities/tournament_payment_entity.dart';
 
 /// Local data source for tournament caching via Hive
 class TournamentLocalDataSource {
-  // ── Tournament list cache ─────────────────────────────────────────────────
-
-  Future<Box> get _tournamentsBox async {
+Future<Box> get _tournamentsBox async {
     if (!Hive.isBoxOpen(HiveTableConstant.tournamentsBox)) {
       return await Hive.openBox(HiveTableConstant.tournamentsBox);
     }
@@ -75,10 +73,7 @@ class TournamentLocalDataSource {
       return null;
     }
   }
-
-  // ── Tournament chat cache (last 50 messages per room) ─────────────────────
-
-  static const int _maxCachedMessages = 50;
+static const int _maxCachedMessages = 50;
 
   /// Cache chat messages for a tournament
   Future<void> cacheChatMessages(
@@ -119,10 +114,7 @@ class TournamentLocalDataSource {
     existing.add(message);
     await cacheChatMessages(tournamentId, existing);
   }
-
-  // ── Payment cache ─────────────────────────────────────────────────────────
-
-  Future<void> cachePayments(
+Future<void> cachePayments(
       String key, List<TournamentPaymentEntity> payments) async {
     final box = await _paymentsBox;
     final jsonList = payments.map((p) => p.toJson()).toList();
@@ -143,10 +135,7 @@ class TournamentLocalDataSource {
       return null;
     }
   }
-
-  // ── Clear ─────────────────────────────────────────────────────────────────
-
-  Future<void> clearAll() async {
+Future<void> clearAll() async {
     final tBox = await _tournamentsBox;
     final cBox = await _chatBox;
     final pBox = await _paymentsBox;

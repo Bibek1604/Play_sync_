@@ -6,11 +6,9 @@ import '../entities/forgot_password_entity.dart';
 /// Defines contract for implementing password reset functionality
 abstract class PasswordResetRepository {
   /// Send OTP to user's email for password reset
-  /// 
-  /// Parameters:
+/// Parameters:
   ///   - email: User's registered email address
-  /// 
-  /// Returns:
+/// Returns:
   ///   - Right: ForgotPasswordResponse on success
   ///   - Left: Failure on error
   Future<Either<Failure, ForgotPasswordResponse>> forgotPassword(
@@ -18,11 +16,9 @@ abstract class PasswordResetRepository {
   );
 
   /// Reset password using OTP
-  /// 
-  /// Parameters:
+/// Parameters:
   ///   - request: ResetPasswordRequest containing email, OTP, and new passwords
-  /// 
-  /// Returns:
+/// Returns:
   ///   - Right: PasswordResetResponse on success
   ///   - Left: Failure on error
   Future<Either<Failure, PasswordResetResponse>> resetPassword(
@@ -30,12 +26,10 @@ abstract class PasswordResetRepository {
   );
 
   /// Verify OTP validity (optional, for real-time validation)
-  /// 
-  /// Parameters:
+/// Parameters:
   ///   - email: User's email
   ///   - otp: OTP to verify
-  /// 
-  /// Returns:
+/// Returns:
   ///   - Right: bool indicating if OTP is valid
   ///   - Left: Failure on error
   Future<Either<Failure, bool>> verifyOtp(String email, String otp);

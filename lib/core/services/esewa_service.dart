@@ -6,19 +6,16 @@ import 'package:crypto/crypto.dart';
 import 'package:uuid/uuid.dart';
 
 /// eSewa Payment Service - Production Ready
-/// 
 /// Handles complete payment flow with eSewa sandbox/live gateway:
 /// 1. Generate payment request with proper signature
 /// 2. Open eSewa payment page in browser
 /// 3. Capture payment result
 /// 4. Verify transaction via backend API
-/// 
 /// Test Credentials (eSewa Sandbox):
 /// - Merchant Code: EPAYTEST
 /// - eSewa ID: 9806800001
 /// - Password: Nepal@123
 /// - MPIN: 1122
-/// 
 /// Reference: https://developer.esewa.com.np/api/epay
 class EsewaService {
   // eSewa Configuration - Test Mode
@@ -43,8 +40,7 @@ class EsewaService {
   Function(String?)? _onPaymentCancellation;
 
   /// Initiate eSewa payment flow
-  /// 
-  /// [tournamentId] - Unique tournament/product ID
+/// [tournamentId] - Unique tournament/product ID
   /// [amount] - Payment amount in NPR (integer only)
   /// [onSuccess] - Callback when payment succeeds
   /// [onFailure] - Callback when payment fails
@@ -128,8 +124,7 @@ class EsewaService {
   }
 
   /// Simulate successful sandbox payment
-  /// 
-  /// Used for testing in sandbox environment
+/// Used for testing in sandbox environment
   /// Automatically triggers success callback after delay
   void _simulateSandboxPayment({
     required String tournamentId,
@@ -155,11 +150,9 @@ class EsewaService {
   }
 
   /// Verify eSewa transaction via backend API
-  /// 
-  /// Should be called after receiving success callback from eSewa
+/// Should be called after receiving success callback from eSewa
   /// Backend will verify the transaction with eSewa servers
-  /// 
-  /// [refId] - Reference ID returned by eSewa
+/// [refId] - Reference ID returned by eSewa
   /// [amount] - Transaction amount
   /// [verifyEndpoint] - Backend API endpoint for verification
   static Future<Map<String, dynamic>?> verifyTransaction({
@@ -198,8 +191,7 @@ class EsewaService {
   }
 
   /// Generate payment signature (for future use with advanced eSewa integration)
-  /// 
-  /// eSewa requires signed field names for certain payment types
+/// eSewa requires signed field names for certain payment types
   /// This method generates HMAC-SHA256 signature
   static String generateSignature({
     required String amount,

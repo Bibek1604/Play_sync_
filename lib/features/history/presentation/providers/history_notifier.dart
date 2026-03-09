@@ -4,9 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/game_history.dart';
 import '../../../../core/api/api_endpoints.dart';
 import '../../../../core/api/api_client.dart';
-
-// ── State ─────────────────────────────────────────────────────────────────────
-
 class HistoryState extends Equatable {
   final List<GameHistory> history;
   final bool isLoading;
@@ -61,9 +58,6 @@ class HistoryState extends Equatable {
   List<Object?> get props =>
       [history, isLoading, error, hasMore, page, totalGames, activeGames, endedGames, cancelledGames];
 }
-
-// ── Notifier ──────────────────────────────────────────────────────────────────
-
 class HistoryNotifier extends StateNotifier<HistoryState> {
   final ApiClient _apiClient;
 
@@ -171,9 +165,6 @@ class HistoryNotifier extends StateNotifier<HistoryState> {
     }
   }
 }
-
-// ── Provider ──────────────────────────────────────────────────────────────────
-
 final historyProvider =
     StateNotifierProvider<HistoryNotifier, HistoryState>((ref) {
   final apiClient = ref.watch(apiClientProvider);

@@ -43,10 +43,7 @@ class _GameHistoryPageState extends ConsumerState<GameHistoryPage>
     _tabs.dispose();
     super.dispose();
   }
-
-  // ── helpers ────────────────────────────────────────────────────────────────
-
-  Future<void> _refreshAll() async {
+Future<void> _refreshAll() async {
     await ref.read(historyProvider.notifier).fetchHistory();
     await ref.read(gameProvider.notifier).fetchMyCreatedGames();
     await ref.read(gameProvider.notifier).fetchMyJoinedGames();
@@ -148,13 +145,10 @@ class _GameHistoryPageState extends ConsumerState<GameHistoryPage>
         body: TabBarView(
           controller: _tabs,
           children: [
-            // ── All History ───────────────────────────────────────────────
-            _AllHistoryTab(state: histState, isDark: isDark,
+_AllHistoryTab(state: histState, isDark: isDark,
                 onRefresh: () => ref.read(historyProvider.notifier).fetchHistory(),
                 onLoadMore: () => ref.read(historyProvider.notifier).loadMore()),
-
-            // ── Created ───────────────────────────────────────────────────
-            _GameEntityTab(
+_GameEntityTab(
               games: gameState.myCreatedGames,
               isLoading: gameState.isLoading,
               isDark: isDark,
@@ -165,9 +159,7 @@ class _GameHistoryPageState extends ConsumerState<GameHistoryPage>
               roleColor: AppColors.primary,
               onRefresh: () => ref.read(gameProvider.notifier).fetchMyCreatedGames(),
             ),
-
-            // ── Joined ────────────────────────────────────────────────────
-            _GameEntityTab(
+_GameEntityTab(
               games: gameState.myJoinedGames,
               isLoading: gameState.isLoading,
               isDark: isDark,
@@ -184,9 +176,6 @@ class _GameHistoryPageState extends ConsumerState<GameHistoryPage>
     );
   }
 }
-
-// ── User banner ────────────────────────────────────────────────────────────────
-
 class _UserBanner extends StatelessWidget {
   final String displayName;
   final String email;
@@ -300,9 +289,6 @@ class _MiniStat extends StatelessWidget {
     );
   }
 }
-
-// ── All-history tab ────────────────────────────────────────────────────────────
-
 class _AllHistoryTab extends StatelessWidget {
   final HistoryState state;
   final bool isDark;
@@ -339,8 +325,7 @@ class _AllHistoryTab extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
         itemCount: state.history.length + 1 + (state.hasMore ? 1 : 0),
         itemBuilder: (context, i) {
-          // ── Stats card at top ──
-          if (i == 0) {
+if (i == 0) {
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: HistoryStatsCard(
@@ -370,9 +355,6 @@ class _AllHistoryTab extends StatelessWidget {
     );
   }
 }
-
-// ── GameEntity tab (Created / Joined) ─────────────────────────────────────────
-
 class _GameEntityTab extends StatelessWidget {
   final List<GameEntity> games;
   final bool isLoading;
@@ -424,9 +406,6 @@ class _GameEntityTab extends StatelessWidget {
     );
   }
 }
-
-// ── History card (All tab) ────────────────────────────────────────────────────
-
 class _HistoryCard extends StatelessWidget {
   final GameHistory history;
   final bool isDark;
@@ -796,9 +775,6 @@ class _PremiumGameHistoryCard extends StatelessWidget {
     );
   }
 }
-
-// ── Shared helpers ─────────────────────────────────────────────────────────────
-
 class _EmptyTab extends StatelessWidget {
   final IconData icon;
   final String label;

@@ -9,9 +9,6 @@ import '../../domain/entities/message_entity.dart';
 import '../../domain/repositories/game_chat_repository.dart';
 import '../state/game_chat_state.dart';
 import '../../../game/domain/entities/game_entity.dart';
-
-// ─── Providers ────────────────────────────────────────────────────────────────
-
 /// Exposes the datasource to the DI graph.
 final gameChatDatasourceProvider = Provider<GameChatRemoteDatasource>((ref) {
   return GameChatRemoteDatasource(ref.watch(apiClientProvider));
@@ -32,7 +29,6 @@ class CurrentUserInfo {
 }
 
 /// Synchronous provider for the current user's profile info.
-/// 
 /// Reacts instantly to auth state changes, ensuring chat alignment (isMe) 
 /// never flickers or defaults to "Other" (Left) while loading a Future.
 final currentUserInfoProvider = Provider<CurrentUserInfo>((ref) {
@@ -57,11 +53,7 @@ final gameChatNotifierProvider =
     return GameChatNotifier(repo, gameId);
   },
 );
-
-// ─── Notifier ─────────────────────────────────────────────────────────────────
-
 /// Manages chat state for a single game room.
-///
 /// STRICT SEND FLOW:
 ///   1. Mark isSending = true.
 ///   2. POST via repository.
@@ -73,12 +65,8 @@ class GameChatNotifier extends StateNotifier<GameChatState> {
   final String _gameId;
 
   GameChatNotifier(this._repo, this._gameId) : super(const GameChatState());
-
-  // ── Public API ─────────────────────────────────────────────────────────────
-
-  /// Loads the complete chat history for [_gameId].
-  ///
-  /// Called once when the chat room opens. Replaces any existing list.
+/// Loads the complete chat history for [_gameId].
+/// Called once when the chat room opens. Replaces any existing list.
   Future<void> loadMessages() async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
@@ -102,8 +90,7 @@ class GameChatNotifier extends StateNotifier<GameChatState> {
   }
 
   /// Sends [text] and appends the confirmed server message to the list.
-  ///
-  /// No optimistic updates. No GET refresh after POST.
+/// No optimistic updates. No GET refresh after POST.
   /// Returns `true` on success, `false` on failure.
   Future<bool> sendMessage(String text) async {
     final trimmed = text.trim();
@@ -133,8 +120,7 @@ class GameChatNotifier extends StateNotifier<GameChatState> {
   }
 
   /// Appends an incoming real-time message (e.g. from Socket.IO).
-  ///
-  /// Skips the message if:
+/// Skips the message if:
   ///   (a) it came from the current user (already in the list from POST response)
   ///   (b) a message with the same ID already exists
   void appendIncoming(MessageEntity msg, String currentUserId) {

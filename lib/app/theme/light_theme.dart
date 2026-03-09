@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
 /// Light Theme Configuration
-/// 
 /// Complete light theme for the PlaySync app.
 class LightTheme {
   // Prevent instantiation

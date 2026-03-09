@@ -30,7 +30,6 @@ class SocketConnectionState {
 }
 
 /// Manages Socket.IO connection lifecycle tied to auth state.
-///
 /// Auto-connects when user authenticates, disconnects on logout.
 /// Joins the user's personal room for notifications.
 class SocketConnectionNotifier extends StateNotifier<SocketConnectionState> {
@@ -136,9 +135,6 @@ class SocketConnectionNotifier extends StateNotifier<SocketConnectionState> {
     super.dispose();
   }
 }
-
-// ── Providers ─────────────────────────────────────────────────────────────────
-
 final socketProvider = StateNotifierProvider<SocketConnectionNotifier,
     SocketConnectionState>((ref) {
   return SocketConnectionNotifier(ref);

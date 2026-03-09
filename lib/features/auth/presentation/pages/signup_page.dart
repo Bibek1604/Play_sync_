@@ -121,9 +121,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 32),
-
-                  // ── Logo ──────────────────────────────────────
-                  Center(
+Center(
                     child: Image.asset(
                       'assets/images/final.png',
                       height: 180,
@@ -132,9 +130,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                     ),
                   ),
                   const SizedBox(height: 32),
-
-                  // ── Heading ───────────────────────────────────
-                  const Center(
+const Center(
                     child: Text(
                       'Create your account to get started',
                       style: TextStyle(
@@ -145,9 +141,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                     ),
                   ),
                   const SizedBox(height: 40),
-
-                  // ── Full Name ─────────────────────────────────
-                  _buildTextField(
+_buildTextField(
                     controller: _nameController,
                     label: 'Full name',
                     hint: 'John Doe',
@@ -160,9 +154,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                     },
                   ),
                   const SizedBox(height: 16),
-
-                  // ── Email ─────────────────────────────────────
-                  _buildTextField(
+_buildTextField(
                     controller: _emailController,
                     label: 'Email address',
                     hint: 'you@example.com',
@@ -179,9 +171,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                     },
                   ),
                   const SizedBox(height: 16),
-
-                  // ── Password ──────────────────────────────────
-                  _buildTextField(
+_buildTextField(
                     controller: _passwordController,
                     label: 'Password',
                     hint: 'Create a password',
@@ -208,9 +198,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                     },
                   ),
                   const SizedBox(height: 16),
-
-                  // ── Confirm Password ──────────────────────────
-                  _buildTextField(
+_buildTextField(
                     controller: _confirmPasswordController,
                     label: 'Confirm password',
                     hint: 'Confirm your password',
@@ -238,9 +226,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                     },
                   ),
                   const SizedBox(height: 20),
-
-                  // ── Terms and Conditions ──────────────────────
-                  Row(
+Row(
                     children: [
                       SizedBox(
                         height: 24,
@@ -276,9 +262,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                     ],
                   ),
                   const SizedBox(height: 28),
-
-                  // ── Create Account button ─────────────────────
-                  SizedBox(
+SizedBox(
                     height: 54,
                     child: ElevatedButton(
                       onPressed: isLoading ? null : _onSignup,
@@ -317,9 +301,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                     ),
                   ),
                   const SizedBox(height: 28),
-
-                  // ── Divider ───────────────────────────────────
-                  Row(
+Row(
                     children: [
                       const Expanded(
                           child: Divider(color: AppColors.border)),
@@ -338,9 +320,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                     ],
                   ),
                   const SizedBox(height: 20),
-
-                  // ── Sign In button ────────────────────────────
-                  SizedBox(
+SizedBox(
                     height: 54,
                     child: OutlinedButton(
                       onPressed: isLoading

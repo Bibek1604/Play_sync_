@@ -28,8 +28,7 @@ class ChatMessage extends Equatable {
   });
 
   /// Returns true if [currentUserId] is the sender of this message.
-  ///
-  /// STRICT RULE: Comparison is ID-only, with complete normalization:
+/// STRICT RULE: Comparison is ID-only, with complete normalization:
   /// - Both IDs are trimmed, lowercased, and checked for hidden characters
   /// - No name fallback, no exceptions, no index-based logic
   /// - System messages always return false

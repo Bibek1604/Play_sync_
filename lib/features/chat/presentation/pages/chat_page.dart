@@ -84,8 +84,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                     child: CustomScrollView(
                       physics: const BouncingScrollPhysics(),
                       slivers: [
-                        // ── Signature Header ────────────────────────────────
-                        SliverAppBar(
+SliverAppBar(
                           pinned: true,
                           floating: false,
                           expandedHeight: 140,
@@ -161,8 +160,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                             titlePadding: const EdgeInsets.only(left: 20, bottom: 20),
                           ),
                         ),
-                        // ── Content ─────────────────────────────────────────
-                        _SectionHeader(
+_SectionHeader(
                           icon: Icons.sports_esports_rounded,
                           label: 'Active Arenas',
                           color: const Color(0xFF0284C7),
@@ -202,9 +200,6 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     );
   }
 }
-
-// ─── Empty State ──────────────────────────────────────────────────────────────
-
 class _EmptyState extends StatelessWidget {
   final Future<void> Function() onRefresh;
   const _EmptyState({required this.onRefresh});
@@ -266,9 +261,6 @@ class _EmptyState extends StatelessWidget {
     );
   }
 }
-
-// ─── Section Header ───────────────────────────────────────────────────────────
-
 class _SectionHeader extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -312,8 +304,6 @@ class _SectionHeader extends StatelessWidget {
     );
   }
 }
-
-// ─── Game Chat Tile ───────────────────────────────────────────────────────────
 // Pure chat-entry tile — tapping goes directly to the game chat room.
 // There is NO "View Details" button here.
 
@@ -358,8 +348,7 @@ class _GameChatTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // ── Avatar with live status dot ──────────────────────────
-            Stack(
+Stack(
               children: [
                 Container(
                   width: 52,
@@ -400,8 +389,7 @@ class _GameChatTile extends StatelessWidget {
               ],
             ),
             const SizedBox(width: 16),
-            // ── Game title & player count ────────────────────────────
-            Expanded(
+Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -444,8 +432,7 @@ class _GameChatTile extends StatelessWidget {
                 ],
               ),
             ),
-            // ── Arrow — takes you straight to chat ──────────────────
-            Container(
+Container(
               padding:
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(

@@ -4,7 +4,6 @@ import '../controllers/camera_visibility_controller.dart';
 import '../../../app/theme/theme_provider.dart';
 
 /// Camera Visibility Provider
-/// 
 /// Provides the camera visibility state to the app.
 /// This is the main provider used throughout the app.
 final cameraVisibilityProvider = StateNotifierProvider<
@@ -13,10 +12,8 @@ final cameraVisibilityProvider = StateNotifierProvider<
 });
 
 /// Camera Theme Manager
-/// 
 /// Listens to camera visibility changes and manages theme accordingly.
 /// This provider connects camera visibility to theme changes.
-/// 
 /// BEHAVIOR:
 /// - When camera is hidden → switch to dark mode
 /// - When camera is shown → do NOT change theme (keep current state)
@@ -42,8 +39,7 @@ class CameraThemeManager {
   }
 
   /// Handle camera visibility changes
-  /// 
-  /// When camera becomes hidden → switch to dark mode
+/// When camera becomes hidden → switch to dark mode
   /// When camera becomes visible → do NOTHING (keep current theme)
   void _handleCameraVisibilityChange(
     CameraVisibilityState? previous,
@@ -74,7 +70,6 @@ class CameraThemeManager {
 }
 
 /// Camera Theme Manager Provider
-/// 
 /// Provides the camera theme manager instance.
 /// This is kept alive to ensure the listener stays active.
 final cameraThemeManagerProvider = Provider<CameraThemeManager>((ref) {

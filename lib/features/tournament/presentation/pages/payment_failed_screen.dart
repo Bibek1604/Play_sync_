@@ -6,7 +6,6 @@ import '../../../../core/constants/app_colors.dart';
 import '../../domain/entities/tournament_entity.dart';
 
 /// Payment failure screen with retry options
-/// 
 /// Arguments:
 /// - `tournament` (TournamentEntity) - Tournament payment failed for
 /// - `error` (String) - Error message to display

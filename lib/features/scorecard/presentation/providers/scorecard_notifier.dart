@@ -3,8 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/scorecard_entity.dart';
 import '../../../../core/api/api_client.dart';
 import '../../../../core/api/api_endpoints.dart';
-
-// ── State ─────────────────────────────────────────────────────────────────────
 class ScorecardState {
   final ScorecardEntity? scorecard;
   final bool isLoading;
@@ -24,8 +22,6 @@ class ScorecardState {
         error: clearError ? null : (error ?? this.error),
       );
 }
-
-// ── Notifier ──────────────────────────────────────────────────────────────────
 class ScorecardNotifier extends StateNotifier<ScorecardState> {
   final ApiClient _api;
   ScorecardNotifier(this._api) : super(const ScorecardState()) {
@@ -50,8 +46,6 @@ class ScorecardNotifier extends StateNotifier<ScorecardState> {
     }
   }
 }
-
-// ── Provider ──────────────────────────────────────────────────────────────────
 final scorecardProvider =
     StateNotifierProvider<ScorecardNotifier, ScorecardState>((ref) {
   final api = ref.watch(apiClientProvider);

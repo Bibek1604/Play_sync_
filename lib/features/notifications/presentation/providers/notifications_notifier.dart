@@ -9,9 +9,6 @@ import '../../../../core/api/api_endpoints.dart';
 import '../../../../core/api/api_client.dart';
 import '../../../../core/services/socket_service.dart';
 import '../../../auth/presentation/providers/auth_notifier.dart';
-
-// ── State ─────────────────────────────────────────────────────────────────────
-
 class NotificationsState extends Equatable {
   final List<NotificationEntity> notifications;
   final bool isLoading;
@@ -52,9 +49,6 @@ class NotificationsState extends Equatable {
   List<Object?> get props =>
       [notifications, isLoading, error, unreadCount, hasMore, page];
 }
-
-// ── Notifier ──────────────────────────────────────────────────────────────────
-
 class NotificationsNotifier extends StateNotifier<NotificationsState> {
   final ApiClient _apiClient;
   final Ref _ref;
@@ -67,10 +61,7 @@ class NotificationsNotifier extends StateNotifier<NotificationsState> {
     _fetchUnreadCount();
     _initSocket();
   }
-
-  // ── Socket integration ────────────────────────────────────────────────
-
-  void _initSocket() {
+void _initSocket() {
     final authState = _ref.read(authNotifierProvider);
     final token = authState.user?.token;
     final userId = authState.user?.userId;
@@ -131,10 +122,7 @@ class NotificationsNotifier extends StateNotifier<NotificationsState> {
       debugPrint('[Notifications] Socket init error: $e');
     }
   }
-
-  // ── API calls ─────────────────────────────────────────────────────────
-
-  Future<void> fetchNotifications() async {
+Future<void> fetchNotifications() async {
     state = state.copyWith(isLoading: true, clearError: true, page: 1);
     try {
       final resp = await _apiClient.get(
@@ -247,9 +235,6 @@ class NotificationsNotifier extends StateNotifier<NotificationsState> {
     super.dispose();
   }
 }
-
-// ── Provider ──────────────────────────────────────────────────────────────────
-
 final notificationsProvider =
     StateNotifierProvider<NotificationsNotifier, NotificationsState>((ref) {
   final apiClient = ref.watch(apiClientProvider);

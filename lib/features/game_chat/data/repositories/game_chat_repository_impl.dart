@@ -4,7 +4,6 @@ import '../../domain/repositories/game_chat_repository.dart';
 import '../datasources/game_chat_remote_datasource.dart';
 
 /// Concrete implementation of [GameChatRepository].
-///
 /// Wraps [GameChatRemoteDatasource] and converts any thrown exceptions
 /// into descriptive error messages that the notifier can surface to the UI.
 class GameChatRepositoryImpl implements GameChatRepository {

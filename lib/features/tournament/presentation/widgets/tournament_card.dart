@@ -51,8 +51,7 @@ class TournamentCard extends ConsumerWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // ── Left: Icon Badge (profile-style) ──────────────────────
-              Container(
+Container(
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
@@ -66,9 +65,7 @@ class TournamentCard extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 13),
-
-              // ── Middle: Title + meta ───────────────────────────────────
-              Expanded(
+Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -141,9 +138,7 @@ class TournamentCard extends ConsumerWidget {
               ),
 
               const SizedBox(width: 10),
-
-              // ── Right: Action Button or Chevron ─────────────────────────
-              if (!isParticipant && tournament.status == TournamentStatus.open)
+if (!isParticipant && tournament.status == TournamentStatus.open)
                 Consumer(
                   builder: (context, ref, _) {
                     final joinState = ref.watch(tournamentJoinControllerProvider);
@@ -204,9 +199,6 @@ class TournamentCard extends ConsumerWidget {
     return AppColors.primary;
   }
 }
-
-// ─── Small helpers ────────────────────────────────────────────────────────────
-
 class _MetaItem extends StatelessWidget {
   final IconData icon;
   final String label;

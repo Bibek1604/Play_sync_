@@ -7,9 +7,6 @@ import '../../domain/entities/game_entity.dart';
 import '../../domain/entities/invite_link_entity.dart';
 import '../../domain/entities/game_invitation_entity.dart';
 import '../../data/repositories/game_repository.dart';
-
-// ─── State ───────────────────────────────────────────────────────────────────
-
 enum GameFilter { all, OPEN, FULL, ENDED, CANCELLED }
 
 class GameState extends Equatable {
@@ -127,9 +124,6 @@ class GameState extends Equatable {
         popularTags, myInvitations,
       ];
 }
-
-// ─── Notifier ────────────────────────────────────────────────────────────────
-
 class GameNotifier extends StateNotifier<GameState> {
   final GameRepository _repository;
   
@@ -398,10 +392,7 @@ class GameNotifier extends StateNotifier<GameState> {
       return null;
     }
   }
-
-  // ─── Update Game ─────────────────────────────────────────────────────────
-
-  /// Updates an existing game (creator only).
+/// Updates an existing game (creator only).
   /// [gameData] may be a plain Map or Dio FormData (for image uploads).
   Future<GameEntity?> updateGame(String gameId, dynamic gameData) async {
     try {
@@ -419,10 +410,7 @@ class GameNotifier extends StateNotifier<GameState> {
       return null;
     }
   }
-
-  // ─── Can Join Check ───────────────────────────────────────────────────────
-
-  /// Checks if the current user can join a game.
+/// Checks if the current user can join a game.
   /// Returns `(canJoin, reason?)` without mutating state.
   Future<({bool canJoin, String? reason})> canJoinGame(String gameId) async {
     try {
@@ -431,10 +419,7 @@ class GameNotifier extends StateNotifier<GameState> {
       return (canJoin: false, reason: _errorMsg(e));
     }
   }
-
-  // ─── Tags ─────────────────────────────────────────────────────────────────
-
-  /// Fetches popular tags and updates state.
+/// Fetches popular tags and updates state.
   Future<void> fetchPopularTags({int limit = 20}) async {
     try {
       final tags = await _repository.fetchPopularTags(limit: limit);
@@ -443,10 +428,7 @@ class GameNotifier extends StateNotifier<GameState> {
       // Non-critical — silently ignore
     }
   }
-
-  // ─── Invite Link ──────────────────────────────────────────────────────────
-
-  /// Generates a shareable invite link for a game (creator only).
+/// Generates a shareable invite link for a game (creator only).
   Future<InviteLink?> generateInviteLink(String gameId) async {
     try {
       return await _repository.generateInviteLink(gameId);
@@ -482,10 +464,7 @@ class GameNotifier extends StateNotifier<GameState> {
       return null;
     }
   }
-
-  // ─── Game Invitations ─────────────────────────────────────────────────────
-
-  /// Sends an invitation to a user for a specific game.
+/// Sends an invitation to a user for a specific game.
   Future<GameInvitation?> sendInvitation({
     required String gameId,
     required String invitedUserId,
@@ -575,9 +554,6 @@ class GameNotifier extends StateNotifier<GameState> {
     return e.toString();
   }
 }
-
-// ─── Providers ───────────────────────────────────────────────────────────────
-
 /// Repository provider for game data with Hive cache coordination
 final gameRepositoryProvider = Provider<GameRepository>((ref) {
   final api = ref.watch(apiClientProvider);

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 
 /// Reusable back button widget for internal pages.
-///
 /// Displays a blue back-arrow icon with optional label text.
 /// Place in the AppBar `leading` slot or as a standalone widget.
 class AppBackButton extends StatelessWidget {

@@ -128,9 +128,6 @@ class OnlineGameListWidget extends ConsumerWidget {
     );
   }
 }
-
-// ── Shared Helper Widgets ───────────────────────────────────────────────────
-
 class _Label extends StatelessWidget {
   final String text;
   const _Label(this.text);

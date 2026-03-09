@@ -1,7 +1,6 @@
 import 'package:equatable/equatable.dart';
 
 /// A single row in the leaderboard — matches backend LeaderboardEntry type.
-///
 /// Backend fields: rank, userId, fullName, avatar, xp, level, wins, totalGames
 class LeaderboardEntry extends Equatable {
   final String userId;

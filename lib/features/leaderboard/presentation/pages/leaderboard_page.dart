@@ -212,8 +212,7 @@ class LeaderboardPage extends ConsumerWidget {
       child: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          // ── Podium ────────────────────────────────────────────────
-          if (top3.length == 3)
+if (top3.length == 3)
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
@@ -230,9 +229,7 @@ class LeaderboardPage extends ConsumerWidget {
                 ),
               ),
             ),
-
-          // ── Rest of the list ──────────────────────────────────────
-          SliverPadding(
+SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate(
@@ -290,9 +287,6 @@ class LeaderboardPage extends ConsumerWidget {
     );
   }
 }
-
-// ── Filter Pill ────────────────────────────────────────────────────────────────
-
 class _FilterPill extends StatelessWidget {
   final String label;
   final IconData icon;
@@ -323,9 +317,6 @@ class _FilterPill extends StatelessWidget {
     );
   }
 }
-
-// ── Filter Sheet ───────────────────────────────────────────────────────────────
-
 class _LeaderboardFilterSheet extends StatefulWidget {
   final LeaderboardFilter current;
   final void Function(LeaderboardFilter) onApply;

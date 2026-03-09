@@ -5,9 +5,6 @@ import '../../../../core/error/failures.dart';
 import '../../domain/entities/tournament_payment_entity.dart';
 import '../../domain/repositories/tournament_repository.dart';
 import 'tournament_notifier.dart';
-
-// ── Payment Flow State ──────────────────────────────────────────────────────
-
 enum PaymentFlowStatus {
   idle,
   initiating,
@@ -70,9 +67,6 @@ class TournamentPaymentState {
 
   bool get canRetryVerify => verifyRetryCount < 6;
 }
-
-// ── Payment Notifier ────────────────────────────────────────────────────────
-
 class TournamentPaymentNotifier extends StateNotifier<TournamentPaymentState> {
   final ITournamentRepository _repository;
   Timer? _retryTimer;
@@ -88,10 +82,7 @@ class TournamentPaymentNotifier extends StateNotifier<TournamentPaymentState> {
     _retryTimer?.cancel();
     super.dispose();
   }
-
-  // ── Initiate eSewa Payment ────────────────────────────────────────────────
-
-  Future<void> initiatePayment(String tournamentId) async {
+Future<void> initiatePayment(String tournamentId) async {
     state = state.copyWith(
       flowStatus: PaymentFlowStatus.initiating,
       clearError: true,
@@ -115,10 +106,7 @@ class TournamentPaymentNotifier extends StateNotifier<TournamentPaymentState> {
       },
     );
   }
-
-  // ── Verify Payment (POST callback from eSewa) ────────────────────────────
-
-  Future<void> verifyPayment([String? base64Data]) async {
+Future<void> verifyPayment([String? base64Data]) async {
     _retryTimer?.cancel();
     state = state.copyWith(
       flowStatus: PaymentFlowStatus.verifying,
@@ -156,10 +144,7 @@ class TournamentPaymentNotifier extends StateNotifier<TournamentPaymentState> {
       if (mounted) verifyPayment(base64Data);
     });
   }
-
-  // ── Check Payment Status ──────────────────────────────────────────────────
-
-  Future<void> checkPaymentStatus(String tournamentId) async {
+Future<void> checkPaymentStatus(String tournamentId) async {
     final result = await _repository.getPaymentStatus(tournamentId);
     result.fold(
       (failure) => debugPrint('[Payment] Status check failed: ${failure.message}'),
@@ -171,10 +156,7 @@ class TournamentPaymentNotifier extends StateNotifier<TournamentPaymentState> {
       },
     );
   }
-
-  // ── Chat Access ───────────────────────────────────────────────────────────
-
-  Future<void> checkChatAccess(String tournamentId) async {
+Future<void> checkChatAccess(String tournamentId) async {
     state = state.copyWith(isCheckingAccess: true);
     final result = await _repository.checkChatAccess(tournamentId);
     result.fold(
@@ -189,10 +171,7 @@ class TournamentPaymentNotifier extends StateNotifier<TournamentPaymentState> {
       },
     );
   }
-
-  // ── Dashboard / Admin Payments ────────────────────────────────────────────
-
-  Future<void> fetchDashboardTransactions() async {
+Future<void> fetchDashboardTransactions() async {
     final result = await _repository.getDashboardTransactions();
     result.fold(
       (failure) => debugPrint('[Payment] Dashboard fetch failed: ${failure.message}'),
@@ -207,17 +186,11 @@ class TournamentPaymentNotifier extends StateNotifier<TournamentPaymentState> {
       (list) => state = state.copyWith(tournamentPayments: list),
     );
   }
-
-  // ── Reset ─────────────────────────────────────────────────────────────────
-
-  void resetPaymentFlow() {
+void resetPaymentFlow() {
     _retryTimer?.cancel();
     state = const TournamentPaymentState();
   }
 }
-
-// ── Provider ────────────────────────────────────────────────────────────────
-
 final tournamentPaymentProvider =
     StateNotifierProvider<TournamentPaymentNotifier, TournamentPaymentState>(
         (ref) {

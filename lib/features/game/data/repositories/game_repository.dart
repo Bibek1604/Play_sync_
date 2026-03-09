@@ -10,7 +10,6 @@ import '../../domain/entities/invite_link_entity.dart';
 import '../../domain/entities/game_invitation_entity.dart';
 
 /// Repository for game data with Hive cache + API coordination.
-///
 /// Implements cache-first strategy with TTL (time-to-live) for optimal performance.
 /// Cache is automatically invalidated after mutations (join/leave/cancel).
 class GameRepository {
@@ -32,12 +31,8 @@ class GameRepository {
     }
     return _gamesBox!;
   }
-
-  // ─── Single Game Operations ─────────────────────────────────────────────
-
-  /// Fetches a game by ID from cache (if fresh) or API.
-  ///
-  /// [forceRefresh] bypasses cache and always fetches from API.
+/// Fetches a game by ID from cache (if fresh) or API.
+/// [forceRefresh] bypasses cache and always fetches from API.
   /// Always fetches with full participant details (`?details=true`).
   Future<GameEntity> getGame(String id, {bool forceRefresh = false}) async {
     final box = await _box;
@@ -81,8 +76,7 @@ class GameRepository {
   }
 
   /// Joins a game and returns the updated game entity.
-  ///
-  /// Cache is updated immediately with the server response.
+/// Cache is updated immediately with the server response.
   Future<GameEntity> joinGame(String id) async {
     try {
       final resp = await _api.post(ApiEndpoints.joinGame(id));
@@ -103,8 +97,7 @@ class GameRepository {
   }
 
   /// Leaves a game and returns the updated game entity.
-  ///
-  /// Cache is updated immediately with the server response.
+/// Cache is updated immediately with the server response.
   Future<GameEntity> leaveGame(String id) async {
     try {
       final resp = await _api.post(ApiEndpoints.leaveGame(id));
@@ -157,8 +150,7 @@ class GameRepository {
   }
 
   /// Updates an existing game (creator only).
-  ///
-  /// [gameData] may be a plain Map or Dio [FormData] (for image uploads).
+/// [gameData] may be a plain Map or Dio [FormData] (for image uploads).
   /// Returns the updated [GameEntity].
   Future<GameEntity> updateGame(String id, dynamic gameData) async {
     try {
@@ -185,8 +177,7 @@ class GameRepository {
   }
 
   /// Checks whether the current user can join a game.
-  ///
-  /// Returns `{ canJoin: bool, reason?: String }`.
+/// Returns `{ canJoin: bool, reason?: String }`.
   Future<({bool canJoin, String? reason})> canJoinGame(String id) async {
     try {
       final resp = await _api.get(ApiEndpoints.canJoinGame(id));
@@ -203,8 +194,7 @@ class GameRepository {
   }
 
   /// Fetches popular game tags from the backend.
-  ///
-  /// GET /games/tags/popular?limit=[limit]
+/// GET /games/tags/popular?limit=[limit]
   Future<List<String>> fetchPopularTags({int limit = 20}) async {
     try {
       final resp = await _api.get(
@@ -223,12 +213,8 @@ class GameRepository {
       return [];
     }
   }
-
-  // ─── Invite Link Operations ─────────────────────────────────────────────
-
-  /// Generates an invite link for a game (creator only).
-  ///
-  /// POST /games/:id/invite
+/// Generates an invite link for a game (creator only).
+/// POST /games/:id/invite
   /// Returns [InviteLink] with code, expiry, and full URL.
   Future<InviteLink> generateInviteLink(String gameId) async {
     try {
@@ -244,8 +230,7 @@ class GameRepository {
   }
 
   /// Fetches invite details for a given invite code.
-  ///
-  /// GET /games/invite/:code (public — no auth middleware in route)
+/// GET /games/invite/:code (public — no auth middleware in route)
   /// Returns basic game info to show before joining.
   Future<InviteDetails> getInviteDetails(String code) async {
     try {
@@ -261,8 +246,7 @@ class GameRepository {
   }
 
   /// Joins a game via invite code. Returns the updated game.
-  ///
-  /// POST /games/invite/:code/join
+/// POST /games/invite/:code/join
   Future<GameEntity> joinViaInvite(String code) async {
     try {
       final resp = await _api.post(ApiEndpoints.joinViaInvite(code));
@@ -278,12 +262,8 @@ class GameRepository {
       rethrow;
     }
   }
-
-  // ─── Game Invitation Operations ─────────────────────────────────────────
-
-  /// Sends a game invitation to a specific user.
-  ///
-  /// POST /games/:gameId/invite  body: { invitedUserId, message? }
+/// Sends a game invitation to a specific user.
+/// POST /games/:gameId/invite  body: { invitedUserId, message? }
   Future<GameInvitation> sendInvitation({
     required String gameId,
     required String invitedUserId,
@@ -308,8 +288,7 @@ class GameRepository {
   }
 
   /// Fetches all invitations received by the current user.
-  ///
-  /// GET /games/me/invitations
+/// GET /games/me/invitations
   Future<List<GameInvitation>> getMyInvitations() async {
     try {
       final resp = await _api.get(ApiEndpoints.getMyInvitations);
@@ -328,8 +307,7 @@ class GameRepository {
   }
 
   /// Responds to a game invitation (accept / decline).
-  ///
-  /// PUT /games/invitations/:invitationId/respond  body: { action }
+/// PUT /games/invitations/:invitationId/respond  body: { action }
   Future<void> respondToInvitation({
     required String invitationId,
     required InvitationAction action,
@@ -360,10 +338,7 @@ class GameRepository {
       rethrow;
     }
   }
-
-  // ─── Bulk Operations ────────────────────────────────────────────────────
-
-  /// Creates a new game and returns the created [GameEntity].
+/// Creates a new game and returns the created [GameEntity].
   /// [gameData] may be a plain [Map] or a Dio [FormData] (for image uploads).
   Future<GameEntity> createGame(dynamic gameData) async {
     try {
@@ -494,10 +469,7 @@ class GameRepository {
       rethrow;
     }
   }
-
-  // ─── Cache Management ───────────────────────────────────────────────────
-
-  /// Loads all cached games on app startup.
+/// Loads all cached games on app startup.
   Future<List<GameEntity>> loadCachedGames() async {
     try {
       final box = await _box;

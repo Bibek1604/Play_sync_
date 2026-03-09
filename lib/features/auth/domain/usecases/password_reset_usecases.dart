@@ -5,7 +5,6 @@ import '../entities/forgot_password_entity.dart';
 import '../repositories/password_reset_repository.dart';
 
 /// UseCase for requesting password reset OTP
-/// 
 /// This use case handles the first step of password reset:
 /// - Accepts email address
 /// - Calls repository to send OTP to email
@@ -22,7 +21,6 @@ class ForgotPasswordUseCase implements UseCase<ForgotPasswordResponse, String> {
 }
 
 /// UseCase for resetting password with OTP
-/// 
 /// This use case handles the second step of password reset:
 /// - Accepts email, OTP, and new password
 /// - Validates inputs
@@ -40,7 +38,6 @@ class ResetPasswordUseCase implements UseCase<PasswordResetResponse, ResetPasswo
 }
 
 /// UseCase for verifying OTP validity
-/// 
 /// This use case provides real-time OTP verification
 /// - Accepts email and OTP
 /// - Calls repository to verify OTP

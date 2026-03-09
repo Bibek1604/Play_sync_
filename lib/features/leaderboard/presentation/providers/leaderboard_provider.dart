@@ -4,9 +4,6 @@ import '../../domain/value_objects/leaderboard_filter.dart';
 import '../../../../core/api/api_client.dart';
 import '../../../../core/api/api_endpoints.dart';
 import '../../../auth/presentation/providers/auth_notifier.dart';
-
-// ── State ─────────────────────────────────────────────────────────────────────
-
 class LeaderboardState {
   final List<LeaderboardEntry> entries;
   final LeaderboardFilter filter;
@@ -43,9 +40,6 @@ class LeaderboardState {
     );
   }
 }
-
-// ── Notifier ──────────────────────────────────────────────────────────────────
-
 class LeaderboardNotifier extends StateNotifier<LeaderboardState> {
   final ApiClient _apiClient;
   final String? _currentUserId;
@@ -141,9 +135,6 @@ class LeaderboardNotifier extends StateNotifier<LeaderboardState> {
     }
   }
 }
-
-// ── Provider ──────────────────────────────────────────────────────────────────
-
 final leaderboardProvider =
     StateNotifierProvider<LeaderboardNotifier, LeaderboardState>((ref) {
   final apiClient = ref.watch(apiClientProvider);

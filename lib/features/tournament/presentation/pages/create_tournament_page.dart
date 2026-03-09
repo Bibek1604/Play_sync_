@@ -269,9 +269,6 @@ class _CreateTournamentPageState extends ConsumerState<CreateTournamentPage> {
     if (success && mounted) Navigator.pop(context, true);
   }
 }
-
-// ── Date Picker Field ───────────────────────────────────────────────────────
-
 class _DatePickerField extends StatelessWidget {
   final String label;
   final DateTime? value;

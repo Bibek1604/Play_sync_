@@ -5,8 +5,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../domain/entities/game_entity.dart';
 import 'package:play_sync_new/features/game_chat/game_chat.dart';
-
-// ─── Design Tokens ────────────────────────────────────────────────────────────
 // All button heights, border radii, and colours are defined centrally so
 // every card in every browse section looks identical.
 
@@ -22,7 +20,6 @@ const _kClrCancel  = Color(0xFFEF4444); // red    — cancel game (creator)
 const _kClrFull    = Color(0xFF64748B); // grey   — game full (disabled)
 
 /// GameCard — consistent UI for both Online and Offline browse sections.
-///
 /// Button matrix (every state is the SAME height/radius — no exceptions):
 ///   Creator + OPEN/FULL  → [Chat]         [Cancel]
 ///   Participant + OPEN/FULL → [Chat]       [Leave]
@@ -120,8 +117,7 @@ class _GameCardState extends ConsumerState<GameCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Banner ──────────────────────────────────────────────────────
-          _Banner(
+_Banner(
             game: widget.game,
             isCreator: _isCreator,
             isJoined: _isJoined,
@@ -130,9 +126,7 @@ class _GameCardState extends ConsumerState<GameCard> {
                 ? () => _do(widget.onDelete)
                 : null,
           ),
-
-          // ── Body ────────────────────────────────────────────────────────
-          Padding(
+Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -246,9 +240,7 @@ class _GameCardState extends ConsumerState<GameCard> {
                 ),
 
                 const SizedBox(height: 16),
-
-                // ── Action buttons ─────────────────────────────────────────
-                _Buttons(
+_Buttons(
                   game: widget.game,
                   isCreator: _isCreator,
                   isJoined: _isJoined,
@@ -273,9 +265,6 @@ class _GameCardState extends ConsumerState<GameCard> {
     return '$h:$m $ampm';
   }
 }
-
-// ─── Banner ───────────────────────────────────────────────────────────────────
-
 class _Banner extends StatelessWidget {
   final GameEntity game;
   final bool isCreator;
@@ -443,8 +432,6 @@ class _PlaceholderBg extends StatelessWidget {
     );
   }
 }
-
-// ─── Action Buttons ───────────────────────────────────────────────────────────
 // ALL buttons: same height (_kBtnHeight), same border-radius (_kBtnRadius),
 // same font size (13), same font weight (w800). Colours only differ by semantic.
 
@@ -648,9 +635,6 @@ class _DisabledBtn extends StatelessWidget {
     );
   }
 }
-
-// ─── Supporting Widgets ───────────────────────────────────────────────────────
-
 class _SportBadge extends StatelessWidget {
   final String sport;
   final bool isDark;

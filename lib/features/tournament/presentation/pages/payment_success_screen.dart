@@ -9,7 +9,6 @@ import '../../domain/entities/tournament_entity.dart';
 import '../../domain/entities/tournament_payment_entity.dart';
 
 /// Beautiful success screen shown after successful eSewa payment
-/// 
 /// Arguments:
 /// - `tournament` (TournamentEntity) - Tournament that was paid for
 /// - `payment` (TournamentPaymentEntity) - Payment details

@@ -1,7 +1,6 @@
 import '../../domain/entities/location_entity.dart';
 
 /// Data model for location with JSON serialization
-/// 
 /// This model extends LocationEntity and adds:
 /// - JSON serialization/deserialization
 /// - API response mapping
@@ -18,8 +17,7 @@ class LocationModel extends LocationEntity {
   });
 
   /// Create LocationModel from JSON
-  /// 
-  /// Used for parsing API responses
+/// Used for parsing API responses
   factory LocationModel.fromJson(Map<String, dynamic> json) {
     return LocationModel(
       latitude: (json['latitude'] as num).toDouble(),
@@ -35,8 +33,7 @@ class LocationModel extends LocationEntity {
   }
 
   /// Convert LocationModel to JSON
-  /// 
-  /// Used for API requests
+/// Used for API requests
   @override
   Map<String, dynamic> toJson() {
     return {

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../camera_theme.dart';
 
 /// Example Camera Page
-/// 
 /// Demonstrates how to use the CameraWrapperWidget safely.
 /// This is a complete, production-ready example.
 class ExampleCameraPage extends ConsumerWidget {
@@ -88,7 +87,6 @@ class _DemoCameraWidget extends StatelessWidget {
 }
 
 /// Example 2: Manual Control
-/// 
 /// Shows how to use camera controls without the wrapper.
 class ExampleManualControlPage extends ConsumerWidget {
   const ExampleManualControlPage({super.key});
@@ -138,7 +136,6 @@ class ExampleManualControlPage extends ConsumerWidget {
 }
 
 /// Example 3: Programmatic Control
-/// 
 /// Shows how to control camera visibility from code.
 class ExampleProgrammaticPage extends ConsumerStatefulWidget {
   const ExampleProgrammaticPage({super.key});

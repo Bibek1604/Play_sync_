@@ -3,7 +3,6 @@ import 'package:play_sync_new/core/services/app_logger.dart';
 import '../constants/hive_table_constant.dart';
 import 'package:flutter/foundation.dart';
 /// Initialises Hive for the PlaySync app.
-///
 /// Call [HiveInit.initialize] once from `main()` before `runApp`.
 /// All Hive type adapters are registered here; all named boxes are opened.
 class HiveInit {
@@ -26,16 +25,11 @@ class HiveInit {
       rethrow;
     }
   }
-
-  // ── Adapter Registration ──────────────────────────────────────────────────
-  static void _registerAdapters() {
+static void _registerAdapters() {
     // Adapter registration stays the same
     AppLogger.debug('Adapters registered', tag: 'HIVE');
   }
-
-  // ── Box Opening ───────────────────────────────────────────────────────────
-  
-  /// Boxes required for immediate startup (Auth, Themes, etc.)
+/// Boxes required for immediate startup (Auth, Themes, etc.)
   static Future<void> _openEssentialBoxes() async {
     final essentialBoxes = [
       HiveTableConstant.authBox,

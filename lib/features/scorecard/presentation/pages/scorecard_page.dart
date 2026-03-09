@@ -63,8 +63,6 @@ class ScorecardPage extends ConsumerWidget {
     );
   }
 }
-
-// ─── Body ─────────────────────────────────────────────────────────────────────
 class _ScorecardBody extends StatelessWidget {
   final dynamic sc;
   const _ScorecardBody({required this.sc});
@@ -74,12 +72,9 @@ class _ScorecardBody extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // ── Rank banner ──
-        _RankBanner(rank: sc.rank),
+_RankBanner(rank: sc.rank),
         SizedBox(height: AppSpacing.lg),
-
-        // ── XP Progress ──
-        _Card(
+_Card(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -94,9 +89,7 @@ class _ScorecardBody extends StatelessWidget {
           ),
         ),
         SizedBox(height: AppSpacing.md),
-
-        // ── Stats row ──
-        Row(
+Row(
           children: [
             Expanded(child: _StatChip(icon: Icons.emoji_events_rounded, label: 'Wins', value: sc.wins.toString(), color: AppColors.success)),
             SizedBox(width: AppSpacing.sm),
@@ -108,9 +101,7 @@ class _ScorecardBody extends StatelessWidget {
           ],
         ),
         SizedBox(height: AppSpacing.md),
-
-        // ── Ring chart ──
-        _Card(
+_Card(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -127,9 +118,7 @@ class _ScorecardBody extends StatelessWidget {
           ),
         ),
         SizedBox(height: AppSpacing.md),
-
-        // ── Win rate bar ──
-        _Card(
+_Card(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -144,8 +133,6 @@ class _ScorecardBody extends StatelessWidget {
     );
   }
 }
-
-// ─── Rank Banner ──────────────────────────────────────────────────────────────
 class _RankBanner extends StatelessWidget {
   final int rank;
   const _RankBanner({required this.rank});
@@ -193,8 +180,6 @@ class _RankBanner extends StatelessWidget {
     );
   }
 }
-
-// ─── Win Rate Bar ─────────────────────────────────────────────────────────────
 class _WinRateBar extends StatefulWidget {
   final double winRate;
   final String label;
@@ -263,8 +248,6 @@ class _WinRateBarState extends State<_WinRateBar>
     );
   }
 }
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 class _Card extends StatelessWidget {
   final Widget child;
   const _Card({required this.child});

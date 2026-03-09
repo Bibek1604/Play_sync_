@@ -10,9 +10,6 @@ import '../../../../../core/api/api_endpoints.dart';
 import '../../../../../core/api/secure_storage_provider.dart';
 import '../../../auth/presentation/providers/auth_notifier.dart';
 import '../../../auth/presentation/view_model/auth_viewmodel.dart';
-
-// ─── State ───────────────────────────────────────────────────────────────────
-
 class ChatState extends Equatable {
   final List<ChatRoom> rooms;
   final Map<String, List<ChatMessage>> messagesByRoom;
@@ -90,15 +87,10 @@ class ChatState extends Equatable {
         error
       ];
 }
-
-// ─── Notifier ────────────────────────────────────────────────────────────────
-
 /// Chat notifier for the Messages tab (REST-only implementation).
-///
 /// Messages use the existing game-chat REST endpoints — **no Socket.IO**:
 ///   GET  /api/v1/games/:gameId/chat  (fetch history)
 ///   POST /api/v1/games/:gameId/chat  (send message)
-///
 /// Architecture:
 /// - Messages are sent via REST and only added to state after server response
 /// - No optimistic updates, no temporary message IDs
@@ -122,10 +114,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
     final id = (await _storage.read(key: 'user_id') ?? '').trim();
     if (id.isNotEmpty) _myId = id;
   }
-
-  // ── Rooms ─────────────────────────────────────────────────────────────────
-
-  /// Build room list from user's joined + created games (existing endpoints).
+/// Build room list from user's joined + created games (existing endpoints).
   Future<void> fetchRooms() async {
     state = state.copyWith(isLoadingRooms: true, clearError: true);
     try {
@@ -169,10 +158,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
       state = state.copyWith(isLoadingRooms: false);
     }
   }
-
-  // ── Room management (REST-only, no real-time Socket.IO) ────────────────────
-
-  Future<void> openRoom(String roomId) async {
+Future<void> openRoom(String roomId) async {
     state = state.copyWith(activeRoomId: roomId, isLoadingMessages: true);
     await _loadMessages(roomId);
     // No socket connection — we use REST only
@@ -258,10 +244,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
       state = state.copyWith(isLoadingMore: false);
     }
   }
-
-  // ── Send (REST-only, no optimistic updates) ────────────────────────────────
-
-  /// Sends a message via REST API.
+/// Sends a message via REST API.
   /// **Only** adds the message to local state after receiving server response.
   /// No optimistic updates, no temporary IDs, no deduplication complexity.
   Future<void> sendMessage(String content) async {
@@ -358,17 +341,11 @@ class ChatNotifier extends StateNotifier<ChatState> {
       isRead: true,
     );
   }
-
-  // ── Mock data (shown if game list unavailable) ─────────────────────────────
-
-  @override
+@override
   void dispose() {
     super.dispose();
   }
 }
-
-// ─── Providers ───────────────────────────────────────────────────────────────
-
 /// Repository provider for chat data operations (clean architecture).
 final chatRepositoryProvider = Provider<ChatRepository>((ref) {
   final api = ref.watch(apiClientProvider);

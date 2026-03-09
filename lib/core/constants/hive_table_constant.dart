@@ -1,5 +1,4 @@
 /// Central location for all Hive-related constants
-///
 /// Type IDs must be unique within the range 0-223 for Hive adapters.
 /// Follow sequential numbering when adding new types.
 class HiveTableConstant {
@@ -7,8 +6,6 @@ class HiveTableConstant {
 
   // Database name
   static const String dbName = 'play_sync_db';
-
-  // ===== TYPE IDs =====
   // PlaySync domain models — globally unique, never reuse
   static const int gameDtoTypeId = 1;
   static const int profileTypeId = 3;
@@ -26,8 +23,6 @@ class HiveTableConstant {
   static const int tournamentPaymentDtoTypeId = 14;
   static const int tournamentChatMessageTypeId = 15;
   static const int adminStatsDtoTypeId = 16;
-
-  // ===== BOX NAMES =====
   // Authentication (dynamic, no Hive model adapter)
   static const String authBox = 'auth_box';
 

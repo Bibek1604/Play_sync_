@@ -9,9 +9,6 @@ import '../../../auth/presentation/providers/auth_notifier.dart';
 import '../../domain/entities/tournament_chat_message.dart';
 import '../../data/datasources/tournament_local_datasource.dart';
 import 'tournament_notifier.dart';
-
-// ── State ───────────────────────────────────────────────────────────────────
-
 class TournamentChatState {
   final List<TournamentChatMessage> messages;
   final List<TournamentParticipantInfo> participants;
@@ -54,9 +51,6 @@ class TournamentChatState {
     );
   }
 }
-
-// ── Notifier ────────────────────────────────────────────────────────────────
-
 class TournamentChatNotifier extends StateNotifier<TournamentChatState> {
   final Ref _ref;
   final TournamentLocalDataSource _localDs;
@@ -67,10 +61,7 @@ class TournamentChatNotifier extends StateNotifier<TournamentChatState> {
 
   String get _myId =>
       _ref.read(authNotifierProvider).user?.userId ?? '';
-
-  // ── Join Tournament Chat ──────────────────────────────────────────────────
-
-  Future<void> joinRoom(String tournamentId) async {
+Future<void> joinRoom(String tournamentId) async {
     if (state.activeTournamentId == tournamentId && state.isConnected) return;
 
     // Leave previous room if any
@@ -140,10 +131,7 @@ class TournamentChatNotifier extends StateNotifier<TournamentChatState> {
         );
       });
   }
-
-  // ── Event Handlers ────────────────────────────────────────────────────────
-
-  void _handleHistory(dynamic data, String tournamentId) {
+void _handleHistory(dynamic data, String tournamentId) {
     try {
       final List<dynamic> rawList;
       if (data is List) {
@@ -230,10 +218,7 @@ class TournamentChatNotifier extends StateNotifier<TournamentChatState> {
       debugPrint('[TournamentChat] Participants parse error: $e');
     }
   }
-
-  // ── Send Message ──────────────────────────────────────────────────────────
-
-  void sendMessage(String content) {
+void sendMessage(String content) {
     final tournamentId = state.activeTournamentId;
     if (tournamentId == null ||
         content.trim().isEmpty ||
@@ -265,10 +250,7 @@ class TournamentChatNotifier extends StateNotifier<TournamentChatState> {
       'content': content.trim(),
     });
   }
-
-  // ── Leave Room ────────────────────────────────────────────────────────────
-
-  void leaveRoom() {
+void leaveRoom() {
     final tid = state.activeTournamentId;
     if (tid != null && _socket != null) {
       _socket!.emit('tournament:leave', {'tournamentId': tid});
@@ -280,10 +262,7 @@ class TournamentChatNotifier extends StateNotifier<TournamentChatState> {
     _socket?.off('tournament:error');
     state = const TournamentChatState();
   }
-
-  // ── Helpers ───────────────────────────────────────────────────────────────
-
-  List<TournamentChatMessage> _mergeMessages(
+List<TournamentChatMessage> _mergeMessages(
     List<TournamentChatMessage> existing,
     List<TournamentChatMessage> incoming,
   ) {
@@ -308,9 +287,6 @@ class TournamentChatNotifier extends StateNotifier<TournamentChatState> {
     super.dispose();
   }
 }
-
-// ── Provider ────────────────────────────────────────────────────────────────
-
 final tournamentChatProvider =
     StateNotifierProvider<TournamentChatNotifier, TournamentChatState>((ref) {
   final localDs = ref.watch(tournamentLocalDataSourceProvider);

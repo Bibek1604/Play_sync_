@@ -48,16 +48,13 @@ class AppDrawer extends ConsumerWidget {
         ),
         child: Column(
           children: [
-            // ── Header ──────────────────────────────────────────────────────
-            _DrawerHeader(
+_DrawerHeader(
               fullName: fullName,
               email: email,
               avatarUrl: avatarUrl,
               onClose: () => Navigator.pop(context),
             ),
-
-            // ── Menu ────────────────────────────────────────────────────────
-            Expanded(
+Expanded(
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(14, 20, 14, 8),
                 physics: const BouncingScrollPhysics(),
@@ -135,9 +132,7 @@ class AppDrawer extends ConsumerWidget {
                 ],
               ),
             ),
-
-            // ── Logout ──────────────────────────────────────────────────────
-            Padding(
+Padding(
               padding: const EdgeInsets.fromLTRB(14, 8, 14, 28),
               child: _LogoutButton(onTap: () async {
                 Navigator.pop(context);
@@ -161,9 +156,6 @@ class AppDrawer extends ConsumerWidget {
     }
   }
 }
-
-// ─── Header ───────────────────────────────────────────────────────────────────
-
 class _DrawerHeader extends StatelessWidget {
   final String fullName;
   final String email;
@@ -341,9 +333,6 @@ class _DrawerHeader extends StatelessWidget {
     );
   }
 }
-
-// ─── Section Label ────────────────────────────────────────────────────────────
-
 class _SectionLabel extends StatelessWidget {
   final String title;
   const _SectionLabel(this.title);
@@ -364,9 +353,6 @@ class _SectionLabel extends StatelessWidget {
     );
   }
 }
-
-// ─── Nav Item ─────────────────────────────────────────────────────────────────
-
 class _NavItem extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -456,9 +442,6 @@ class _NavItem extends StatelessWidget {
     );
   }
 }
-
-// ─── Logout Button ────────────────────────────────────────────────────────────
-
 class _LogoutButton extends StatelessWidget {
   final VoidCallback onTap;
   const _LogoutButton({required this.onTap});

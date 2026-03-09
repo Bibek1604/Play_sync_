@@ -2,10 +2,8 @@ import 'package:dartz/dartz.dart';
 import 'package:play_sync_new/core/error/failures.dart';
 
 /// Base interface for use cases that require parameters
-///
 /// [SuccessType] - The type of successful result
 /// [Params] - The type of parameters required for the use case
-///
 /// Example:
 /// ```dart
 /// class GetProductByIdUsecase implements UsecaseWithParams<ProductEntity, GetProductParams> {
@@ -20,9 +18,7 @@ abstract interface class UsecaseWithParams<SuccessType, Params> {
 }
 
 /// Base interface for use cases that don't require parameters
-///
 /// [SuccessType] - The type of successful result
-///
 /// Example:
 /// ```dart
 /// class GetAllProductsUsecase implements UsecaseWithoutParams<List<ProductEntity>> {

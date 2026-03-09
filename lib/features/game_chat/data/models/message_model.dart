@@ -1,7 +1,6 @@
 import '../../domain/entities/message_entity.dart';
 
 /// Data-layer model for a chat message.
-///
 /// Parses the backend ChatMessageDTO which is currently in flat format:
 /// ```json
 /// {
@@ -14,7 +13,6 @@ import '../../domain/entities/message_entity.dart';
 ///   "createdAt": "ISO 8601 string"
 /// }
 /// ```
-///
 /// Also handles the legacy nested-user format as a fallback.
 class MessageModel extends MessageEntity {
   const MessageModel({
@@ -29,15 +27,12 @@ class MessageModel extends MessageEntity {
   });
 
   /// Parses a backend JSON map into [MessageModel].
-  ///
-  /// Supports both current (flat) and legacy (nested user) formats.
+/// Supports both current (flat) and legacy (nested user) formats.
   factory MessageModel.fromJson(Map<String, dynamic> json, String gameId) {
     final type = json['type'] as String? ?? 'text';
     final isSystem = type == 'system';
     final msgId = _normalizeId(json['_id'] ?? json['id']);
-
-    // ── Current format: flat senderId / senderName / text ──────────────────
-    final flatSenderId = _normalizeId(json['senderId']);
+final flatSenderId = _normalizeId(json['senderId']);
     if (flatSenderId.isNotEmpty) {
       final content = (json['text'] as String?)?.isNotEmpty == true
           ? json['text'] as String
@@ -58,9 +53,7 @@ class MessageModel extends MessageEntity {
         isSystemMessage: isSystem,
       );
     }
-
-    // ── Legacy format: nested user object / content field ───────────────────
-    final rawUser = json['user'];
+final rawUser = json['user'];
     String senderId = '';
     String senderName = 'Unknown';
     String? senderAvatar;
@@ -92,10 +85,7 @@ class MessageModel extends MessageEntity {
       isSystemMessage: isSystem,
     );
   }
-
-  // ── Helpers ───────────────────────────────────────────────────────────────
-
-  /// Normalises a Mongo ObjectId (plain string or `{ $oid: '...' }` map) to a
+/// Normalises a Mongo ObjectId (plain string or `{ $oid: '...' }` map) to a
   /// standardized trimmed lowercase string for reliable comparison.
   static String _normalizeId(dynamic id) {
     if (id == null) return '';

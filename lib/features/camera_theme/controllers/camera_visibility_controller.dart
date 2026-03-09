@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Camera Visibility State
-/// 
 /// Manages the visibility state of the camera screen.
 /// This is separate from UI to maintain clean architecture.
 class CameraVisibilityState {
@@ -51,7 +50,6 @@ class CameraVisibilityState {
 }
 
 /// Camera Visibility Controller
-/// 
 /// Controls the visibility state of the camera screen.
 /// Follows clean architecture - business logic only, no UI concerns.
 class CameraVisibilityController
@@ -59,8 +57,7 @@ class CameraVisibilityController
   CameraVisibilityController() : super(CameraVisibilityState.initial());
 
   /// Hide the camera
-  /// 
-  /// Sets visibility to false and records the timestamp.
+/// Sets visibility to false and records the timestamp.
   /// This will trigger theme change through the camera theme provider.
   void hideCamera() {
     if (state.isVisible) {
@@ -72,8 +69,7 @@ class CameraVisibilityController
   }
 
   /// Show the camera
-  /// 
-  /// Sets visibility to true and records the timestamp.
+/// Sets visibility to true and records the timestamp.
   /// IMPORTANT: This does NOT change the theme - theme stays as is.
   void showCamera() {
     if (!state.isVisible) {

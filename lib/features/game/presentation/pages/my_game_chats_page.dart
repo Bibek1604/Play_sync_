@@ -189,9 +189,6 @@ class _MyGameChatsPageState extends ConsumerState<MyGameChatsPage> {
     );
   }
 }
-
-// ── Tile ─────────────────────────────────────────────────────────────────────
-
 class _GameChatTile extends StatelessWidget {
   const _GameChatTile({
     required this.game,
@@ -358,9 +355,6 @@ class _GameChatTile extends StatelessWidget {
         GameStatus.CANCELLED => 'Cancelled',
       };
 }
-
-// ── Empty state ──────────────────────────────────────────────────────────────
-
 class _EmptyState extends StatelessWidget {
   const _EmptyState({required this.onBrowse});
   final VoidCallback onBrowse;

@@ -12,9 +12,7 @@ import '../../domain/entities/tournament_payment_entity.dart';
 import '../providers/tournament_payment_notifier.dart';
 
 /// Modern payment screen for tournament entry fee
-/// 
 /// Displays tournament details and initiates eSewa payment
-/// 
 /// Arguments:
 /// - `tournament` (TournamentEntity) - Tournament to pay for
 class TournamentPaymentScreen extends ConsumerStatefulWidget {
@@ -98,24 +96,15 @@ class _TournamentPaymentScreenState
           child: ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              // ── Payment Header ──────────────────────────────────────
-              _buildHeader(theme),
+_buildHeader(theme),
               const SizedBox(height: 24),
-
-              // ── Tournament Details Card ─────────────────────────────
-              _buildTournamentDetails(theme),
+_buildTournamentDetails(theme),
               const SizedBox(height: 20),
-
-              // ── Payment Summary Card ────────────────────────────────
-              _buildPaymentSummary(theme),
+_buildPaymentSummary(theme),
               const SizedBox(height: 32),
-
-              // ── eSewa Payment Button ────────────────────────────────
-              _buildPayButton(paymentState),
+_buildPayButton(paymentState),
               const SizedBox(height: 16),
-
-              // ── Security Notice ─────────────────────────────────────
-              _buildSecurityNotice(theme),
+_buildSecurityNotice(theme),
               const SizedBox(height: 32),
             ],
           ),
@@ -412,10 +401,7 @@ class _TournamentPaymentScreenState
       ),
     );
   }
-
-  // ── Actions ───────────────────────────────────────────────────────────
-
-  Future<void> _initiatePayment() async {
+Future<void> _initiatePayment() async {
     final notifier = ref.read(tournamentPaymentProvider.notifier);
     await notifier.initiatePayment(widget.tournament.id);
   }
@@ -498,9 +484,6 @@ class _TournamentPaymentScreenState
     );
   }
 }
-
-// ── Detail Item Widget ──────────────────────────────────────────────────────
-
 class _DetailItem extends StatelessWidget {
   final IconData icon;
   final String label;

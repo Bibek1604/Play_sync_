@@ -6,7 +6,6 @@ import '../../../../app/theme/theme_provider.dart';
 import '../../../../core/widgets/back_button_widget.dart';
 
 /// Theme Page
-/// 
 /// Allows users to change the app theme (light/dark/system).
 class ThemePage extends ConsumerWidget {
   const ThemePage({super.key});

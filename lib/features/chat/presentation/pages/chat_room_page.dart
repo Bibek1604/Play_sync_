@@ -228,9 +228,6 @@ class _ChatRoomPageState extends ConsumerState<ChatRoomPage> {
     );
   }
 }
-
-// ─── Message bubble ───────────────────────────────────────────────────────────
-
 class _MessageBubble extends StatelessWidget {
   final ChatMessage message;
   final String currentUserId;
@@ -313,9 +310,6 @@ class _MessageBubble extends StatelessWidget {
     return '$h:$m';
   }
 }
-
-// ─── Input bar ────────────────────────────────────────────────────────────────
-
 class _ChatInputBar extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback onSend;

@@ -17,11 +17,9 @@ class ChatHistoryResult {
 }
 
 /// Repository for game chat operations.
-///
 /// Wraps REST endpoints:
 ///   - GET  /games/:gameId/chat  → paginated message history
 ///   - POST /games/:gameId/chat  → send message (REST fallback)
-///
 /// Real-time messaging is handled via Socket.IO in the notifier layer.
 class ChatRepository {
   final ApiClient _api;
@@ -29,8 +27,7 @@ class ChatRepository {
   ChatRepository(this._api);
 
   /// Fetches paginated chat history for a game.
-  ///
-  /// [limit] — max messages to return (default 50, max 100 per backend).
+/// [limit] — max messages to return (default 50, max 100 per backend).
   /// [before] — ISO-8601 cursor for pagination (load older messages).
   Future<ChatHistoryResult> getChatHistory(
     String gameId, {
@@ -69,8 +66,7 @@ class ChatRepository {
 
   /// Sends a text message to a game chat via REST (fallback for when socket
   /// is offline or for guaranteed delivery).
-  ///
-  /// POST /games/:gameId/chat  body: { content }
+/// POST /games/:gameId/chat  body: { content }
   /// Returns the created [ChatMessage].
   Future<ChatMessage> sendMessage(String gameId, String content) async {
     try {
@@ -89,8 +85,7 @@ class ChatRepository {
   }
 
   /// Parses a backend ChatMessageDTO into [ChatMessage].
-  ///
-  /// Backend shape:
+/// Backend shape:
   /// ```json
   /// {
   ///   "_id": "abc",

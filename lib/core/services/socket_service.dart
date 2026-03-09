@@ -8,7 +8,6 @@ import '../api/api_endpoints.dart';
 enum SocketState { disconnected, connecting, connected, error }
 
 /// Singleton Socket.IO wrapper for PlaySync real-time features.
-///
 /// Usage:
 /// ```dart
 /// final socket = SocketService.instance.getSocket(token: accessToken);
@@ -16,12 +15,9 @@ enum SocketState { disconnected, connecting, connected, error }
 /// socket.on('new-message', (data) { /* handle */ });
 /// ```
 class SocketService {
-  // ── Singleton ────────────────────────────────────────────────────────────
-  SocketService._internal();
+SocketService._internal();
   static final SocketService instance = SocketService._internal();
-
-  // ── State ─────────────────────────────────────────────────────────────────
-  io.Socket? _socket;
+io.Socket? _socket;
   String? _currentToken;
 
   final _stateController = StreamController<SocketState>.broadcast();
@@ -31,12 +27,8 @@ class SocketService {
 
   SocketState _state = SocketState.disconnected;
   SocketState get state => _state;
-
-  // ── Public API ─────────────────────────────────────────────────────────────
-
-  /// Returns (and creates if needed) the socket connected with [token].
-  ///
-  /// Idempotent — calling multiple times with the same token returns the
+/// Returns (and creates if needed) the socket connected with [token].
+/// Idempotent — calling multiple times with the same token returns the
   /// existing socket.  Calling with a different token reconnects.
   io.Socket getSocket({required String token}) {
     if (_socket != null && _currentToken == token && _socket!.connected) {
@@ -61,10 +53,7 @@ class SocketService {
     _currentToken = null;
     _updateState(SocketState.disconnected);
   }
-
-  // ── Internal ───────────────────────────────────────────────────────────────
-
-  void _connect() {
+void _connect() {
     // Build the socket URL (strip /api/v1 path)
     final socketUrl = ApiEndpoints.baseUrl.replaceAll('/api/v1', '');
 

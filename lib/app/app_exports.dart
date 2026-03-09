@@ -1,5 +1,4 @@
 /// App Module Exports
-/// 
 /// Export all app-level configurations from one place.
 library;
 

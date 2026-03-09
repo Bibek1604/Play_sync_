@@ -1,5 +1,4 @@
 /// Dashboard Feature - Clean Architecture
-/// 
 /// Structure:
 /// ├── data/                    # Data Layer (future)
 /// │   ├── datasources/         # Data sources
@@ -11,7 +10,6 @@
 /// │   ├── repositories/        # Repository contracts
 /// │   └── usecases/            # Use cases
 /// │
-///     
 /// └── presentation/            # Presentation Layer
 ///     ├── pages/               # Full screen pages
 ///     ├── providers/           # State management

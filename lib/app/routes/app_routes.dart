@@ -1,9 +1,4 @@
-/// Application route names
-/// 
-/// Centralized route definitions for navigation throughout the app.
-/// All route paths are defined as static constants for type-safety.
 class AppRoutes {
-  // Prevent instantiation
   AppRoutes._();
 
   // Auth Routes
@@ -34,7 +29,6 @@ class AppRoutes {
   // Chat
   static const String chat = '/chat';
 
-  // Game Chat (per-game room, pass Map<String,String> {gameId, gameTitle} as arguments)
   static const String gameChat = '/game-chat';
 
   // Scorecard

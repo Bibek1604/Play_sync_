@@ -11,10 +11,7 @@ class TournamentRemoteDataSource {
 
   TournamentRemoteDataSource({required ApiClient apiClient})
       : _apiClient = apiClient;
-
-  // ── CRUD ──────────────────────────────────────────────────────────────────
-
-  Future<List<TournamentEntity>> getTournaments({
+Future<List<TournamentEntity>> getTournaments({
     int page = 1,
     int limit = 10,
     String? status,
@@ -97,10 +94,7 @@ class TournamentRemoteDataSource {
     }
     return [];
   }
-
-  // ── Payments ──────────────────────────────────────────────────────────────
-
-  Future<PaymentInitiation> initiatePayment(String id) async {
+Future<PaymentInitiation> initiatePayment(String id) async {
     final response = await _apiClient.post(
       ApiEndpoints.initiatePayment,
       data: {'tournamentId': id},
@@ -154,10 +148,7 @@ class TournamentRemoteDataSource {
     final data = _extractData(response.data);
     return _parsePaymentList(data);
   }
-
-  // ── Helpers ───────────────────────────────────────────────────────────────
-
-  List<TournamentPaymentEntity> _parsePaymentList(dynamic data) {
+List<TournamentPaymentEntity> _parsePaymentList(dynamic data) {
     if (data is List) {
       return data
           .map((e) =>

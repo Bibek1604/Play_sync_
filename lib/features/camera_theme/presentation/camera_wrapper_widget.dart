@@ -3,10 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/camera_theme_provider.dart';
 
 /// Camera Wrapper Widget
-/// 
 /// A reusable widget that wraps camera UI and manages visibility.
 /// This follows clean architecture - UI layer only.
-/// 
 /// Usage:
 /// ```dart
 /// CameraWrapperWidget(
@@ -177,7 +175,6 @@ class _CameraWrapperWidgetState extends ConsumerState<CameraWrapperWidget> {
 }
 
 /// Simple Camera Control Buttons
-/// 
 /// Standalone control buttons that can be placed anywhere.
 /// Useful when you don't want the full wrapper.
 class CameraControlButtons extends ConsumerWidget {

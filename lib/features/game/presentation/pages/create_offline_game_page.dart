@@ -19,21 +19,16 @@ class CreateOfflineGamePage extends ConsumerStatefulWidget {
 }
 
 class _CreateOfflineGamePageState extends ConsumerState<CreateOfflineGamePage> {
-  // ── Form State ───────────────────────────────────────────────────────────
-  final _formKey = GlobalKey<FormState>();
+final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _playersController = TextEditingController(text: '10');
   final _descController = TextEditingController();
-
-  // ── Location State ───────────────────────────────────────────────────────
-  double? _latitude;
+double? _latitude;
   double? _longitude;
   String? _areaName;
   bool _isDetectingLocation = false;
   String? _locationErrorMessage;
-
-  // ── UI State ──────────────────────────────────────────────────────────────
-  bool _isSubmitting = false;
+bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -51,10 +46,7 @@ class _CreateOfflineGamePageState extends ConsumerState<CreateOfflineGamePage> {
     _descController.dispose();
     super.dispose();
   }
-
-  // ── Location Logic ────────────────────────────────────────────────────────
-  
-  /// Handles the complete flow of detecting location:
+/// Handles the complete flow of detecting location:
   /// Service check -> Permission request -> Position acquisition -> Reverse Geocoding
   Future<void> _detectLocation() async {
     if (!mounted) return;
@@ -314,10 +306,7 @@ class _CreateOfflineGamePageState extends ConsumerState<CreateOfflineGamePage> {
       }
     }
   }
-
-  // ── Submission Logic ──────────────────────────────────────────────────────
-  
-  Future<void> _submit() async {
+Future<void> _submit() async {
     // 1. Validate Form Fields
     if (!_formKey.currentState!.validate()) return;
 
@@ -384,10 +373,7 @@ class _CreateOfflineGamePageState extends ConsumerState<CreateOfflineGamePage> {
       }
     }
   }
-
-  // ── Build UI ──────────────────────────────────────────────────────────────
-
-  @override
+@override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -409,8 +395,7 @@ class _CreateOfflineGamePageState extends ConsumerState<CreateOfflineGamePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Header Text ───────────────────────────────────────
-              const Text(
+const Text(
                 'Host a Local Game',
                 style: TextStyle(
                   fontSize: 24,
@@ -424,13 +409,9 @@ class _CreateOfflineGamePageState extends ConsumerState<CreateOfflineGamePage> {
                 style: TextStyle(color: AppColors.textSecondary),
               ),
               const SizedBox(height: AppSpacing.xxl),
-
-              // ── Location Banner ───────────────────────────────────
-              _buildLocationStatus(),
+_buildLocationStatus(),
               const SizedBox(height: AppSpacing.xl),
-
-              // ── Game Name ─────────────────────────────────────────
-              _buildFormField(
+_buildFormField(
                 label: 'Game Name *',
                 hint: 'e.g. Backyard Cricket, Chess at Park',
                 controller: _nameController,
@@ -438,9 +419,7 @@ class _CreateOfflineGamePageState extends ConsumerState<CreateOfflineGamePage> {
                 validator: (v) => (v == null || v.trim().isEmpty) ? 'Please enter a game name' : null,
               ),
               const SizedBox(height: AppSpacing.lg),
-
-              // ── Players ───────────────────────────────────────────
-              _buildFormField(
+_buildFormField(
                 label: 'Max Players *',
                 hint: 'Total player limit',
                 controller: _playersController,
@@ -455,9 +434,7 @@ class _CreateOfflineGamePageState extends ConsumerState<CreateOfflineGamePage> {
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               ),
               const SizedBox(height: AppSpacing.lg),
-
-              // ── Description ───────────────────────────────────────
-              _buildFormField(
+_buildFormField(
                 label: 'Description (Optional)',
                 hint: 'Details about meeting point, rules, etc.',
                 controller: _descController,
@@ -465,9 +442,7 @@ class _CreateOfflineGamePageState extends ConsumerState<CreateOfflineGamePage> {
                 maxLines: 4,
               ),
               const SizedBox(height: AppSpacing.xxl),
-
-              // ── Submit Button ─────────────────────────────────────
-              SizedBox(
+SizedBox(
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(

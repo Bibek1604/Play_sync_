@@ -111,10 +111,7 @@ class ProfileResponseModel {
       updatedAt: updatedAt,
     );
   }
-
-  // ─── Helpers ──────────────────────────────────────────────────────────────
-
-  static String? _imageUrl(String? path) {
+static String? _imageUrl(String? path) {
     if (path == null || path.isEmpty) return null;
     if (path.startsWith('http')) return path;
     final cleanPath = path.startsWith('/') ? path : '/$path';

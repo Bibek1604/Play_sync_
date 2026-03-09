@@ -14,10 +14,8 @@ import 'package:socket_io_client/socket_io_client.dart' as io;
 import '../../data/models/message_model.dart';
 
 /// Clean-architecture game chat room screen.
-///
 /// Opens for a [gameId] and [gameTitle].  On init it loads chat history
 /// once via GET.  Sending uses POST and appends only the returned message.
-///
 /// Alignment rule (single bubble, never duplicated):
 ///   message.isMe(currentUserId) == true  → RIGHT, primary-blue bubble
 ///   message.isMe(currentUserId) == false → LEFT,  grey bubble
@@ -153,10 +151,7 @@ class _GameChatRoomPageState extends ConsumerState<GameChatRoomPage> {
     _focusNode.dispose();
     super.dispose();
   }
-
-  // ── Scroll ────────────────────────────────────────────────────────────────
-
-  void _scrollToBottom({bool animated = true}) {
+void _scrollToBottom({bool animated = true}) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_scrollCtrl.hasClients) return;
       if (animated) {
@@ -170,10 +165,7 @@ class _GameChatRoomPageState extends ConsumerState<GameChatRoomPage> {
       }
     });
   }
-
-  // ── Send ──────────────────────────────────────────────────────────────────
-
-  Future<void> _sendMessage() async {
+Future<void> _sendMessage() async {
     final text = _inputCtrl.text.trim();
     if (text.isEmpty) return;
 
@@ -189,18 +181,13 @@ class _GameChatRoomPageState extends ConsumerState<GameChatRoomPage> {
     // 3. Scroll to bottom after the new bubble is rendered
     if (ok) _scrollToBottom();
   }
-
-  // ── Build ─────────────────────────────────────────────────────────────────
-
-  @override
+@override
   Widget build(BuildContext context) {
     final chatState = ref.watch(gameChatNotifierProvider(widget.gameId));
     final gameState = ref.watch(gameProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-
-    // ── IDENTITY RESOLUTION (SYNCHRONOUS) ──────────────────────────────
-    // Watch the reactive user info (ID + Name) for robust alignment checks.
+// Watch the reactive user info (ID + Name) for robust alignment checks.
     final userInfo = ref.watch(currentUserInfoProvider);
     final bestId = userInfo.id.isNotEmpty ? userInfo.id : _currentUserId;
 
@@ -209,9 +196,7 @@ class _GameChatRoomPageState extends ConsumerState<GameChatRoomPage> {
         if (mounted) setState(() => _currentUserId = bestId);
       });
     }
-
-    // ── ACCESS CONTROL: Check if user has access to this chat ──────────
-    GameEntity? currentGame;
+GameEntity? currentGame;
     
     // Try to find the game in created games
     try {
@@ -384,17 +369,14 @@ class _GameChatRoomPageState extends ConsumerState<GameChatRoomPage> {
         ],
         body: Column(
           children: [
-            // ── Error banner ─────────────────────────────────────────────────
-            if (chatState.error != null)
+if (chatState.error != null)
               _ErrorBanner(
                 message: chatState.error!,
                 onDismiss: () => ref
                     .read(gameChatNotifierProvider(widget.gameId).notifier)
                     .clearError(),
               ),
-
-            // ── Message list ─────────────────────────────────────────────────
-            Expanded(
+Expanded(
               child: chatState.isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : chatState.messages.isEmpty
@@ -407,9 +389,7 @@ class _GameChatRoomPageState extends ConsumerState<GameChatRoomPage> {
                           isDark: isDark,
                         ),
             ),
-
-            // ── Input bar ────────────────────────────────────────────────────
-            _InputBar(
+_InputBar(
               controller: _inputCtrl,
               focusNode: _focusNode,
               isSending: chatState.isSending,
@@ -469,9 +449,6 @@ class _GameChatRoomPageState extends ConsumerState<GameChatRoomPage> {
     );
   }
 }
-
-// ─── Message List ─────────────────────────────────────────────────────────────
-
 class _MessageList extends StatelessWidget {
   final List<MessageEntity> messages;
   final String currentUserId;
@@ -512,9 +489,6 @@ class _MessageList extends StatelessWidget {
     );
   }
 }
-
-// ─── Message Bubble ───────────────────────────────────────────────────────────
-
 class _MessageBubble extends StatelessWidget {
   final MessageEntity message;
   final String currentUserId;
@@ -532,8 +506,7 @@ class _MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ── THE CORE RULE ─────────────────────────────────────────────────────
-    // isMe == true  → RIGHT side, blue bubble
+// isMe == true  → RIGHT side, blue bubble
     // isMe == false → LEFT side, grey bubble
     // ONE bubble. No duplication. No cross-rendering.
     final isMe = message.isMe(currentUserId, currentUserName: currentUserName);
@@ -652,9 +625,6 @@ class _MessageBubble extends StatelessWidget {
     return '$h:$m';
   }
 }
-
-// ─── System Bubble ────────────────────────────────────────────────────────────
-
 class _SystemBubble extends StatelessWidget {
   final String text;
   final bool isDark;
@@ -688,9 +658,6 @@ class _SystemBubble extends StatelessWidget {
     );
   }
 }
-
-// ─── Sender Avatar ────────────────────────────────────────────────────────────
-
 class _SenderAvatar extends StatelessWidget {
   final String name;
   final String? avatarUrl;
@@ -715,9 +682,6 @@ class _SenderAvatar extends StatelessWidget {
     );
   }
 }
-
-// ─── App Bar Avatar ───────────────────────────────────────────────────────────
-
 class _Avatar extends StatelessWidget {
   final String? imageUrl;
   final String title;
@@ -736,9 +700,6 @@ class _Avatar extends StatelessWidget {
     );
   }
 }
-
-// ─── Input Bar ────────────────────────────────────────────────────────────────
-
 class _InputBar extends StatelessWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
@@ -857,9 +818,6 @@ class _InputBar extends StatelessWidget {
     );
   }
 }
-
-// ─── Empty State ──────────────────────────────────────────────────────────────
-
 class _EmptyState extends StatelessWidget {
   final bool isDark;
   const _EmptyState({required this.isDark});
@@ -901,9 +859,6 @@ class _EmptyState extends StatelessWidget {
     );
   }
 }
-
-// ─── Error Banner ─────────────────────────────────────────────────────────────
-
 class _ErrorBanner extends StatelessWidget {
   final String message;
   final VoidCallback onDismiss;

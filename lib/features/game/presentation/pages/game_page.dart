@@ -222,9 +222,7 @@ class _GamePageState extends ConsumerState<GamePage>
               ),
             ),
           ),
-          
-          // ── Hero Section with stats ──────────────────────────────
-          SliverToBoxAdapter(
+SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
               child: Container(
@@ -290,9 +288,7 @@ class _GamePageState extends ConsumerState<GamePage>
               ),
             ),
           ),
-          
-          // ── Tabs ──────────────────────────────────────────────────
-          SliverPersistentHeader(
+SliverPersistentHeader(
             pinned: true,
             delegate: _SliverAppBarDelegate(
               TabBar(
@@ -447,11 +443,7 @@ class _CircleBadge extends StatelessWidget {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Category card
-// ─────────────────────────────────────────────────────────────────────────────
-
 class _CategoryCard extends StatelessWidget {
   final String label;
   final IconData icon;
@@ -531,11 +523,7 @@ class _CategoryCard extends StatelessWidget {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Gradient host button (shown in expanded header)
-// ─────────────────────────────────────────────────────────────────────────────
-
 class _GradientButton extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -574,11 +562,7 @@ class _GradientButton extends StatelessWidget {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Empty state view
-// ─────────────────────────────────────────────────────────────────────────────
-
 class _EmptyGamesView extends StatelessWidget {
   final VoidCallback onRefresh;
   final VoidCallback onCreate;
@@ -651,11 +635,7 @@ class _EmptyGamesView extends StatelessWidget {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Game detail bottom sheet
-// ─────────────────────────────────────────────────────────────────────────────
-
 class _GameDetailSheet extends ConsumerWidget {
   final GameEntity game;
   const _GameDetailSheet({required this.game});

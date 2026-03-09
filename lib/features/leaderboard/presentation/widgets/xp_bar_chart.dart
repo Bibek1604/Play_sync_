@@ -150,9 +150,7 @@ class _BarPainter extends CustomPainter {
     for (var i = 0; i < entries.length; i++) {
       final entry = entries[i];
       final y = barGap + i * (barHeight + barGap);
-
-      // ── Rank label ──
-      _drawText(
+_drawText(
         canvas,
         '#${entry.rank}',
         Offset(0, y + barHeight / 2 - 6),
@@ -162,9 +160,7 @@ class _BarPainter extends CustomPainter {
             color: AppColors.textSecondary),
         maxWidth: labelWidth,
       );
-
-      // ── Name ──
-      final nameX = labelWidth + 4;
+final nameX = labelWidth + 4;
       _drawText(
         canvas,
         entry.fullName.length > 12
@@ -180,18 +176,14 @@ class _BarPainter extends CustomPainter {
         ),
         maxWidth: nameWidth,
       );
-
-      // ── Background bar ──
-      final barX = labelWidth + nameWidth + 8;
+final barX = labelWidth + nameWidth + 8;
       final bgRect = RRect.fromRectAndRadius(
         Rect.fromLTWH(barX, y, availableWidth, barHeight),
         const Radius.circular(6),
       );
       canvas.drawRRect(
           bgRect, Paint()..color = AppColors.surfaceLight);
-
-      // ── Filled bar ──
-      final fillWidth = maxXp > 0
+final fillWidth = maxXp > 0
           ? (entry.xp / maxXp) * availableWidth * progress
           : 0.0;
       if (fillWidth > 4) {
@@ -202,9 +194,7 @@ class _BarPainter extends CustomPainter {
         canvas.drawRRect(
             fillRect, Paint()..color = _barColor(entry.rank));
       }
-
-      // ── XP label ──
-      final xpX = barX + availableWidth + 6;
+final xpX = barX + availableWidth + 6;
       _drawText(
         canvas,
         '${entry.xp}',

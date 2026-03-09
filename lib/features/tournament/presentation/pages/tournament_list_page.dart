@@ -44,8 +44,7 @@ class _TournamentListPageState extends ConsumerState<TournamentListPage> {
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
-            // ── App Bar ────────────────────────────────────────────────────
-            SliverAppBar(
+SliverAppBar(
               pinned: true,
               floating: false,
               expandedHeight: 160,
@@ -137,9 +136,7 @@ class _TournamentListPageState extends ConsumerState<TournamentListPage> {
                 titlePadding: const EdgeInsets.only(left: 20, bottom: 20),
               ),
             ),
-
-            // ── Content ────────────────────────────────────────────────────
-            if (state.isLoading && state.tournaments.isEmpty)
+if (state.isLoading && state.tournaments.isEmpty)
               const SliverFillRemaining(
                 hasScrollBody: false,
                 child: Center(

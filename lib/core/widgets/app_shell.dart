@@ -12,8 +12,6 @@ import '../../features/auth/presentation/providers/auth_notifier.dart';
 
 /// Provider that tracks the active bottom-nav tab index.
 final shellIndexProvider = StateProvider<int>((ref) => 0);
-
-// ── Nav item model ─────────────────────────────────────────────────────────────
 class _NavDest {
   final IconData icon;
   final IconData activeIcon;
@@ -54,9 +52,7 @@ class AppShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    // ── Session-expiry listener ────────────────────────────────────────────
-    ref.listen<AsyncValue<void>>(unauthorizedStreamProvider, (_, next) {
+ref.listen<AsyncValue<void>>(unauthorizedStreamProvider, (_, next) {
       next.whenOrNull(
         data: (_) {
           ref.read(authNotifierProvider.notifier).forceLogout();
@@ -113,9 +109,6 @@ class AppShell extends ConsumerWidget {
     );
   }
 }
-
-// ─── Custom Bottom Bar ────────────────────────────────────────────────────────
-
 class _BottomBar extends StatelessWidget {
   final int currentIndex;
   final bool isDark;
@@ -188,9 +181,6 @@ class _BottomBar extends StatelessWidget {
     );
   }
 }
-
-// ─── Individual Nav Item ──────────────────────────────────────────────────────
-
 class _NavItem extends StatelessWidget {
   final _NavDest dest;
   final bool isActive;

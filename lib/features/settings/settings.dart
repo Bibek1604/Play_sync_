@@ -1,5 +1,4 @@
 /// Settings Feature - Clean Architecture
-/// 
 /// Structure:
 /// ├── data/                    # Data Layer (future)
 /// │   ├── datasources/         # Data sources
